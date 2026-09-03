@@ -313,10 +313,10 @@ export function createApiServer(
 
             // 2. Include pool shares
             const poolStats = pool.getStats();
-            for (const m of poolStats.topMiners || []) {
+            for (const m of poolStats.miners || []) {
                 if (m.address) {
                     const s = getOrCreate(m.address);
-                    s.sharesSubmitted += m.roundShares || 0;
+                    s.sharesSubmitted += m.shares || 0;
                 }
             }
 
