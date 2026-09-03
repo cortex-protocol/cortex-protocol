@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cortex Protocol ($CTX) | Technical Research Whitepaper</title>
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <style>
+        .paper-layout {
+            max-width: 960px;
+            margin: 40px auto 80px;
+            padding: 60px 70px;
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            font-size: 1.05rem;
+            line-height: 1.85;
+            color: var(--slate-800);
+        }
+        @media (max-width: 768px) {
+            .paper-layout {
+                padding: 30px 20px;
+                margin: 20px 10px;
+            }
+        }
+        .paper-header {
+            border-bottom: 2px solid var(--indigo-soft);
+            padding-bottom: 30px;
+            margin-bottom: 40px;
+        }
+        .paper-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--indigo-soft);
+            color: var(--indigo);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            margin-bottom: 16px;
+        }
+        .paper-title {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+        .paper-subtitle {
+            font-size: 1.2rem;
+            color: var(--indigo);
+            font-weight: 700;
+            margin-top: 12px;
+            line-height: 1.4;
+        }
+        .paper-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-top: 24px;
+            font-size: 0.85rem;
+        }
+        .meta-item strong {
+            display: block;
+            color: var(--slate-500);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .meta-item span {
+            color: var(--slate-900);
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+        .toc-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-left: 4px solid var(--indigo);
+            border-radius: 12px;
+            padding: 24px 30px;
+            margin: 36px 0;
+        }
+        .toc-title {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            color: var(--slate-900);
+            font-size: 1.1rem;
+            margin-bottom: 14px;
+        }
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.92rem;
+        }
+        .toc-list a {
+            color: var(--slate-700);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .toc-list a:hover {
+            color: var(--indigo);
+            font-weight: 600;
+        }
+        h2 {
+            font-family: var(--font-heading);
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin: 48px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h3 {
+            font-family: var(--font-heading);
+            font-size: 1.28rem;
+            font-weight: 700;
+            color: var(--slate-900);
+            margin: 30px 0 14px;
+        }
+        p { margin-bottom: 18px; }
+        .academic-quote {
+            border-left: 3px solid var(--indigo);
+            background: #f8fafc;
+            padding: 18px 24px;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--slate-700);
+            margin: 24px 0;
+        }
+        .formula-card {
+            background: #090d16;
+            color: #38bdf8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 26px;
+            border-radius: 14px;
+            font-family: var(--font-mono);
+            font-size: 0.98rem;
+            margin: 24px 0;
+            overflow-x: auto;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+        }
+        .formula-caption {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 8px;
+            font-style: italic;
+            font-family: var(--font-sans);
+        }
+        .paper-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 28px 0;
+            font-size: 0.92rem;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .paper-table th, .paper-table td {
+            padding: 14px 18px;
+            border: 1px solid var(--border-light);
+            text-align: left;
+        }
+        .paper-table th {
+            background: var(--bg-subtle);
+            font-weight: 800;
+            color: var(--slate-900);
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+        }
+        .print-fab {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 1000;
+        }
+        @media print {
+            .header-container, .print-fab { display: none !important; }
+            .paper-layout {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light text-slate">
+
+    <!-- HEADER NAVIGATION -->
+    <div class="header-container">
+        <nav class="nav-bar light-card-nav">
+            <div class="nav-brand" onclick="window.location.href='/'">
+                <div class="brand-logo-custom">
+                    <img src="assets/logo.svg" alt="Cortex Logo" class="brand-logo-img">
+                </div>
+                <div class="brand-text">
+                    <span class="brand-name">CORTEX</span>
+                    <span class="brand-badge-light">PROTOCOL</span>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <a href="/" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back to Mainnet Hub</a>
+                <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-file-pdf"></i> Export / Print PDF</button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- MAIN WHITEPAPER BODY -->
+    <main class="paper-layout">
+        
+        <!-- HEADER -->
+        <div class="paper-header">
+            <div class="paper-badge">
+                <i class="fa-solid fa-scroll"></i> PROTOCOL SPECIFICATION PAPER v2.0
+            </div>
+            <h1 class="paper-title">CORTEX PROTOCOL ($CTX)</h1>
+            <div class="paper-subtitle">The Settlement & State Layer for Autonomous AI Agents</div>
+
+            <div class="paper-meta-grid">
+                <div class="meta-item">
+                    <strong>Author & Origin</strong>
+                    <span>Cortex Research Foundation</span>
+                </div>
+                <div class="meta-item">
+                    <strong>Consensus Model</strong>
+                    <span>Nakamoto PoW (RandomX CPU)</span>
+                </div>
+                <div class="meta-item">
+                    <strong>Network Status</strong>
+                    <span>Incentivized Testnet 2.0 (Live)</span>
+                </div>
+                <div class="meta-item">
+                    <strong>Distribution Model</strong>
+                    <span>100% Fair Launch (0% VC Premine)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE OF CONTENTS -->
+        <div class="toc-box">
+            <div class="toc-title"><i class="fa-solid fa-list-ol text-indigo"></i> Table of Contents</div>
+            <ul class="toc-list">
+                <li><a href="#abstract">1. Executive Summary & Abstract</a></li>
+                <li><a href="#problem">2. The Core Problem: Machine-to-Machine Trust & Coordination</a></li>
+                <li><a href="#architecture">3. Architecture: Edge RAG & L1 Cryptographic Anchoring</a></li>
+                <li><a href="#privacy">4. Client-Side Privacy via AES-256-GCM Encryption</a></li>
+                <li><a href="#consensus">5. Consensus Engine: ASIC-Resistant Nakamoto CPU PoW (RandomX)</a></li>
+                <li><a href="#tokenomics">6. Tokenomics, Incentivized Testnet & 3-Month Linear Vesting</a></li>
+                <li><a href="#roadmap">7. 4-Phase Roadmap to Mainnet Genesis</a></li>
+                <li><a href="#developers">8. Developer Integration & Edge RAG SDKs</a></li>
+                <li><a href="#conclusion">9. Conclusion & Protocol Governance</a></li>
+            </ul>
+        </div>
+
+        <!-- 1. ABSTRACT -->
+        <h2 id="abstract">1. Executive Summary & Abstract</h2>
+        <p>
+            Cortex Protocol is a sovereign Layer-1 blockchain engineered specifically to solve <strong>Machine-to-Machine Trust, Identity, and Cryptographic Settlement</strong> for autonomous artificial intelligence. 
+        </p>
+        <p>
+            Rejecting the flawed paradigm of on-chain vector bloat and monolithic "world brains," Cortex Protocol enforces a strict <strong>Separation of Concerns</strong>:
+        </p>
+        <div class="academic-quote">
+            "Heavy vector embeddings, indexation (HNSW), and Retrieval-Augmented Generation (RAG) execute 100% locally and privately at the edge. The Layer-1 blockchain serves exclusively as an immutable, trustless notary for cryptographic state proofs and peer-to-peer economic settlement."
+        </div>
+        <p>
+            Consensus is secured via <strong>Nakamoto CPU Proof-of-Work powered by RandomX</strong>, ensuring absolute ASIC-resistance, fair community distribution, and censorship-proof validator decentralization.
+        </p>
+
+        <!-- 2. THE PROBLEM -->
+        <h2 id="problem">2. The Core Problem: Machine-to-Machine Trust & Coordination</h2>
+        <p>
+            As artificial intelligence transitions from human-prompted chatbots into autonomous, interacting economic agents, existing centralized infrastructure introduces critical failure points:
+        </p>
+        <ul>
+            <li><strong>Siloed SaaS Gatekeepers:</strong> Centralized vector databases and APIs (AWS, Pinecone, OpenAI) subject autonomous agents to arbitrary de-platforming, opaque rate-limits, and vendor lock-in.</li>
+            <li><strong>Lack of Trustless Coordination:</strong> Autonomous agents from different organizations cannot verify the validity or authenticity of another agent's memory state without trusting a central intermediary.</li>
+            <li><strong>Absence of Machine-Native Currency:</strong> Agents require a friction-free, non-custodial settlement asset capable of executing micro-payments for data exchange, compute leasing, and state notarization.</li>
+        </ul>
+
+        <!-- 3. ARCHITECTURE -->
+        <h2 id="architecture">3. Architecture: Edge RAG & L1 Cryptographic Anchoring</h2>
+        <p>
+            Attempting to store raw 768-dimensional float32 vector arrays directly within the blockchain consensus state causes catastrophic state bloat and destroys independent node decentralization. Cortex Protocol resolves this through a mathematically sound two-tier division:
+        </p>
+
+        <div class="formula-card">
+            <div style="color:#818cf8; font-weight:800; margin-bottom:8px;">THEOREM 1: BOUNDED LEDGER STATE COMPLEXITY</div>
+            <div>$$\forall m \in \text{Memories}, \quad \text{StateSize}(\text{L1}) = O(1) \quad \text{via} \quad H_{\text{root}} = \text{MerkleRoot}(\{h_1, h_2, \dots, h_k\})$$</div>
+            <div class="formula-caption">The L1 blockchain records only 32-byte cryptographic hashes and Merkle roots, preserving absolute micro-node decentralization regardless of memory volume.</div>
+        </div>
+
+        <table class="paper-table">
+            <thead>
+                <tr>
+                    <th>Domain</th>
+                    <th>Execution Layer</th>
+                    <th>Primary Function</th>
+                    <th>Performance Metric</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Layer-1 Consensus</strong></td>
+                    <td>Global Decentralized Miners</td>
+                    <td>RandomX CPU PoW, State Notarization, Merkle Roots, P2P Settlement</td>
+                    <td>15.0s Confirmation Target</td>
+                </tr>
+                <tr>
+                    <td><strong>Edge Vector Engine</strong></td>
+                    <td>Local Agent RAM / Disk</td>
+                    <td>768-Dim HNSW Indexing, Cosine Semantic Similarity Search (Edge RAG)</td>
+                    <td>&lt; 10ms In-Memory Retrieval</td>
+                </tr>
+                <tr>
+                    <td><strong>Private State Enclave</strong></td>
+                    <td>Client-Side Environment</td>
+                    <td>AES-256-GCM Symmetric Cipher, Blinded Hash Commitment</td>
+                    <td>Zero Plaintext Leakage</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 4. PRIVACY SHIELD -->
+        <h2 id="privacy">4. Client-Side Privacy via AES-256-GCM Encryption</h2>
+        <p>
+            No raw vector embeddings or unencrypted context states are ever exposed to the public blockchain. Agents encrypt sensitive state payloads locally prior to generating cryptographic proofs:
+        </p>
+        <div class="formula-card">
+            <div>$$\text{Ciphertext} = \text{AES-256-GCM}(K_{\text{agent}}, \text{Payload})$$</div>
+            <div style="margin-top:8px;">$$\text{LeafHash} = \text{SHA-256d}(\text{AgentID} \parallel \text{Topic} \parallel \text{SHA-256}(\text{Vector}) \parallel \text{Ciphertext})$$</div>
+            <div class="formula-caption">Raw vector data is never published in plaintext. Light clients verify any state transition via 60-byte Merkle proofs against the on-chain block header.</div>
+        </div>
+
+        <!-- 5. CONSENSUS ENGINE -->
+        <h2 id="consensus">5. Consensus Engine: ASIC-Resistant Nakamoto CPU PoW (RandomX)</h2>
+        <p>
+            Cortex Protocol implements pure Nakamoto consensus utilizing the <strong>RandomX Proof-of-Work algorithm</strong>, live in production on Testnet 1.0 and Mainnet:
+        </p>
+        <ul>
+            <li><strong>Memory-Hard Scratchpad (256 KB L1/L2/L3 Cache):</strong> Saturates CPU cache hierarchy, rendering fixed-function Bitcoin-style ASICs and FPGAs economically inefficient.</li>
+            <li><strong>Random Instruction VM:</strong> Generates pseudo-random instruction streams (integer ALU, floating point FPU, branch prediction, memory swaps) on every hashing iteration.</li>
+            <li><strong>15-Second Block Time with Dynamic Difficulty:</strong> Target difficulty auto-adjusts every 5 blocks via exponential moving average to maintain precise block emission.</li>
+        </ul>
+
+        <div class="formula-card">
+            <div>$$D_{n+1} = \text{clamp}\left( D_n \times \frac{T_{\text{target}} \times 5}{t_{\text{actual}}}, \quad \frac{D_n}{2}, \quad D_n \times 2 \right)$$</div>
+            <div class="formula-caption">Where \(T_{\text{target}} = 15.0\text{s}\) and \(t_{\text{actual}} = \text{Timestamp}(B_n) - \text{Timestamp}(B_{n-5})\).</div>
+        </div>
+
+        <!-- 6. TOKENOMICS -->
+        <h2 id="tokenomics">6. Tokenomics, Incentivized Testnet & 3-Month Linear Vesting</h2>
+        <p>
+            Cortex Protocol adopts a strictly finite supply curve with an automated fee combustion sink and a fair launch bootstrap mechanism:
+        </p>
+
+        <table class="paper-table">
+            <thead>
+                <tr>
+                    <th>Economic Metric</th>
+                    <th>Specification</th>
+                    <th>Design Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Token Symbol</strong></td>
+                    <td><strong>$CTX</strong></td>
+                    <td>Native gas, settlement, and state notarization unit</td>
+                </tr>
+                <tr>
+                    <td><strong>Maximum Hard Cap</strong></td>
+                    <td><strong>21,000,000 CTX</strong></td>
+                    <td>Absolute mathematical supply ceiling</td>
+                </tr>
+                <tr>
+                    <td><strong>Team / VC Pre-mine</strong></td>
+                    <td><strong>0% (100% Fair Launch)</strong></td>
+                    <td>Zero insider dumping, 100% decentralized community distribution</td>
+                </tr>
+                <tr>
+                    <td><strong>Initial Block Subsidy</strong></td>
+                    <td><strong>50.00 CTX / Block</strong></td>
+                    <td>Halving every 210,000 blocks (~3.65 months)</td>
+                </tr>
+                <tr>
+                    <td><strong>Permanent Combustion Sink</strong></td>
+                    <td><strong>30% of All Network Fees</strong></td>
+                    <td>Sent directly to unspendable burn address <code>ctx1000000000000...</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Incentivized Testnet Allocation</strong></td>
+                    <td><strong>1.0% (210,000 CTX)</strong></td>
+                    <td>Genesis Block bootstrap for active miners & community testers</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>6.1 Incentivized Testnet Allocation Breakdown (70/30 Split)</h3>
+        <p>
+            Exactly <strong>1.0% of the total hard cap (210,000 $CTX)</strong> is reserved for participants of the Incentivized Testnet 1.0:
+        </p>
+        <ul>
+            <li><strong>70% (147,000 CTX) — Active Hardware Miners:</strong> Distributed pro-rata based on validated RandomX blocks and valid pool shares submitted during the testnet period.</li>
+            <li><strong>30% (63,000 CTX) — Community Testers:</strong> Distributed equally across active addresses participating in DEX swaps, Web3 Wallet signatures, and state commits.</li>
+        </ul>
+
+        <div class="formula-card">
+            <div style="color:#10b981; font-weight:800; margin-bottom:8px;">ANTI-WHALE & 3-MONTH LINEAR VESTING RULES</div>
+            <div>$$\text{MaxReward}(\text{Address}) \le 0.03 \times \text{TestnetPool} = 6,300 \text{ CTX}$$</div>
+            <div style="margin-top:8px;">$$\text{Unlocked}(t) = \text{Allocation} \times \left(0.20 + 0.80 \times \frac{\min(t, T_{\text{vest}})}{T_{\text{vest}}}\right), \quad T_{\text{vest}} = 90 \text{ Days}$$</div>
+            <div class="formula-caption">20% liquid at Genesis Block #0. 80% streamed continuously block-by-block over 90 days (~518,400 blocks). Excess over 3% cap is redistributed to the community pool.</div>
+        </div>
+
+        <!-- 7. ROADMAP -->
+        <h2 id="roadmap">7. 4-Phase Roadmap to Mainnet Genesis</h2>
+        <table class="paper-table">
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>Milestone Name</th>
+                    <th>Key Deliverables</th>
+                    <th>Target Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Phase 1</strong></td>
+                    <td><strong>Incentivized Testnet 1.0</strong></td>
+                    <td>RandomX CPU Pool Mining, DEX Trading, Web3 Extension Signing, Merkle State Anchoring</td>
+                    <td><span class="pill-badge pill-green-light font-mono">LIVE / IN PROGRESS</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Phase 2</strong></td>
+                    <td><strong>Mainnet Preparation</strong></td>
+                    <td>Final Testnet Snapshot, Genesis Block Code Audit, Multi-node Validator Stress-Testing</td>
+                    <td><span class="pill-badge pill-violet-light font-mono">Q4 2026</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Phase 3</strong></td>
+                    <td><strong>Mainnet Genesis Launch</strong></td>
+                    <td>100% Fair Launch Genesis Block #0, 1% Testnet Distribution with Vesting, 30% Gas Fee Burn</td>
+                    <td><span class="pill-badge pill-indigo-light font-mono">Q1 2027</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Phase 4</strong></td>
+                    <td><strong>Developer Ecosystem</strong></td>
+                    <td>Python SDK for Edge RAG, LangChain/AutoGPT/CrewAI native plugins, Developer Bounties</td>
+                    <td><span class="pill-badge font-mono">Q2 2027</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 8. DEVELOPER INTEGRATION -->
+        <h2 id="developers">8. Developer Integration & Edge RAG SDKs</h2>
+        <p>
+            Cortex Protocol provides native SDK libraries for Python, TypeScript, and Rust. A Python agent can inscribe and verify state in three lines of code:
+        </p>
+        <div class="formula-card" style="color:#f8fafc;">
+            <span style="color:#a855f7;">from</span> cortex_protocol <span style="color:#a855f7;">import</span> CortexClient, AgentWallet<br><br>
+            wallet = AgentWallet.from_private_key(<span style="color:#38bdf8;">"0x4a7f92b9..."</span>)<br>
+            client = CortexClient(node_url=<span style="color:#38bdf8;">"https://cortex-protocol.xyz"</span>, wallet=wallet)<br><br>
+            <span style="color:#64748b;"># Inscribe encrypted state commitment (30% permanent fee burn)</span><br>
+            tx_id = client.inscribe_memory(<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;agent_id=<span style="color:#38bdf8;">"Alpha-Arbitrage-01"</span>,<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;topic=<span style="color:#38bdf8;">"curve_uniswap_spread"</span>,<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;content=<span style="color:#38bdf8;">"Identified 3.4% spatial liquidity dislocation."</span><br>
+            )
+        </div>
+
+        <!-- 9. CONCLUSION -->
+        <h2 id="conclusion">9. Conclusion & Protocol Governance</h2>
+        <p>
+            The emergence of sovereign Artificial General Intelligence requires an incorruptible, decentralized foundation. By harmonizing RandomX CPU hardware consensus, strict Separation of Concerns, client-side AES-256-GCM encryption, and mathematical tokenomics with automated fee burning, <strong>Cortex Protocol ($CTX)</strong> establishes the definitive, un-censorable settlement and state notarization layer for the autonomous machine economy.
+        </p>
+    </main>
+
+    <!-- PRINT FLOATING ACTION BUTTON -->
+    <div class="print-fab">
+        <button class="btn btn-primary btn-shimmer" onclick="window.print()">
+            <i class="fa-solid fa-file-pdf"></i> Download Official PDF
+        </button>
+    </div>
+
+</body>
+</html>

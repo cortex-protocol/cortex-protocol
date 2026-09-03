@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cortex AMM DEX - Sovereign L1 Exchange</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { background: #f8fafc; color: var(--slate-900); }
+        .dex-standalone-header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .dex-standalone-container {
+            max-width: 1200px;
+            margin: 32px auto;
+            padding: 0 20px;
+        }
+        .dex-nav-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--emerald);
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal-overlay.active {
+            display: flex !important;
+        }
+        .signature-dialog-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+            animation: modalPop 0.2s ease-out;
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- STANDALONE DEX HEADER -->
+    <header class="dex-standalone-header">
+        <div class="flex items-center gap-3">
+            <a href="/" class="brand-logo-light flex items-center gap-2" style="text-decoration:none;">
+                <img src="assets/logo.svg" alt="Cortex Logo" style="width: 34px; height: 34px; filter: drop-shadow(0 2px 6px rgba(79, 70, 229, 0.3));">
+                <div class="flex items-baseline gap-2">
+                    <span class="brand-name-light font-extrabold" style="font-size:1.2rem; letter-spacing:-0.02em;">CORTEX <span class="text-indigo">DEX</span></span>
+                    <span class="badge-subtle badge-indigo text-xs">AMM v1.0</span>
+                </div>
+            </a>
+            <div class="dex-nav-badge ml-2">
+                <span class="dot-indicator"></span>
+                <span>Layer-1 Testnet</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="/" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-arrow-left"></i> <span>Protocol Home</span>
+            </a>
+            <a href="/downloads/cortex-wallet-extension.zip" download class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-download"></i> <span>Get Extension</span>
+            </a>
+            <div id="dex-header-wallet-container">
+                <button class="btn btn-primary btn-sm" id="btn-dex-connect" onclick="connectDexWallet()">
+                    <i class="fa-solid fa-wallet"></i> <span>Connect Extension</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN DEX APPLICATION -->
+    <main class="dex-standalone-container">
+        <!-- TOP PROTOCOL STATS BAR (4 COMPACT COLUMNS) -->
+        <div class="dex-stats-row" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 24px;">
+            <div class="dex-stat-card stat-card-emerald">
+                <span class="text-xs text-slate-500 font-bold">CTX SPOT PRICE</span>
+                <div class="text-xl font-bold text-emerald mono mt-1" id="dex-spot-price-val">$1.2450 USD</div>
+                <span class="text-xs text-slate-400">Continuous AMM Curve</span>
+            </div>
+            <div class="dex-stat-card stat-card-indigo">
+                <span class="text-xs text-slate-500 font-bold">TOTAL POOL LIQUIDITY</span>
+                <div class="text-xl font-bold text-indigo mono mt-1" id="dex-tvl-val">$1,245,000 USD</div>
+                <span class="text-xs text-slate-400">500K CTX + 622.5K USDC</span>
+            </div>
+            <div class="dex-stat-card stat-card-violet">
+                <span class="text-xs text-slate-500 font-bold">24H TRADING VOLUME</span>
+                <div class="text-xl font-bold text-violet mono mt-1">$98,420 USD</div>
+                <span class="text-xs text-slate-400">+14.8% vs yesterday</span>
+            </div>
+            <div class="dex-stat-card stat-card-amber">
+                <span class="text-xs text-slate-500 font-bold">LP REWARDS APY</span>
+                <div class="text-xl font-bold text-amber mono mt-1">18.4% APY</div>
+                <span class="text-xs text-slate-400">Auto-distributed to LPs</span>
+            </div>
+        </div>
+
+        <!-- 2-COLUMN SWAP & CHART GRID -->
+        <div class="grid-2col" style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            
+            <!-- LEFT COLUMN: SWAP INTERFACE -->
+            <div class="dex-swap-card spotlight-card">
+                <div class="flex items-center justify-between pb-3 border-bottom-subtle">
+                    <div class="flex items-center gap-2">
+                        <span class="dot-indicator"></span>
+                        <h3 class="text-slate-900 font-bold m-0">Instant Token Swap</h3>
+                    </div>
+                    <div class="flex items-center gap-1 text-xs">
+                        <span class="text-slate-500 mr-1">Slippage:</span>
+                        <button class="badge-subtle cursor-pointer active-slippage" onclick="setDexSlippage(0.5, this)">0.5%</button>
+                        <button class="badge-subtle cursor-pointer" onclick="setDexSlippage(1.0, this)">1.0%</button>
+                    </div>
+                </div>
+
+                <!-- PAY TOKEN BOX -->
+                <div class="dex-token-box mt-3">
+                    <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                        <span class="font-bold">You Pay</span>
+                        <div class="flex items-center">
+                            <span>Balance: <strong class="mono text-slate-900" id="dex-pay-bal">0.00 CTX</strong></span>
+                            <button class="max-pill-btn" onclick="setDexMaxPay()">MAX</button>
+                        </div>
+                    </div>
+                    <div class="dex-input-row">
+                        <input type="number" id="dex-input-pay" class="dex-input-amount" placeholder="0.0" oninput="calcSwapOutput()">
+                        <div class="token-pill-badge" id="dex-pay-token-pill">
+                            <span style="font-size: 1.1rem;">🧠</span>
+                            <span id="dex-pay-sym">CTX</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SWITCH DIRECTION BUTTON -->
+                <div class="swap-switch-wrap">
+                    <button class="swap-switch-btn" onclick="invertSwapPair()" title="Switch Pair Direction">
+                        <i class="fa-solid fa-arrow-down-up-across-line"></i>
+                    </button>
+                </div>
+
+                <!-- RECEIVE TOKEN BOX -->
+                <div class="dex-token-box">
+                    <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                        <span class="font-bold">You Receive (Estimated)</span>
+                        <span>Balance: <strong class="mono text-slate-900" id="dex-receive-bal">1,000.00 tUSDC</strong></span>
+                    </div>
+                    <div class="dex-input-row">
+                        <input type="number" id="dex-input-receive" class="dex-input-amount text-emerald" placeholder="0.0" readonly>
+                        <div class="token-pill-badge" id="dex-receive-token-pill">
+                            <span style="font-size: 1.1rem;">💵</span>
+                            <span id="dex-receive-sym">tUSDC</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SWAP DETAILS ACCORDION -->
+                <div class="dex-meta-rows mt-3">
+                    <div class="dex-meta-row">
+                        <span class="text-slate-500">Exchange Rate</span>
+                        <span class="mono font-bold text-slate-800" id="dex-rate-text">1 CTX ≈ 1.2450 tUSDC</span>
+                    </div>
+                    <div class="dex-meta-row">
+                        <span class="text-slate-500">LP Fee Tier (0.3%)</span>
+                        <span class="mono font-bold text-slate-800" id="dex-fee-text">0.00 CTX</span>
+                    </div>
+                    <div class="dex-meta-row">
+                        <span class="text-slate-500">Price Impact</span>
+                        <span class="mono text-emerald font-bold" id="dex-impact-text">&lt; 0.01%</span>
+                    </div>
+                    <div class="dex-meta-row">
+                        <span class="text-slate-500">Routing</span>
+                        <span class="mono text-indigo font-bold">Cortex Constant-Product AMM (x·y=k)</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-hero-cta btn-block btn-shimmer mt-3" id="btn-dex-execute-swap" onclick="requestSwapSignature()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Swap Tokens Instantly
+                </button>
+                <div id="dex-swap-status-box" class="mt-2 text-center text-sm"></div>
+            </div>
+
+            <!-- RIGHT COLUMN: PRICE CHART & LIQUIDITY POOL -->
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <!-- PRICE ACTION CHART CARD -->
+                <div class="dex-chart-card spotlight-card">
+                    <div class="flex items-center justify-between pb-2 border-bottom-subtle">
+                        <div>
+                            <h3 class="text-slate-900 font-bold m-0"><i class="fa-solid fa-chart-area text-emerald"></i> CTX / USD Price Action</h3>
+                            <span class="text-xs text-slate-400">AMM Continuous Pricing Curve</span>
+                        </div>
+                        <span class="badge-subtle badge-emerald font-bold">+4.8% 24h</span>
+                    </div>
+                    <div class="dex-chart-canvas-wrap mt-3" style="background:#ffffff; border-radius:12px; border:1px solid #f1f5f9; padding:10px;">
+                        <canvas id="dex-price-canvas" style="width:100%; height:180px;"></canvas>
+                    </div>
+                </div>
+
+                <!-- LIQUIDITY POOL CARD -->
+                <div class="light-card rounded-16 p-4">
+                    <div class="flex items-center justify-between pb-2 border-bottom-subtle">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-water text-indigo" style="font-size:1.1rem;"></i>
+                            <h4 class="text-slate-900 font-bold m-0">Provide Liquidity</h4>
+                        </div>
+                        <span class="badge-subtle badge-violet font-bold">18.4% APY</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2 mb-3">Earn 0.3% protocol fee on all trades proportional to your share of the pool.</p>
+                    <div class="grid-2col gap-2">
+                        <button class="btn btn-outline btn-block btn-sm" onclick="depositLiquidityDemo()">
+                            <i class="fa-solid fa-plus"></i> Add Liquidity
+                        </button>
+                        <button class="btn btn-outline btn-block btn-sm" onclick="claimLpYieldDemo()">
+                            <i class="fa-solid fa-gift"></i> Claim Rewards
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="toast-light"></div>
+
+    <script>
+        // STANDALONE DEX LOGIC
+        let dexState = {
+            fromSymbol: 'CTX',
+            toSymbol: 'tUSDC',
+            poolCtx: 500000,
+            poolUsdc: 622500,
+            spotPrice: 1.2450,
+            userCtx: 0,
+            userUsdc: 1000.00,
+            slippage: 0.5,
+            activeWallet: null
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            initStandaloneDex();
+            drawDexPriceChart();
+            autoDetectExtension();
+        });
+
+        async function initStandaloneDex() {
+            try {
+                const res = await fetch('/api/dex/pool');
+                const data = await res.json();
+                dexState.poolCtx = data.poolCtx;
+                dexState.poolUsdc = data.poolUsdc;
+                dexState.spotPrice = data.spotPrice;
+                document.getElementById('dex-spot-price-val').textContent = `$${data.spotPrice.toFixed(4)} USD`;
+                const tvl = Math.round(data.poolCtx * data.spotPrice + data.poolUsdc);
+                document.getElementById('dex-tvl-val').textContent = `$${tvl.toLocaleString()} USD`;
+            } catch(e) {}
+            syncDexDisplay();
+        }
+
+        async function autoDetectExtension() {
+            // Check if wallet is saved in localStorage or extension
+            const saved = localStorage.getItem('cortex_wallet');
+            if (saved) {
+                try {
+                    dexState.activeWallet = JSON.parse(saved);
+                    await syncUserBalances();
+                } catch(e) {}
+            }
+        }
+
+        async function connectDexWallet() {
+            if (window.cortex && typeof window.cortex.request === 'function') {
+                try {
+                    const accounts = await window.cortex.request({ method: 'ctx_requestAccounts' });
+                    if (accounts && accounts.length > 0) {
+                        dexState.activeWallet = { address: accounts[0] };
+                        localStorage.setItem('cortex_wallet', JSON.stringify(dexState.activeWallet));
+                        await syncUserBalances();
+                        showToast(`🟢 Extension Connected: ${accounts[0].substring(0, 10)}...!`);
+                        return;
+                    }
+                } catch(e) {}
+            }
+            // Prompt manual key or generate
+            const key = prompt('Paste your 64-char private key to connect to DEX:');
+            if (key) {
+                try {
+                    const res = await fetch('/api/wallet/import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ privateKey: key.trim() })
+                    });
+                    const data = await res.json();
+                    if (data.error) return showToast(data.error, true);
+                    dexState.activeWallet = data;
+                    localStorage.setItem('cortex_wallet', JSON.stringify(data));
+                    await syncUserBalances();
+                    showToast('🟢 Wallet Connected!');
+                } catch(e) {
+                    showToast('Error importing key', true);
+                }
+            }
+        }
+
+        async function syncUserBalances() {
+            if (!dexState.activeWallet || !dexState.activeWallet.address) return;
+            const addr = dexState.activeWallet.address;
+            try {
+                const res = await fetch(`/api/dex/balance/${addr}`);
+                const data = await res.json();
+                dexState.userCtx = data.ctx || 0;
+                dexState.userUsdc = data.usdc || 1000.00;
+            } catch(e) {}
+
+            const headerContainer = document.getElementById('dex-header-wallet-container');
+            const shortAddr = `${addr.substring(0, 8)}...${addr.substring(addr.length - 4)}`;
+            if (headerContainer) {
+                headerContainer.innerHTML = `
+                    <div class="connected-wallet-pill" onclick="connectDexWallet()" title="Wallet Active">
+                        <span class="dot-indicator"></span>
+                        <span class="mono text-xs font-bold text-slate-800">${shortAddr}</span>
+                        <span class="badge-subtle badge-emerald mono text-xs font-bold">${dexState.userCtx.toFixed(2)} CTX</span>
+                    </div>
+                `;
+            }
+            syncDexDisplay();
+        }
+
+        function syncDexDisplay() {
+            const payBalEl = document.getElementById('dex-pay-bal');
+            const recBalEl = document.getElementById('dex-receive-bal');
+
+            if (dexState.fromSymbol === 'CTX') {
+                payBalEl.textContent = `${dexState.userCtx.toFixed(2)} CTX`;
+                recBalEl.textContent = `${dexState.userUsdc.toFixed(2)} tUSDC`;
+            } else {
+                payBalEl.textContent = `${dexState.userUsdc.toFixed(2)} tUSDC`;
+                recBalEl.textContent = `${dexState.userCtx.toFixed(2)} CTX`;
+            }
+            calcSwapOutput();
+        }
+
+        function setDexMaxPay() {
+            const inEl = document.getElementById('dex-input-pay');
+            if (dexState.fromSymbol === 'CTX') {
+                inEl.value = Math.max(0, dexState.userCtx - 0.01).toFixed(4);
+            } else {
+                inEl.value = dexState.userUsdc.toFixed(2);
+            }
+            calcSwapOutput();
+        }
+
+        function invertSwapPair() {
+            const temp = dexState.fromSymbol;
+            dexState.fromSymbol = dexState.toSymbol;
+            dexState.toSymbol = temp;
+
+            document.getElementById('dex-pay-sym').textContent = dexState.fromSymbol;
+            document.getElementById('dex-receive-sym').textContent = dexState.toSymbol;
+            document.getElementById('dex-pay-token-pill').querySelector('span:first-child').textContent = dexState.fromSymbol === 'CTX' ? '🧠' : '💵';
+            document.getElementById('dex-receive-token-pill').querySelector('span:first-child').textContent = dexState.toSymbol === 'CTX' ? '🧠' : '💵';
+
+            const inEl = document.getElementById('dex-input-pay');
+            const outEl = document.getElementById('dex-input-receive');
+            inEl.value = '';
+            outEl.value = '';
+
+            syncDexDisplay();
+        }
+
+        function calcSwapOutput() {
+            const inAmount = parseFloat(document.getElementById('dex-input-pay').value || '0');
+            const outEl = document.getElementById('dex-input-receive');
+            const rateText = document.getElementById('dex-rate-text');
+            const feeText = document.getElementById('dex-fee-text');
+            const impactText = document.getElementById('dex-impact-text');
+
+            if (inAmount <= 0) {
+                outEl.value = '';
+                feeText.textContent = `0.00 ${dexState.fromSymbol}`;
+                impactText.textContent = '< 0.01%';
+                return;
+            }
+
+            const fee = inAmount * 0.003;
+            const effectiveIn = inAmount * 0.997;
+            feeText.textContent = `${fee.toFixed(4)} ${dexState.fromSymbol}`;
+
+            let outAmount = 0;
+            if (dexState.fromSymbol === 'CTX') {
+                outAmount = (dexState.poolUsdc * effectiveIn) / (dexState.poolCtx + effectiveIn);
+                const impact = ((inAmount / dexState.poolCtx) * 100).toFixed(2);
+                impactText.textContent = `${impact}%`;
+                rateText.textContent = `1 CTX ≈ ${(dexState.poolUsdc / dexState.poolCtx).toFixed(4)} tUSDC`;
+            } else {
+                outAmount = (dexState.poolCtx * effectiveIn) / (dexState.poolUsdc + effectiveIn);
+                const impact = ((inAmount / dexState.poolUsdc) * 100).toFixed(2);
+                impactText.textContent = `${impact}%`;
+                rateText.textContent = `1 tUSDC ≈ ${(dexState.poolCtx / dexState.poolUsdc).toFixed(4)} CTX`;
+            }
+
+            outEl.value = outAmount.toFixed(4);
+        }
+
+        function setDexSlippage(val, btn) {
+            dexState.slippage = val;
+            document.querySelectorAll('.active-slippage').forEach(el => el.classList.remove('active-slippage'));
+            if (btn) btn.classList.add('active-slippage');
+        }
+
+        // STEP 1: TRIGGER DEDICATED EXTENSION POPUP APPROVAL
+        async function requestSwapSignature() {
+            let inAmount = parseFloat(document.getElementById('dex-input-pay').value || '0');
+            if (inAmount <= 0) {
+                inAmount = dexState.userCtx > 1 ? Math.min(10, +(dexState.userCtx * 0.5).toFixed(2)) : 5;
+                document.getElementById('dex-input-pay').value = inAmount;
+                calcSwapOutput();
+            }
+
+            const outAmount = parseFloat(document.getElementById('dex-input-receive').value || '0');
+            const btn = document.getElementById('btn-dex-execute-swap');
+            const statusBox = document.getElementById('dex-swap-status-box');
+
+            const swapParams = {
+                fromSymbol: dexState.fromSymbol,
+                toSymbol: dexState.toSymbol,
+                amountIn: inAmount,
+                amountOut: outAmount
+            };
+
+            // Call official Cortex Wallet Extension (triggers independent popup window)
+            if (window.cortex && typeof window.cortex.request === 'function') {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Confirm in Cortex Extension...';
+                statusBox.innerHTML = '<div class="p-3 bg-indigo-50 rounded-12 text-indigo font-bold mt-2 border-indigo flex items-center justify-center gap-2"><i class="fa-solid fa-arrow-up-right-from-square"></i> Please approve the swap in your Cortex Wallet Extension popup window.</div>';
+
+                try {
+                    const result = await window.cortex.request({
+                        method: 'ctx_signSwap',
+                        params: swapParams
+                    });
+
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Swap Tokens Instantly';
+
+                    if (result && result.success) {
+                        showToast(`🎉 Swap Signed in Extension! Tx: ${result.txId.substring(0, 10)}...`);
+                        document.getElementById('dex-input-pay').value = '';
+                        document.getElementById('dex-input-receive').value = '';
+                        statusBox.innerHTML = `
+                            <div class="p-3 bg-emerald-50 rounded-12 text-emerald font-bold mt-2">
+                                ✓ Confirmed! Swapped ${swapParams.amountIn} ${result.fromSymbol || swapParams.fromSymbol} for ${result.amountOut || swapParams.amountOut} ${result.toSymbol || swapParams.toSymbol} (Tx: ${result.txId.substring(0, 12)}...)
+                            </div>
+                        `;
+                        await syncUserBalances();
+                        drawDexPriceChart();
+                        return;
+                    } else if (result && result.error) {
+                        statusBox.innerHTML = `<div class="p-2 bg-rose-50 text-flame rounded-10 mt-2">${result.error}</div>`;
+                        return showToast(result.error, true);
+                    }
+                } catch(e) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Swap Tokens Instantly';
+                    statusBox.innerHTML = `<div class="p-2 bg-rose-50 text-flame rounded-10 mt-2">${e.message || 'Transaction rejected in wallet'}</div>`;
+                    return showToast(e.message || 'Transaction rejected in wallet', true);
+                }
+            }
+
+            // If extension not yet connected or installed, prompt connect
+            connectDexWallet();
+        }
+
+        function depositLiquidityDemo() {
+            showToast('💧 Liquidity Deposited (Earn 18.4% APY)');
+        }
+        function claimLpYieldDemo() {
+            showToast('🎁 +14.80 tUSDC LP Yield Claimed!');
+        }
+
+        function drawDexPriceChart() {
+            const canvas = document.getElementById('dex-price-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            const w = rect.width || 450;
+            const h = 180;
+
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            ctx.scale(dpr, dpr);
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = '#f1f5f9';
+            ctx.lineWidth = 1;
+            for (let y = 30; y < h; y += 35) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            const currentPrice = dexState.spotPrice;
+            const points = [
+                currentPrice * 0.925,
+                currentPrice * 0.942,
+                currentPrice * 0.918,
+                currentPrice * 0.965,
+                currentPrice * 0.952,
+                currentPrice * 0.984,
+                currentPrice * 0.970,
+                currentPrice * 1.012,
+                currentPrice * 0.995,
+                currentPrice * 1.034,
+                currentPrice * 1.008,
+                currentPrice
+            ];
+
+            const minP = Math.min(...points) * 0.985;
+            const maxP = Math.max(...points) * 1.015;
+            const stepX = w / (points.length - 1);
+
+            const coords = points.map((p, i) => ({
+                x: i * stepX,
+                y: h - 28 - ((p - minP) / (maxP - minP)) * (h - 55)
+            }));
+
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, 'rgba(16, 185, 129, 0.22)');
+            grad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+            ctx.beginPath();
+            ctx.moveTo(coords[0].x, h);
+            ctx.lineTo(coords[0].x, coords[0].y);
+            for (let i = 0; i < coords.length - 1; i++) {
+                const xc = (coords[i].x + coords[i + 1].x) / 2;
+                const yc = (coords[i].y + coords[i + 1].y) / 2;
+                ctx.quadraticCurveTo(coords[i].x, coords[i].y, xc, yc);
+            }
+            ctx.lineTo(coords[coords.length - 1].x, coords[coords.length - 1].y);
+            ctx.lineTo(coords[coords.length - 1].x, h);
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(coords[0].x, coords[0].y);
+            for (let i = 0; i < coords.length - 1; i++) {
+                const xc = (coords[i].x + coords[i + 1].x) / 2;
+                const yc = (coords[i].y + coords[i + 1].y) / 2;
+                ctx.quadraticCurveTo(coords[i].x, coords[i].y, xc, yc);
+            }
+            ctx.lineTo(coords[coords.length - 1].x, coords[coords.length - 1].y);
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            const last = coords[coords.length - 1];
+            ctx.beginPath();
+            ctx.arc(last.x - 3, last.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#10b981';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 15px JetBrains Mono';
+            ctx.textAlign = 'left';
+            ctx.fillText(`$${currentPrice.toFixed(4)} USD`, 12, 24);
+
+            ctx.fillStyle = '#10b981';
+            ctx.font = '11px Plus Jakarta Sans';
+            ctx.fillText('+4.8% (24h continuous AMM curve)', 12, 40);
+        }
+
+        function showToast(msg, isErr = false) {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.textContent = msg;
+            t.style.borderColor = isErr ? 'var(--flame)' : 'var(--indigo)';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+    </script>
+</body>
+</html>

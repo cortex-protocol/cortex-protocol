@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cortex-protocol"
+version = "1.0.0"
+authors = [
+  { name="Cortex Protocol Foundation", email="core@cortex-protocol.xyz" },
+]
+description = "Python SDK for Cortex Protocol ($CTX) - The Decentralized Neural Vector Memory Layer for Autonomous AI."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security :: Cryptography"
+]
+dependencies = []
+
+[project.urls]
+"Homepage" = "https://cortex-protocol.xyz"
+"Documentation" = "https://cortex-protocol.xyz/whitepaper.html"
+"Bug Tracker" = "https://github.com/cortex-protocol/cortex-protocol/issues"

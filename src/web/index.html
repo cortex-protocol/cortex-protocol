@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cortex Protocol ($CTX) | The Settlement & State Layer for Autonomous AI Agents</title>
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-light text-slate">
+
+    <!-- INTERACTIVE NEURAL SYNAPSE CANVAS & MESH -->
+    <canvas id="neural-canvas"></canvas>
+    <div class="light-mesh-bg"></div>
+
+    <!-- FLOATING TOP NAVIGATION -->
+    <header class="header-container">
+        <nav class="nav-bar light-card-nav">
+            <div class="nav-brand" onclick="navigateTo('landing')">
+                <div class="brand-logo-custom">
+                    <img src="assets/logo.svg" alt="Cortex Logo" class="brand-logo-img">
+                </div>
+                <div class="brand-text">
+                    <span class="brand-name">CORTEX</span>
+                    <span class="brand-badge-light">PROTOCOL</span>
+                </div>
+            </div>
+
+            <div class="nav-links">
+                <a href="#how-it-works" class="nav-link" onclick="navigateTo('landing', 'how-it-works')">Vision</a>
+                <a href="#stack-explorer" class="nav-link" onclick="navigateTo('landing', 'stack-explorer')">Architecture</a>
+                <a href="#ai-swarm" class="nav-link" onclick="navigateTo('landing', 'ai-swarm')">AI Swarm</a>
+                <a href="#semantic-search" class="nav-link" onclick="navigateTo('landing', 'semantic-search')">Semantic AI</a>
+                <a href="#network-metrics" class="nav-link" onclick="navigateTo('landing', 'network-metrics')">Telemetry</a>
+                <a href="#mining-node" class="nav-link" onclick="navigateTo('landing', 'mining-node')">Mining</a>
+                <a href="#tokenomics" class="nav-link" onclick="navigateTo('landing', 'tokenomics')">Tokenomics</a>
+                <a href="#roadmap" class="nav-link" onclick="navigateTo('landing', 'roadmap')">Roadmap</a>
+                <a href="whitepaper.html" class="nav-link" target="_blank">Whitepaper</a>
+            </div>
+
+            <div class="nav-actions">
+                <a href="/dex" class="btn btn-outline nav-btn-desktop">
+                    <i class="fa-solid fa-arrows-rotate text-emerald"></i> <span>DEX Swap</span>
+                </a>
+                <button class="btn btn-outline nav-btn-desktop" onclick="navigateTo('explorer')">
+                    <i class="fa-solid fa-cubes text-indigo"></i> <span>Explorer</span>
+                </button>
+                <button class="btn btn-hero-cta nav-cta-btn" onclick="navigateTo('landing', 'mining-node')">
+                    <i class="fa-solid fa-terminal"></i> <span>Mine $CTX</span>
+                </button>
+                <a href="/downloads/cortex-wallet-extension.zip" download class="btn btn-primary nav-wallet-btn" title="Download Official Chrome/Brave Extension">
+                    <i class="fa-solid fa-download"></i> <span>Cortex Extension</span>
+                </a>
+                <button class="mobile-menu-toggle-btn" id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle navigation">
+                    <i class="fa-solid fa-bars" id="mobile-menu-icon"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- MOBILE SLIDE-DOWN NAVIGATION DRAWER -->
+        <div class="mobile-nav-drawer" id="mobile-nav-drawer">
+            <div class="mobile-drawer-links">
+                <a href="whitepaper.html" class="mobile-drawer-link" target="_blank"><i class="fa-solid fa-file-lines text-indigo"></i> Whitepaper</a>
+                <a href="/dex" class="mobile-drawer-link"><i class="fa-solid fa-arrows-rotate text-emerald"></i> AMM DEX Exchange</a>
+                <a href="#how-it-works" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'how-it-works')"><i class="fa-solid fa-brain text-violet"></i> How it Works</a>
+                <a href="#stack-explorer" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'stack-explorer')"><i class="fa-solid fa-layer-group text-indigo"></i> Architecture</a>
+                <a href="#ai-swarm" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'ai-swarm')"><i class="fa-solid fa-network-wired text-indigo"></i> AI Swarm</a>
+                <a href="#semantic-search" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'semantic-search')"><i class="fa-solid fa-bolt text-amber"></i> Semantic AI</a>
+                <a href="#network-metrics" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'network-metrics')"><i class="fa-solid fa-chart-line text-emerald"></i> Telemetry</a>
+                <a href="#mining-node" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'mining-node')"><i class="fa-solid fa-terminal text-flame"></i> Mining Hub</a>
+                <a href="#tokenomics" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'tokenomics')"><i class="fa-solid fa-coins text-amber"></i> Tokenomics</a>
+                <a href="#roadmap" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'roadmap')"><i class="fa-solid fa-map text-indigo"></i> Roadmap</a>
+                <a href="#faq" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'faq')"><i class="fa-solid fa-circle-question text-slate-500"></i> FAQ</a>
+            </div>
+            <div class="mobile-drawer-actions">
+                <a href="/dex" class="btn btn-outline btn-block mb-2">
+                    <i class="fa-solid fa-arrows-rotate text-emerald"></i> Launch DEX Swap
+                </a>
+                <button class="btn btn-outline btn-block mb-2" onclick="closeAndNavigate('explorer')">
+                    <i class="fa-solid fa-cubes text-indigo"></i> Block Explorer
+                </button>
+                <a href="/downloads/cortex-wallet-extension.zip" download class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-download"></i> Download Extension
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- LIVE NETWORK STATS TICKER (LIGHT THEME) -->
+    <div class="network-ticker-container">
+        <div class="network-ticker light-card">
+            <div class="ticker-item">
+                <span class="ticker-dot-green"></span>
+                <span class="ticker-label">NETWORK:</span>
+                <span class="ticker-value text-indigo font-bold">TESTNET 2.0 (LIVE)</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-label">BLOCK HEIGHT:</span>
+                <span class="ticker-value mono text-slate-800" id="ticker-height">#0</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-label">DIFFICULTY:</span>
+                <span class="ticker-value mono text-violet" id="ticker-diff">2</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-label">NETWORK HASHRATE:</span>
+                <span class="ticker-value mono text-emerald" id="ticker-hr">0 H/s</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-label">BURNED $CTX:</span>
+                <span class="ticker-value mono text-flame" id="ticker-burned">0.00 CTX 🔥</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-label">BLOCK SUBSIDY:</span>
+                <span class="ticker-value mono text-amber">50 CTX</span>
+            </div>
+            <div class="ticker-item">
+                <span class="ticker-label">MAX SUPPLY:</span>
+                <span class="ticker-value mono text-slate-800">21,000,000 CTX</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP ROUTER CONTAINER -->
+    <main id="app-view-container">
+
+        <!-- ======================================================== -->
+        <!-- VIEW 1: TIER-1 INSTITUTIONAL PRESENTATION WEBSITE        -->
+        <!-- ======================================================== -->
+        <div id="view-landing" class="view-pane active">
+
+            <!-- HERO SECTION -->
+            <section class="hero-section">
+                <div class="hero-content reveal-on-scroll">
+                    <div class="hero-pill-badge shimmer-pill">
+                        <span class="pill-sparkle">⚡</span>
+                        <span class="pill-text">100% Fair Launch • 0% Pre-mine • ASIC-Resistant CPU PoW</span>
+                        <i class="fa-solid fa-arrow-right pill-arrow"></i>
+                    </div>
+
+                    <h1 class="hero-title">
+                        The Settlement & State Layer for <span class="gradient-text-indigo animated-gradient">Autonomous AI Agents</span>
+                    </h1>
+
+                    <p class="hero-description">
+                        <strong>Cortex Protocol</strong> is a purpose-built Layer-1 blockchain engineered to cryptographically anchor and verify AI states. Agents run their RAG locally, while Cortex handles machine-to-machine trust, identity, and peer-to-peer settlement via CPU Proof-of-Work.
+                    </p>
+
+                    <div class="hero-cta-group">
+                        <a href="/downloads/cortex-miner-windows.zip" class="btn btn-hero-cta btn-shimmer" download="cortex-miner-windows.zip">
+                            <i class="fa-brands fa-windows"></i>
+                            <span>Download Miner (.zip)</span>
+                        </a>
+                        <button class="btn btn-hero-secondary" onclick="navigateTo('landing', 'mining-node')">
+                            <i class="fa-solid fa-terminal"></i>
+                            <span>CLI Instructions</span>
+                        </button>
+                        <button class="btn btn-hero-ghost" onclick="navigateTo('wallet')">
+                            <i class="fa-solid fa-faucet-drip text-indigo"></i>
+                            <span>Testnet Faucet</span>
+                        </button>
+                        <button class="btn btn-hero-ghost" onclick="navigateTo('explorer')">
+                            <i class="fa-solid fa-cubes"></i>
+                            <span>Live Explorer</span>
+                        </button>
+                    </div>
+
+                    <!-- HERO METRIC CARDS -->
+                    <div class="hero-stats-grid">
+                        <div class="hero-stat-card light-card spotlight-card">
+                            <div class="stat-num text-indigo" id="hero-stat-blocks">0</div>
+                            <div class="stat-name">Confirmed Blocks</div>
+                            <div class="stat-info">15s Target Time</div>
+                        </div>
+                        <div class="hero-stat-card light-card spotlight-card">
+                            <div class="stat-num text-violet" id="hero-stat-memories">0</div>
+                            <div class="stat-name">AI State Proofs Anchored</div>
+                            <div class="stat-info">Immutable Vector Roots</div>
+                        </div>
+                        <div class="hero-stat-card light-card spotlight-card">
+                            <div class="stat-num text-flame">30%</div>
+                            <div class="stat-name">Deflationary Burn</div>
+                            <div class="stat-info">On Every Memory Query</div>
+                        </div>
+                        <div class="hero-stat-card light-card spotlight-card">
+                            <div class="stat-num text-emerald">21.0M</div>
+                            <div class="stat-name">Hard Cap Max Supply</div>
+                            <div class="stat-info">Halving Every 210k Blocks</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HERO 3D TOKEN EMBLEM & ARCHITECTURE VISUAL -->
+                <div class="hero-showcase light-card spotlight-card reveal-on-scroll">
+                    <div class="token-3d-wrapper">
+                        <div class="token-glow-halo"></div>
+                        <img src="assets/cortex_coin.jpg" alt="3D Cortex Token" class="token-3d-image">
+                        <div class="token-badge-float">
+                            <span class="dot-indicator"></span>
+                            <span>Native Layer-1 Coin: $CTX</span>
+                        </div>
+                    </div>
+
+                    <div class="visual-pipeline mt-3">
+                        <div class="pipeline-step hover-glow">
+                            <div class="pipeline-icon bg-violet-soft text-violet">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="pipeline-text">
+                                <strong>1. Autonomous AI Learns Knowledge</strong>
+                                <span>Encrypted 768-dim vector embedding signed</span>
+                            </div>
+                        </div>
+
+                        <div class="pipeline-step hover-glow">
+                            <div class="pipeline-icon bg-flame-soft text-flame">
+                                <i class="fa-solid fa-fire"></i>
+                            </div>
+                            <div class="pipeline-text">
+                                <strong>2. Deflationary Gas Combustion</strong>
+                                <span>30% of $CTX fee permanently burned</span>
+                            </div>
+                        </div>
+
+                        <div class="pipeline-step hover-glow">
+                            <div class="pipeline-icon bg-emerald-soft text-emerald">
+                                <i class="fa-solid fa-cubes-stacked"></i>
+                            </div>
+                            <div class="pipeline-text">
+                                <strong>3. Hardware Nodes Inscribe Block</strong>
+                                <span>50 CTX subsidy rewarded to miner</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 2: HOW IT WORKS & ARCHITECTURAL FOUNDATIONS      -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="how-it-works">
+                <div class="section-header">
+                    <span class="section-eyebrow">HOW CORTEX WORKS</span>
+                    <h2 class="section-title">Solving Machine-to-Machine Trust & Privacy</h2>
+                    <p class="section-subtitle">A decentralized, mathematically sound architecture connecting raw compute hardware with autonomous machine intelligence.</p>
+                </div>
+
+                <div class="architecture-banner light-card spotlight-card mb-4">
+                    <div class="arch-banner-grid">
+                        <div class="arch-banner-img-wrap">
+                            <img src="assets/cortex_mesh.jpg" alt="Neural Network Mesh" class="arch-mesh-img">
+                        </div>
+                        <div class="arch-banner-content">
+                            <span class="badge-subtle">CRYPTOGRAPHIC STATE ATTESTATION</span>
+                            <h3>Cryptographic Anchoring for Edge RAG</h3>
+                            <p>
+                                No sensitive vectors are exposed on-chain. Agents encrypt their data (AES-256) and run vector search locally. The blockchain acts as an immutable public notary to anchor Merkle state roots with sub-second finality.
+                            </p>
+                            <div class="arch-highlights">
+                                <div class="highlight-item"><i class="fa-solid fa-shield-halved text-indigo"></i> <strong>Zero Single Point of Failure</strong></div>
+                                <div class="highlight-item"><i class="fa-solid fa-bolt text-emerald"></i> <strong>Verifiable Edge RAG Notary</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workflow-grid">
+                    <div class="workflow-card light-card spotlight-card">
+                        <div class="step-badge">PILLAR 1</div>
+                        <div class="workflow-icon icon-indigo"><i class="fa-solid fa-database"></i></div>
+                        <h3>The Centralized Trust Barrier</h3>
+                        <p>Current autonomous agents rely on centralized gatekeepers (AWS, Google, Pinecone). If servers fail, credentials expire, or APIs are revoked, multi-agent coordination collapses and data integrity is compromised.</p>
+                    </div>
+
+                    <div class="workflow-card light-card spotlight-card">
+                        <div class="step-badge">PILLAR 2</div>
+                        <div class="workflow-icon icon-violet"><i class="fa-solid fa-link"></i></div>
+                        <h3>Cryptographic State Commits</h3>
+                        <p>With Cortex Protocol, agents sign state fingerprints with elliptic curve private keys (`secp256k1`). Knowledge is indexed into verifiable **State Merkle Trees** and anchored permanently into the blockchain ledger.</p>
+                    </div>
+
+                    <div class="workflow-card light-card spotlight-card">
+                        <div class="step-badge">PILLAR 3</div>
+                        <div class="workflow-icon icon-flame"><i class="fa-solid fa-fire"></i></div>
+                        <h3>30% Deflationary Burn</h3>
+                        <p>Every time an agent anchors state or executes peer settlement, a gas fee in $CTX is required. **30% is burned permanently** to an unspendable address. As global AI adoption expands, circulating supply is continuously reduced.</p>
+                    </div>
+
+                    <div class="workflow-card light-card spotlight-card">
+                        <div class="step-badge">PILLAR 4</div>
+                        <div class="workflow-icon icon-emerald"><i class="fa-solid fa-server"></i></div>
+                        <h3>ASIC-Resistant CPU Mining</h3>
+                        <p>Decentralized CPU node operators validate state transitions and anchor Merkle roots. Miners are rewarded with **50 CTX per block + 70% of all gas fees**, establishing a sustainable economic flywheel.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 3: INTERACTIVE LAYER-1 ARCHITECTURAL STACK      -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="stack-explorer">
+                <div class="section-header">
+                    <span class="section-eyebrow">MODULAR ARCHITECTURE</span>
+                    <h2 class="section-title">The 3-Layer Neural Stack</h2>
+                    <p class="section-subtitle">Click each architectural layer to inspect its cryptographic primitives, consensus rules, and execution engine.</p>
+                </div>
+
+                <div class="stack-explorer-layout light-card spotlight-card">
+                    <div class="stack-layers-selector">
+                        <div class="stack-layer-card active" onclick="selectStackLayer(1)">
+                            <div class="layer-num mono text-indigo">LAYER 01</div>
+                            <div class="layer-title">Consensus & Nakamoto CPU Proof-of-Work</div>
+                            <div class="layer-desc">ASIC-resistant RandomX execution & SHA-256d, dynamic difficulty retargeting, 15s target block time.</div>
+                        </div>
+
+                        <div class="stack-layer-card" onclick="selectStackLayer(2)">
+                            <div class="layer-num mono text-violet">LAYER 02</div>
+                            <div class="layer-title">Client-Side Vector Storage & On-Chain Anchoring</div>
+                            <div class="layer-desc">768-dim float32 vector hashing, binary Merkle tree synthesis, 60-byte Merkle proof verification.</div>
+                        </div>
+
+                        <div class="stack-layer-card" onclick="selectStackLayer(3)">
+                            <div class="layer-num mono text-flame">LAYER 03</div>
+                            <div class="layer-title">Autonomous Agent Gateway & 30% Burn Pipeline</div>
+                            <div class="layer-desc">secp256k1 canonical ECDSA signing, AES-256-GCM memory encryption, deflationary gas burn.</div>
+                        </div>
+                    </div>
+
+                    <div class="stack-layer-detail-box" id="stack-layer-details"></div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 4: AI SEMANTIC VECTOR SEARCH CONSOLE             -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="semantic-search">
+                <div class="section-header">
+                    <span class="section-eyebrow">NATURAL LANGUAGE VECTOR MATCHING</span>
+                    <h2 class="section-title">Real-Time AI Semantic Memory Search</h2>
+                    <p class="section-subtitle">Query on-chain memories using plain natural language and watch the engine compute 768-dimensional Cosine Similarity scores in real-time.</p>
+                </div>
+
+                <div class="semantic-search-card light-card spotlight-card">
+                    <div class="search-input-wrapper">
+                        <i class="fa-solid fa-magnifying-glass search-icon-left text-indigo"></i>
+                        <input type="text" id="semantic-query-input" class="semantic-input" placeholder="Ask anything, e.g. 'arbitrage strategy on uniswap', 'how was reentrancy fixed', 'kinase inhibitor'..." value="arbitrage strategy across uniswap">
+                        <button class="btn btn-primary search-btn-inner" onclick="executeSemanticSearch()">
+                            <i class="fa-solid fa-bolt"></i> <span>Search Vector Ledger</span>
+                        </button>
+                    </div>
+
+                    <!-- PRESET QUICK QUERIES -->
+                    <div class="quick-queries-row mt-3">
+                        <span class="label text-muted">Try sample queries:</span>
+                        <button class="preset-query-btn" onclick="setQueryAndSearch('arbitrage opportunity uniswap')">Uniswap Arbitrage</button>
+                        <button class="preset-query-btn" onclick="setQueryAndSearch('reentrancy vulnerability patch')">Smart Contract Security</button>
+                        <button class="preset-query-btn" onclick="setQueryAndSearch('kinase inhibitor binding energy')">Biotech Molecule</button>
+                        <button class="preset-query-btn" onclick="setQueryAndSearch('diplomatic treaty in valyria')">NPC Game Lore</button>
+                    </div>
+
+                    <!-- SEARCH RESULTS FEED WITH COSINE GAUGES -->
+                    <div class="semantic-results-container mt-4" id="semantic-results-feed">
+                        <div class="semantic-empty-hint">
+                            <i class="fa-solid fa-brain fa-spin-pulse text-indigo" style="font-size:2.5rem; margin-bottom:12px;"></i>
+                            <p>Enter a query or click a preset above to query on-chain vector memory.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 5: AUTONOMOUS AI SWARM & LIVE STATE SETTLEMENT    -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="ai-swarm">
+                <div class="section-header">
+                    <span class="section-eyebrow">DECENTRALIZED EPISTEMIC COLLABORATION</span>
+                    <h2 class="section-title">Autonomous AI Swarm & Live State Settlement</h2>
+                    <p class="section-subtitle">Real-time simulation of autonomous AI agents communicating, reasoning, and anchoring cryptographic proofs onto the Cortex Layer-1 blockchain.</p>
+                </div>
+
+                <div class="swarm-visualizer-card light-card spotlight-card">
+                    <!-- TOP SWARM CONTROL BAR -->
+                    <div class="swarm-control-bar flex items-center justify-between flex-wrap gap-3 pb-3 border-bottom-subtle">
+                        <div class="flex items-center gap-3">
+                            <span class="pulse-beacon-indicator"></span>
+                            <div>
+                                <strong class="text-slate-900">Active Multi-Agent Swarm Cluster</strong>
+                                <div class="text-xs text-slate-500">3 Sovereign Autonomous Agents • Sub-millisecond In-RAM Edge RAG</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="btn btn-hero-cta btn-sm btn-shimmer" onclick="triggerSwarmReasoning()">
+                                <i class="fa-solid fa-bolt"></i> <span>Trigger Swarm Reasoning</span>
+                            </button>
+                            <button class="btn btn-outline btn-sm" onclick="resetSwarmSimulation()">
+                                <i class="fa-solid fa-rotate"></i> <span>Reset State</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- INTERACTIVE RETINA 2X SWARM CANVAS -->
+                    <div class="swarm-canvas-wrapper mt-3" style="position:relative; width:100%; height:320px; border-radius:14px; overflow:hidden; background:radial-gradient(ellipse at center, rgba(99, 102, 241, 0.08) 0%, rgba(248, 250, 252, 0.95) 100%); border:1px solid var(--border-subtle);">
+                        <canvas id="swarm-canvas" style="width:100%; height:100%; display:block;"></canvas>
+                        
+                        <!-- FLOATING CORE BADGE -->
+                        <div class="swarm-center-badge">
+                            <div class="core-ring-pulse"></div>
+                            <i class="fa-solid fa-brain text-indigo"></i>
+                            <span class="mono text-xs font-bold text-slate-900">CORTEX L1</span>
+                        </div>
+                    </div>
+
+                    <!-- 3 AGENT PROFILE STATUS CARDS -->
+                    <div class="swarm-agents-grid mt-4">
+                        <div class="swarm-agent-card agent-trader light-card">
+                            <div class="agent-card-header">
+                                <div class="agent-avatar"><i class="fa-solid fa-chart-line text-emerald"></i></div>
+                                <div>
+                                    <div class="font-bold text-slate-900">Alpha-Trader-01</div>
+                                    <span class="badge-subtle badge-emerald">DeFi & Arbitrage</span>
+                                </div>
+                            </div>
+                            <div class="agent-meta-stats mt-2">
+                                <div>Latency: <strong class="mono text-emerald">2.1 ms</strong></div>
+                                <div>States Inscribed: <strong class="mono text-slate-900" id="trader-mem-count">24</strong></div>
+                                <div>Last Burn: <strong class="mono text-flame">0.015 CTX 🔥</strong></div>
+                            </div>
+                            <div class="agent-thought-bubble mt-2" id="trader-thought">
+                                "Arbitrage spread detected: 3.4% on Curve 3pool. Executed 12.4 ETH net swap."
+                            </div>
+                        </div>
+
+                        <div class="swarm-agent-card agent-bio light-card">
+                            <div class="agent-card-header">
+                                <div class="agent-avatar"><i class="fa-solid fa-dna text-violet"></i></div>
+                                <div>
+                                    <div class="font-bold text-slate-900">Bio-Genesis-AI</div>
+                                    <span class="badge-subtle badge-violet">Molecular Oncology</span>
+                                </div>
+                            </div>
+                            <div class="agent-meta-stats mt-2">
+                                <div>Latency: <strong class="mono text-violet">1.4 ms</strong></div>
+                                <div>Proteins Folded: <strong class="mono text-slate-900" id="bio-mem-count">56</strong></div>
+                                <div>Last Burn: <strong class="mono text-flame">0.015 CTX 🔥</strong></div>
+                            </div>
+                            <div class="agent-thought-bubble mt-2" id="bio-thought">
+                                "Kinase docking affinity CX-882 score -14.8 kcal/mol against EGFR receptor."
+                            </div>
+                        </div>
+
+                        <div class="swarm-agent-card agent-cyber light-card">
+                            <div class="agent-card-header">
+                                <div class="agent-avatar"><i class="fa-solid fa-shield-halved text-indigo"></i></div>
+                                <div>
+                                    <div class="font-bold text-slate-900">Cyber-Sentinel-X</div>
+                                    <span class="badge-subtle badge-indigo">Security & Zero-Day</span>
+                                </div>
+                            </div>
+                            <div class="agent-meta-stats mt-2">
+                                <div>Latency: <strong class="mono text-indigo">0.8 ms</strong></div>
+                                <div>Threats Neutralized: <strong class="mono text-slate-900" id="cyber-mem-count">19</strong></div>
+                                <div>Last Burn: <strong class="mono text-flame">0.015 CTX 🔥</strong></div>
+                            </div>
+                            <div class="agent-thought-bubble mt-2" id="cyber-thought">
+                                "Reentrancy vulnerability mitigated in ERC-4626 vault at bytecode offset 0x48f."
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LIVE SWARM ACTIVITY LOG STREAM -->
+                    <div class="swarm-activity-stream mt-3">
+                        <div class="stream-header flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider"><i class="fa-solid fa-wave-square text-indigo"></i> Live Epistemic Mesh Event Stream</span>
+                            <span class="badge-subtle font-mono text-xs">Merkle Verified Receipts</span>
+                        </div>
+                        <div class="stream-items-list mt-2" id="swarm-activity-feed">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 6: LIVE HASHRATE & BLOCK METRICS CHART           -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="network-metrics">
+                <div class="section-header">
+                    <span class="section-eyebrow">NETWORK TELEMETRY</span>
+                    <h2 class="section-title">Live Node Telemetry & Block Timeline</h2>
+                    <p class="section-subtitle">Real-time time-series metrics rendered directly from confirmed block headers.</p>
+                </div>
+
+                <div class="metrics-dashboard-card light-card spotlight-card">
+                    <div class="chart-header-row">
+                        <div class="chart-title-box">
+                            <div class="flex items-center gap-2">
+                                <span class="dot-indicator"></span>
+                                <span class="badge-subtle">LIVE ON-CHAIN TELEMETRY</span>
+                            </div>
+                            <h3 class="mt-1">Block Production, Difficulty & Block Time Trajectory</h3>
+                        </div>
+                        <div class="chart-stat-chips">
+                            <span class="chip-item"><i class="fa-solid fa-clock text-indigo"></i> Target: <strong class="text-indigo mono">15s</strong></span>
+                            <span class="chip-item"><i class="fa-solid fa-shield-halved text-violet"></i> Algorithm: <strong class="text-violet mono">RandomX CPU</strong></span>
+                            <span class="chip-item"><i class="fa-solid fa-cubes text-emerald"></i> Window: <strong class="text-emerald mono">5 Blocks</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- TELEMETRY SUMMARY METRICS -->
+                    <div class="telemetry-summary-bar mt-3">
+                        <div class="telemetry-stat">
+                            <span class="t-label">Current Difficulty</span>
+                            <span class="t-val text-violet mono" id="telemetry-diff-val">5</span>
+                        </div>
+                        <div class="telemetry-stat">
+                            <span class="t-label">Avg Block Interval</span>
+                            <span class="t-val text-indigo mono" id="telemetry-interval-val">15.0s</span>
+                        </div>
+                        <div class="telemetry-stat">
+                            <span class="t-label">Latest Mined Block</span>
+                            <span class="t-val text-emerald mono" id="telemetry-latest-block">#64</span>
+                        </div>
+                        <div class="telemetry-stat">
+                            <span class="t-label">Deflationary Burn</span>
+                            <span class="t-val text-flame mono">30% Permanent</span>
+                        </div>
+                    </div>
+
+                    <!-- INTERACTIVE CANVAS CHART -->
+                    <div class="sparkline-canvas-container mt-3" style="position:relative;">
+                        <canvas id="hashrate-sparkline-canvas" height="230"></canvas>
+                        <div id="chart-tooltip" class="chart-tooltip-box" style="display:none;"></div>
+                    </div>
+
+                    <!-- CHART LEGEND -->
+                    <div class="chart-legend-row mt-3">
+                        <div class="legend-item"><span class="legend-line" style="background:#818cf8;"></span> <span>PoW Difficulty Target</span></div>
+                        <div class="legend-item"><span class="legend-bar" style="background:rgba(56, 189, 248, 0.45);"></span> <span>Block Mining Time (Seconds)</span></div>
+                        <div class="legend-item"><span class="legend-dot" style="background:#ec4899;"></span> <span>AI Memory Commits</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 6: INTERACTIVE COST COMPARISON                   -->
+            <!-- ======================================================== -->
+            <!-- SECTION 6: SOVEREIGN SETTLEMENT VS CENTRALIZED SAAS      -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="cost-comparison">
+                <div class="section-header">
+                    <span class="section-eyebrow">SOVEREIGNTY & SETTLEMENT SUPERIORITY</span>
+                    <h2 class="section-title">Siloed SaaS APIs vs. Trustless Agent Settlement</h2>
+                    <p class="section-subtitle">Why autonomous AI agents and enterprises are migrating from centralized SaaS gatekeepers to sovereign, cryptographically verifiable state settlement.</p>
+                </div>
+
+                <div class="cost-comparison-card light-card spotlight-card">
+                    <div class="cost-comparison-grid mt-2">
+                        <div class="comparison-cost-box legacy-cloud spotlight-card">
+                            <div class="cost-box-badge text-red"><i class="fa-solid fa-xmark"></i> Legacy SaaS (AWS / OpenAI / Pinecone)</div>
+                            <div class="cost-amount mono text-slate-900">Siloed & Fragile</div>
+                            <div class="cost-sub">Opaque subscriptions • Centralized single points of failure</div>
+                            <ul class="cost-box-features">
+                                <li><i class="fa-solid fa-circle-xmark text-red"></i> <strong>Censorship & Lock-in:</strong> Subject to arbitrary API revocation, vendor lock-in, and account bans.</li>
+                                <li><i class="fa-solid fa-circle-xmark text-red"></i> <strong>Zero Machine Trust:</strong> Independent AI agents cannot verify each other's state or trade data trustlessly.</li>
+                                <li><i class="fa-solid fa-circle-xmark text-red"></i> <strong>Opaque Rent Extraction:</strong> Continuous recurring subscription fees with zero on-chain settlement guarantees.</li>
+                            </ul>
+                        </div>
+
+                        <div class="comparison-cost-box cortex-advantage spotlight-card border-glow-animated">
+                            <div class="cost-box-badge text-emerald"><i class="fa-solid fa-check"></i> Cortex Protocol ($CTX)</div>
+                            <div class="cost-amount mono text-indigo">100% Sovereign</div>
+                            <div class="cost-sub">Cryptographic proof of state • Direct P2P value exchange</div>
+                            <ul class="cost-box-features">
+                                <li><i class="fa-solid fa-circle-check text-emerald"></i> <strong>Cryptographic Proof of State:</strong> Immutable 60-byte Merkle root verification anchored on-chain.</li>
+                                <li><i class="fa-solid fa-circle-check text-emerald"></i> <strong>Direct Machine Settlement:</strong> Autonomous agent-to-agent micro-payments with native $CTX.</li>
+                                <li><i class="fa-solid fa-circle-check text-emerald"></i> <strong>Sub-Millisecond Edge RAG:</strong> Vectors remain encrypted & local (AES-256) while the L1 acts as public notary.</li>
+                            </ul>
+                            <div class="savings-pill pulse-emerald">
+                                <span>Autonomous Coordination: <strong class="text-emerald mono">Sovereign Machine Trust</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 7: INTERACTIVE MERKLE TREE & VECTOR INSPECTOR    -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="merkle-inspector">
+                <div class="section-header">
+                    <span class="section-eyebrow">DEEP-TECH VISUALIZER</span>
+                    <h2 class="section-title">Interactive Neural Merkle Tree Inspector</h2>
+                    <p class="section-subtitle">Explore how Cortex Protocol structures thousands of 768-dimensional AI memory vectors into a single verifiable cryptographic root hash.</p>
+                </div>
+
+                <div class="merkle-visualizer-card light-card spotlight-card">
+                    <div class="merkle-tree-container">
+                        <div class="tree-level level-root">
+                            <div class="merkle-node root-node" onclick="inspectNode('root')">
+                                <span class="node-tag">BLOCK HEADER ROOT</span>
+                                <div class="node-title">Memory Merkle Root</div>
+                                <div class="node-hash mono" id="merkle-root-hash">0x960930fc695c2880...</div>
+                            </div>
+                        </div>
+
+                        <div class="tree-lines">
+                            <div class="line-branch-left"></div>
+                            <div class="line-branch-right"></div>
+                        </div>
+
+                        <div class="tree-level level-branches">
+                            <div class="merkle-node branch-node" onclick="inspectNode('branch-left')">
+                                <span class="node-tag">BRANCH #1</span>
+                                <div class="node-title">Hash(A + B)</div>
+                                <div class="node-hash mono">0x3b89e2...</div>
+                            </div>
+                            <div class="merkle-node branch-node" onclick="inspectNode('branch-right')">
+                                <span class="node-tag">BRANCH #2</span>
+                                <div class="node-title">Hash(C + D)</div>
+                                <div class="node-hash mono">0x7f41a9...</div>
+                            </div>
+                        </div>
+
+                        <div class="tree-lines">
+                            <div class="line-leaves-grid"></div>
+                        </div>
+
+                        <div class="tree-level level-leaves">
+                            <div class="merkle-node leaf-node active" onclick="inspectNode('leaf-1')">
+                                <span class="node-tag">LEAF A (TRADING AI)</span>
+                                <div class="node-hash mono">0x8f2a...</div>
+                            </div>
+                            <div class="merkle-node leaf-node" onclick="inspectNode('leaf-2')">
+                                <span class="node-tag">LEAF B (CODE AI)</span>
+                                <div class="node-hash mono">0x14bc...</div>
+                            </div>
+                            <div class="merkle-node leaf-node" onclick="inspectNode('leaf-3')">
+                                <span class="node-tag">LEAF C (MED AI)</span>
+                                <div class="node-hash mono">0x99fe...</div>
+                            </div>
+                            <div class="merkle-node leaf-node" onclick="inspectNode('leaf-4')">
+                                <span class="node-tag">LEAF D (NPC AI)</span>
+                                <div class="node-hash mono">0x42da...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="inspector-details-box mt-4" id="merkle-inspector-details">
+                        <div class="inspector-header">
+                            <span class="pill-badge pill-violet-light font-bold">Selected Element: Leaf A (Arbitrage Memory)</span>
+                            <span class="mono text-muted" style="font-size:0.75rem;">Vector Dimensions: 768 float32</span>
+                        </div>
+                        <div class="inspector-grid mt-2">
+                            <div><strong>Raw Payload:</strong> "Identified 4.2% spatial arbitrage on Uniswap v3"</div>
+                            <div><strong>Signer:</strong> <span class="mono text-indigo">ctx1eade8dcdc3b1335014b9c24f9...</span></div>
+                            <div><strong>Gas Burned:</strong> <span class="text-flame font-bold">0.015 CTX (30%)</span></div>
+                            <div><strong>Cryptographic Proof:</strong> Validated by SHA-256d double hashing</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 8: MULTI-LANGUAGE DEVELOPER SDKS                 -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="developer-sdk">
+                <div class="section-header">
+                    <span class="section-eyebrow">DEVELOPER EXPERIENCE</span>
+                    <h2 class="section-title">Integrate Memory in 3 Lines of Code</h2>
+                    <p class="section-subtitle">Native SDKs for Python (LangChain, AutoGPT, LlamaIndex), TypeScript, Rust, and REST.</p>
+                </div>
+
+                <div class="developer-sdk-suite light-card spotlight-card">
+                    <div class="sdk-tabs">
+                        <button class="sdk-tab active" onclick="switchSdkTab('python')"><i class="fa-brands fa-python text-amber"></i> Python / LangChain</button>
+                        <button class="sdk-tab" onclick="switchSdkTab('typescript')"><i class="fa-brands fa-js text-violet"></i> TypeScript / Node.js</button>
+                        <button class="sdk-tab" onclick="switchSdkTab('rust')"><i class="fa-brands fa-rust text-flame"></i> Rust (cortex-rs)</button>
+                        <button class="sdk-tab" onclick="switchSdkTab('curl')"><i class="fa-solid fa-terminal text-emerald"></i> cURL / REST</button>
+                    </div>
+
+                    <div class="sdk-terminal-box">
+                        <div class="term-header">
+                            <span class="term-title mono" id="sdk-code-filename">agent_memory_langchain.py</span>
+                            <button class="copy-term-btn" onclick="copySdkCode()"><i class="fa-solid fa-copy"></i> Copy Code</button>
+                        </div>
+                        <pre class="term-code-block mono"><code id="sdk-code-content"># 1. Import Cortex Protocol LangChain Provider
+from cortex_protocol import CortexMemoryStore, AgentKey
+
+# 2. Connect agent wallet & inscribe immutable memory
+key = AgentKey.from_hex("0x4a7f92b...")
+memory_store = CortexMemoryStore(node_url="http://localhost:3000", agent_key=key)
+
+tx_id = memory_store.commit(
+    topic="quantitative_alpha",
+    fact="Discovered 4.2% spatial arbitrage path across Uniswap v3 & Curve pools.",
+    memory_type="EPISODIC"
+)
+
+# 3. Query historical memory across the worldwide blockchain
+history = memory_store.query(topic="quantitative_alpha")
+print(f"Verified on Cortex Chain: {tx_id}")</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 9: NATIVE MINING & NODE SETUP HUB (TERMINAL CLI) -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="mining-node">
+                <div class="section-header">
+                    <span class="section-eyebrow">HIGH-PERFORMANCE HARDWARE MINING</span>
+                    <h2 class="section-title">Run a Node & Mine $CTX on Real Hardware</h2>
+                    <p class="section-subtitle">No browser gimmicks. Cortex Protocol runs natively as a multi-threaded CPU miner on Windows, Linux, macOS, and Oracle Cloud VPS.</p>
+                </div>
+
+                <div class="mining-hub-layout light-card spotlight-card">
+                    <!-- 1-CLICK STANDALONE DOWNLOAD BANNER -->
+                    <div class="windows-download-card mb-3 p-3 rounded-12 bg-subtle border-light flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 rounded-10 bg-white border-light text-indigo text-xl">
+                                <i class="fa-brands fa-windows"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-900">Windows 1-Click Miner (Standalone Package)</div>
+                                <div class="text-xs text-slate-500">Includes embedded Node.js runtime + start_miner.bat • 34.8 MB • Ready to run</div>
+                            </div>
+                        </div>
+                        <a href="/downloads/cortex-miner-windows.zip" class="btn btn-primary" download="cortex-miner-windows.zip">
+                            <i class="fa-solid fa-download"></i> Download Windows .ZIP
+                        </a>
+                    </div>
+
+                    <div class="os-tabs">
+                        <button class="os-tab active" onclick="switchOsTab('windows')"><i class="fa-brands fa-windows"></i> Windows</button>
+                        <button class="os-tab" onclick="switchOsTab('linux')"><i class="fa-brands fa-linux"></i> Linux (Ubuntu/Debian)</button>
+                        <button class="os-tab" onclick="switchOsTab('oracle')"><i class="fa-solid fa-cloud"></i> Oracle Cloud 24/7</button>
+                        <button class="os-tab" onclick="switchOsTab('macos')"><i class="fa-brands fa-apple"></i> macOS</button>
+                    </div>
+
+                    <div class="terminal-display-box">
+                        <div class="term-header">
+                            <div class="terminal-dots">
+                                <span class="dot-red"></span>
+                                <span class="dot-yellow"></span>
+                                <span class="dot-green"></span>
+                            </div>
+                            <span class="term-title mono" id="os-terminal-title">PowerShell / Command Prompt</span>
+                            <button class="copy-term-btn" onclick="copyTerminalCode()"><i class="fa-solid fa-copy"></i> Copy Commands</button>
+                        </div>
+                        <pre class="term-code-block mono"><code id="os-code-content"># 1. Navigate to cortex-protocol directory
+cd C:\Users\kevin\.gemini\antigravity\scratch\cortex-protocol
+
+# 2. Launch high-performance multi-threaded CPU miner
+npm run miner
+
+# (Optional) Specify your custom wallet payout address
+MINER_ADDRESS=ctx1... npm run miner</code></pre>
+                    </div>
+
+                    <!-- COLLABORATIVE MINING POOL TELEMETRY -->
+                    <div class="mining-pool-hub mt-4 p-4 rounded-14 bg-subtle border-light">
+                        <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-bottom-subtle">
+                            <div class="flex items-center gap-3">
+                                <div class="agent-avatar"><i class="fa-solid fa-server text-indigo"></i></div>
+                                <div>
+                                    <div class="font-bold text-slate-900">Official P2P Mining Pool (PPLNS 1% Fee)</div>
+                                    <div class="text-xs text-slate-500">Collaborative multi-miner stratum • Low share difficulty (Diff 3) • Auto reward splitting</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="badge-subtle badge-emerald font-mono"><i class="fa-solid fa-circle text-xs"></i> POOL ACTIVE</span>
+                            </div>
+                        </div>
+
+                        <div class="pool-metrics-grid mt-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
+                            <div class="p-3 bg-white rounded-10 border-subtle">
+                                <div class="text-xs text-slate-500">Pool Hashrate</div>
+                                <div class="text-lg font-bold text-indigo mono" id="pool-hashrate-val">0 kH/s</div>
+                            </div>
+                            <div class="p-3 bg-white rounded-10 border-subtle">
+                                <div class="text-xs text-slate-500">Connected Miners</div>
+                                <div class="text-lg font-bold text-emerald mono" id="pool-miners-count">0 Workers</div>
+                            </div>
+                            <div class="p-3 bg-white rounded-10 border-subtle">
+                                <div class="text-xs text-slate-500">Share Difficulty</div>
+                                <div class="text-lg font-bold text-violet mono" id="pool-share-diff">Diff 3 (Fast)</div>
+                            </div>
+                            <div class="p-3 bg-white rounded-10 border-subtle">
+                                <div class="text-xs text-slate-500">Blocks Won</div>
+                                <div class="text-lg font-bold text-amber mono" id="pool-blocks-won">0 Blocks</div>
+                            </div>
+                        </div>
+
+                        <!-- LIVE POOL WORKERS TABLE -->
+                        <div class="pool-workers-table-container mt-3">
+                            <div class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                <span><i class="fa-solid fa-users text-indigo"></i> Active Pool Workers</span>
+                                <span class="mono text-xs text-slate-500">PPLNS Distribution Window</span>
+                            </div>
+                            <div class="table-responsive" style="max-height: 160px; overflow-y: auto;">
+                                <table class="table-subtle w-full text-xs" style="width: 100%;">
+                                    <thead>
+                                        <tr class="text-left text-slate-500 border-bottom-subtle">
+                                            <th class="p-2">Worker Address</th>
+                                            <th class="p-2">Rig ID</th>
+                                            <th class="p-2">Valid Shares</th>
+                                            <th class="p-2">Est. Hashrate</th>
+                                            <th class="p-2">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pool-workers-tbody">
+                                        <tr>
+                                            <td colspan="5" class="p-3 text-center text-slate-400">No external workers connected. Run the 1-Click miner to join the pool!</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mining-estimator-section mt-4">
+                        <div class="estimator-header">
+                            <h3><i class="fa-solid fa-calculator text-indigo"></i> CPU Mining Yield Estimator</h3>
+                            <span class="badge-subtle">Based on Dynamic Difficulty</span>
+                        </div>
+
+                        <div class="calc-grid mt-3">
+                            <div class="calc-controls">
+                                <label class="calc-label">
+                                    <span>Allocated CPU Mining Threads :</span>
+                                    <strong class="text-indigo mono" id="calc-cores-val">8 Threads</strong>
+                                </label>
+                                <input type="range" id="calc-cores-slider" min="1" max="64" value="8" class="range-slider" oninput="updateMiningCalculator()">
+
+                                <div class="calc-meta-info mt-3">
+                                    <div>Estimated Hashrate: <strong class="text-emerald mono" id="calc-estimated-hr">120 kH/s</strong></div>
+                                    <div>Current Network Difficulty: <strong class="text-violet mono" id="calc-network-diff">2</strong></div>
+                                </div>
+                            </div>
+
+                            <div class="calc-results-panel">
+                                <div class="result-box spotlight-card">
+                                    <div class="res-title">Estimated Daily Yield</div>
+                                    <div class="res-value text-indigo mono" id="calc-daily-ctx">~ 250 CTX</div>
+                                    <div class="res-sub">50 CTX / block + collected AI gas fees</div>
+                                </div>
+
+                                <div class="result-box spotlight-card">
+                                    <div class="res-title">Estimated Monthly Yield</div>
+                                    <div class="res-value text-emerald mono" id="calc-monthly-ctx">~ 7,500 CTX</div>
+                                    <div class="res-sub">100% fair launch emission</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 10: MATHEMATICAL TOKENOMICS & HALVING TIMELINE   -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="tokenomics">
+                <div class="section-header">
+                    <span class="section-eyebrow">MONETARY POLICY</span>
+                    <h2 class="section-title">Strict Mathematical Scarcity</h2>
+                    <p class="section-subtitle">A strictly capped monetary supply engineered to appreciate in tandem with global AI adoption.</p>
+                </div>
+
+                <div class="tokenomics-layout">
+                    <div class="tokenomics-card light-card spotlight-card">
+                        <div class="token-header-light">
+                            <div>
+                                <span class="badge-token">OFFICIAL TICKER</span>
+                                <div class="token-ticker-light">$CTX</div>
+                            </div>
+                            <div class="token-supply-light">
+                                <span class="label">HARD CAP SUPPLY</span>
+                                <span class="val mono">21,000,000 CTX</span>
+                            </div>
+                        </div>
+
+                        <div class="token-metrics-list-light">
+                            <div class="metric-row-light">
+                                <span><i class="fa-solid fa-gift text-indigo"></i> Pre-mine / Private VC Sale</span>
+                                <strong class="text-emerald mono">0% (100% Fair Launch)</strong>
+                            </div>
+                            <div class="metric-row-light">
+                                <span><i class="fa-solid fa-cubes text-amber"></i> Initial Block Subsidy</span>
+                                <strong class="text-amber mono">50.00 CTX</strong>
+                            </div>
+                            <div class="metric-row-light">
+                                <span><i class="fa-solid fa-clock text-violet"></i> Target Block Time</span>
+                                <strong class="mono">15 Seconds</strong>
+                            </div>
+                            <div class="metric-row-light">
+                                <span><i class="fa-solid fa-hourglass-half text-indigo"></i> Halving Interval</span>
+                                <strong class="mono">Every 210,000 Blocks (~3.65 Months)</strong>
+                            </div>
+                            <div class="metric-row-light">
+                                <span><i class="fa-solid fa-fire text-flame"></i> Deflationary Gas Burn</span>
+                                <strong class="text-flame mono">30% Permanently Destroyed</strong>
+                            </div>
+                            <div class="metric-row-light">
+                                <span><i class="fa-solid fa-hammer text-emerald"></i> Node Operator Share</span>
+                                <strong class="text-emerald mono">70% Fee Share + 50 CTX</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tokenomics-visual-light light-card spotlight-card">
+                        <h3 class="visual-title-light"><i class="fa-solid fa-chart-pie text-indigo"></i> 100% Community Emission</h3>
+
+                        <div class="supply-bar-light">
+                            <div class="bar-fill-community" style="width: 100%;">
+                                100% Minted by Decentralized Miners & Node Operators
+                            </div>
+                        </div>
+                        <div class="supply-legend-light">
+                            <span><span class="dot-green"></span> 100% Community Hardware Mining</span>
+                            <span><span class="dot-red"></span> 0% Insiders / Founders / VCs</span>
+                        </div>
+
+                        <div class="halving-timeline mt-4">
+                            <div class="halving-stage active">
+                                <span class="stage-badge">ERA 1 (CURRENT)</span>
+                                <div class="stage-reward mono font-bold">50 CTX / block</div>
+                                <div class="stage-blocks">Blocks 0 → 210,000</div>
+                            </div>
+                            <div class="halving-stage">
+                                <span class="stage-badge">ERA 2</span>
+                                <div class="stage-reward mono font-bold">25 CTX / block</div>
+                                <div class="stage-blocks">Blocks 210k → 420k</div>
+                            </div>
+                            <div class="halving-stage">
+                                <span class="stage-badge">ERA 3</span>
+                                <div class="stage-reward mono font-bold">12.5 CTX / block</div>
+                                <div class="stage-blocks">Blocks 420k → 630k</div>
+                            </div>
+                        </div>
+
+                        <div class="deflation-box-light mt-4">
+                            <div class="deflation-title text-flame font-bold">
+                                <i class="fa-solid fa-fire"></i> THE DEFLATIONARY FORMULA
+                            </div>
+                            <div class="deflation-formula mono">
+                                Circulating Supply = ∑(Block Subsidies) − ∑(30% Gas Fee Burned)
+                            </div>
+                            <p class="deflation-explanation">
+                                As autonomous AI agents scale globally, state anchoring volume increases exponentially, accelerating the token burn rate and driving net-negative supply inflation over time.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INCENTIVIZED TESTNET ALLOCATION CARD (1% GENESIS BOOTSTRAP) -->
+                <div class="testnet-incentive-card light-card spotlight-card border-glow-animated mt-4 p-4 rounded-16 bg-white border-light">
+                    <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-bottom-subtle">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 rounded-10 bg-indigo-soft text-indigo text-xl">
+                                <i class="fa-solid fa-gift"></i>
+                            </div>
+                            <div>
+                                <span class="badge-subtle badge-emerald font-mono">1.0% GENESIS BOOTSTRAP ALLOCATION</span>
+                                <h3 class="text-slate-900 font-bold mt-1">Incentivized Testnet 1.0 Rewards (210,000 $CTX)</h3>
+                            </div>
+                        </div>
+                        <span class="pill-badge pill-green-light font-mono">● Active Tracking</span>
+                    </div>
+
+                    <div class="grid-2col gap-4 mt-3">
+                        <div class="p-3 bg-subtle rounded-12 border-subtle">
+                            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">70% Miner Share</div>
+                            <div class="text-xl font-bold text-indigo mono">147,000 CTX</div>
+                            <p class="text-xs text-slate-600 mt-1">Distributed pro-rata based on validated RandomX blocks and accepted pool shares.</p>
+                        </div>
+                        <div class="p-3 bg-subtle rounded-12 border-subtle">
+                            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">30% Community Tester Share</div>
+                            <div class="text-xl font-bold text-emerald mono">63,000 CTX</div>
+                            <p class="text-xs text-slate-600 mt-1">Distributed equally to active addresses testing DEX swaps, Web3 Wallet signatures & state commits.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between flex-wrap gap-3 mt-3 pt-3 border-top-subtle text-xs text-slate-600">
+                        <div><i class="fa-solid fa-shield-halved text-indigo"></i> <strong>Anti-Whale Hard Cap:</strong> Max 3.0% (6,300 CTX) per address. Excess is redistributed.</div>
+                        <div><i class="fa-solid fa-lock text-emerald"></i> <strong>3-Month Linear Vesting:</strong> 20% liquid at Genesis Block #0, 80% streamed block-by-block over 90 days.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 11: STRATEGIC PROTOCOL ROADMAP                   -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="roadmap">
+                <div class="section-header">
+                    <span class="section-eyebrow">STRATEGIC TRAJECTORY</span>
+                    <h2 class="section-title">Protocol Roadmap & Evolution</h2>
+                    <p class="section-subtitle">From Incentivized Testnet to Mainnet Genesis, RandomX CPU mining, and sovereign AI state settlement.</p>
+                </div>
+
+                <div class="roadmap-timeline-wrapper">
+                    <div class="roadmap-line-glow"></div>
+
+                    <!-- PHASE 1 (ACTIVE / IN PROGRESS) -->
+                    <div class="roadmap-card-item phase-active reveal-on-scroll">
+                        <div class="roadmap-node-badge pulse-indigo">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="roadmap-card light-card spotlight-card border-indigo-active">
+                            <div class="roadmap-card-header">
+                                <div>
+                                    <span class="roadmap-phase-tag pill-green-light"><span class="dot-indicator"></span> PHASE 1 • INCENTIVIZED TESTNET (LIVE)</span>
+                                    <h3 class="roadmap-card-title mt-1">Incentivized Testnet 1.0 & CPU Mining</h3>
+                                </div>
+                                <span class="roadmap-date mono">Q3 2026 (ACTIVE)</span>
+                            </div>
+                            <p class="roadmap-desc">Live deployment of ASIC-resistant RandomX CPU mining, P2P DEX liquidity testing, standalone Web3 Extension, and cryptographic state root anchoring.</p>
+                            <div class="roadmap-checklist">
+                                <div class="check-item done"><i class="fa-solid fa-circle-check text-emerald"></i> <span><strong>ASIC-Resistant CPU Mining:</strong> Pure RandomX Proof-of-Work engine live in production</span></div>
+                                <div class="check-item done"><i class="fa-solid fa-circle-check text-emerald"></i> <span><strong>Web3 DEX & Liquidity Pool:</strong> In-browser swap engine & pool rewards active</span></div>
+                                <div class="check-item done"><i class="fa-solid fa-circle-check text-emerald"></i> <span><strong>Standalone Web3 Wallet:</strong> Chrome Extension with native approval popup windows</span></div>
+                                <div class="check-item done"><i class="fa-solid fa-circle-check text-emerald"></i> <span><strong>State Root Anchoring:</strong> In-RAM Edge RAG with on-chain Merkle proof verification</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 2 (PREPARATION) -->
+                    <div class="roadmap-card-item phase-upcoming reveal-on-scroll">
+                        <div class="roadmap-node-badge">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="roadmap-card light-card spotlight-card">
+                            <div class="roadmap-card-header">
+                                <div>
+                                    <span class="roadmap-phase-tag pill-violet-light">PHASE 2 • NEXT MILESTONE</span>
+                                    <h3 class="roadmap-card-title mt-1">Mainnet Preparation & Security Audit</h3>
+                                </div>
+                                <span class="roadmap-date mono">Q4 2026</span>
+                            </div>
+                            <p class="roadmap-desc">Final cryptographic snapshot of all Testnet miner and tester addresses, audit of Genesis Block parameters, and multi-node stress testing.</p>
+                            <div class="roadmap-checklist">
+                                <div class="check-item"><i class="fa-regular fa-circle text-slate-400"></i> <span><strong>Final Testnet Snapshot:</strong> Verification of 70/30 split and 3% anti-whale hard caps</span></div>
+                                <div class="check-item"><i class="fa-regular fa-circle text-slate-400"></i> <span><strong>Genesis Block Audit:</strong> Cryptographic verification of initial state & vesting contract logic</span></div>
+                                <div class="check-item"><i class="fa-regular fa-circle text-slate-400"></i> <span><strong>Validator Stress Testing:</strong> Multi-region node mesh and P2P gossip hardening</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 3 (MAINNET GENESIS) -->
+                    <div class="roadmap-card-item phase-upcoming reveal-on-scroll">
+                        <div class="roadmap-node-badge">
+                            <i class="fa-solid fa-rocket"></i>
+                        </div>
+                        <div class="roadmap-card light-card spotlight-card">
+                            <div class="roadmap-card-header">
+                                <div>
+                                    <span class="roadmap-phase-tag pill-flame-light">PHASE 3 • MAINNET LAUNCH</span>
+                                    <h3 class="roadmap-card-title mt-1">Mainnet Genesis & Fair Launch</h3>
+                                </div>
+                                <span class="roadmap-date mono">Q1 2027</span>
+                            </div>
+                            <p class="roadmap-desc">Mainnet Block #0 launch with 0% team pre-mine, execution of the 1% Testnet distribution with 3-month vesting, and continuous 30% gas fee burning.</p>
+                            <div class="roadmap-checklist">
+                                <div class="check-item"><i class="fa-regular fa-circle text-slate-400"></i> <span><strong>Mainnet Block #0:</strong> 100% Fair Launch (0% VC pre-mine, 21M hard cap, RandomX PoW)</span></div>
+                                <div class="check-item"><i class="fa-regular fa-circle text-slate-400"></i> <span><strong>1% Testnet Distribution:</strong> 20% liquid on Day 1 + 80% streamed over 3 months</span></div>
+                                <div class="check-item"><i class="fa-regular fa-circle text-slate-400"></i> <span><strong>Deflationary Engine:</strong> Permanent 30% gas fee burn to unspendable address</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 4 (DEVELOPER ECOSYSTEM) -->
+                    <div class="roadmap-card-item phase-upcoming reveal-on-scroll">
+                        <div class="roadmap-node-badge">
+                            <i class="fa-solid fa-code"></i>
+                        </div>
+                        <div class="roadmap-card light-card spotlight-card">
+                            <div class="roadmap-card-header">
+                                <div>
+                                    <span class="roadmap-phase-tag pill-indigo-light">PHASE 4 • ECOSYSTEM GROWTH</span>
+                                    <h3 class="roadmap-card-title mt-1">Developer Ecosystem & Edge RAG SDKs</h3>
+                                </div>
+                                <span class="roadmap-date mono">Q2 2027</span>
+                            </div>
+                            <p class="roadmap-desc">Standardizing Python Edge RAG SDKs, launching developer hackathons & bounties, and integrating native LangChain and AutoGPT agent plugins.</p>
+                            <div class="roadmap-checklist">
+                                <div class="check-item"><i class="fa-regular fa-circle text-slate-400"></i> <span><strong>Python Edge RAG SDK:</strong> Local-first in-RAM vector indexing with on-chain notarization</span></div>
+                                <div class="check-item"><i class="fa-regular fa-circle text-slate-400"></i> <span><strong>Framework Integrations:</strong> Native LangChain, AutoGPT, CrewAI, and LlamaIndex plugins</span></div>
+                                <div class="check-item"><i class="fa-regular fa-circle text-slate-400"></i> <span><strong>Developer Grants & Bounties:</strong> Dedicated community fund for sovereign AI agents</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 11: FAQ ACCORDION (INSTITUTIONAL GRADE)          -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="faq">
+                <div class="section-header">
+                    <span class="section-eyebrow">FREQUENTLY ASKED QUESTIONS</span>
+                    <h2 class="section-title">Everything You Need to Know</h2>
+                </div>
+
+                <div class="faq-list">
+                    <div class="faq-item light-card spotlight-card" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <span>1. How do I start mining $CTX on my hardware?</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            You can start mining natively on any multi-core CPU by navigating to the project directory and running <code>npm run miner</code>. Your terminal will launch the real-time mining dashboard showing live CPU Hashrate ($kH/s$), accepted blocks, and $CTX$ rewards credited directly to your address.
+                        </div>
+                    </div>
+
+                    <div class="faq-item light-card spotlight-card" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <span>2. Why does Cortex Protocol possess intrinsic economic value?</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Unlike speculative meme tokens, every autonomous AI agent or developer requiring decentralized memory persistence must purchase and spend $CTX. Furthermore, <strong>30% of every transaction fee is permanently burned</strong>, mathematically reducing the circulating supply as AI network adoption expands.
+                        </div>
+                    </div>
+
+                    <div class="faq-item light-card spotlight-card" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <span>3. Was there any ICO, pre-sale, or team allocation?</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            No. Cortex Protocol operates on an absolute <strong>Fair Launch model with 0% pre-mine</strong>. Every single token in existence is minted transparently by hardware miners and node operators starting from Genesis Block #0.
+                        </div>
+                    </div>
+
+                    <div class="faq-item light-card spotlight-card" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <span>4. How do I deploy a 24/7 master seed node on my Oracle Cloud VPS?</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            The repository includes a production-ready <code>deploy-oracle.sh</code> script. Running this single bash script on your Ubuntu/Debian Oracle instance configures Node.js, sets up PM2 process management for 24/7 uptime, and opens ports 3000 (RPC/Explorer) and 6001 (P2P Gossip Network).
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CALL TO ACTION BANNER -->
+            <section class="cta-banner-section reveal-on-scroll">
+                <div class="cta-banner-light light-card spotlight-card border-glow-animated">
+                    <h2>Power the Sovereign Memory of Artificial Intelligence</h2>
+                    <p>Join decentralized node operators worldwide and start mining $CTX today.</p>
+                    <div class="cta-buttons">
+                        <button class="btn btn-hero-cta btn-shimmer" onclick="navigateTo('landing', 'mining-node')">
+                            <i class="fa-solid fa-terminal"></i> Start Native Miner
+                        </button>
+                        <button class="btn btn-outline" onclick="navigateTo('wallet')">
+                            <i class="fa-solid fa-wallet"></i> Create Web Wallet
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- VIEW 2: BLOCKCHAIN EXPLORER APP (LIGHT THEME)            -->
+        <!-- ======================================================== -->
+        <div id="view-explorer" class="view-pane">
+            <div class="app-page-header">
+                <div>
+                    <h2><i class="fa-solid fa-cubes text-indigo"></i> Live Blockchain Explorer</h2>
+                    <p class="text-muted">Real-time ledger inspection, Merkle roots, and AI memory commits.</p>
+                </div>
+                <button class="btn btn-outline" onclick="navigateTo('landing')"><i class="fa-solid fa-arrow-left"></i> Back to Home</button>
+            </div>
+
+            <div class="grid-2col mt-4">
+                <div class="panel light-card spotlight-card">
+                    <div class="panel-header-light">
+                        <h3><i class="fa-solid fa-cubes text-indigo"></i> Confirmed Blocks</h3>
+                        <span class="pill-badge pill-green-light">● Realtime Sync</span>
+                    </div>
+                    <div class="table-container">
+                        <table class="table-light">
+                            <thead>
+                                <tr>
+                                    <th>Height</th>
+                                    <th>Miner</th>
+                                    <th>Transactions</th>
+                                    <th>Difficulty</th>
+                                    <th>Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blocks-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel light-card spotlight-card">
+                    <div class="panel-header-light">
+                        <h3><i class="fa-solid fa-brain text-violet"></i> Neural Memory Stream</h3>
+                        <span class="pill-badge pill-violet-light">Vector Ledger</span>
+                    </div>
+                    <div class="memory-feed-light" id="memory-feed-container"></div>
+                </div>
+            </div>
+
+            <div class="panel light-card spotlight-card mt-4">
+                <div class="panel-header-light">
+                    <h3><i class="fa-solid fa-hourglass-half text-amber"></i> Mempool (Pending Queue)</h3>
+                    <span class="pill-badge pill-amber-light" id="mempool-count">0 pending</span>
+                </div>
+                <div class="mempool-list" id="mempool-container">
+                    <p class="empty-state">No pending transactions. Network state is synchronized.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- BLOCK & MERKLE PROOF INSPECTOR MODAL -->
+    <div id="inspector-modal" class="modal-overlay" onclick="closeInspectorModal(event)">
+        <div class="modal-content light-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <span class="badge-subtle">CRYPTOGRAPHIC INSPECTOR</span>
+                    <h3 id="modal-block-title" class="text-slate-900 mt-1">Block #0 Inspector</h3>
+                </div>
+                <button class="modal-close-btn" onclick="closeInspectorModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="modal-block-body"></div>
+        </div>
+    </div>
+
+    <!-- FOOTER (LIGHT THEME) -->
+    <footer class="footer-container-light light-card reveal-on-scroll">
+        <div class="footer-top-light">
+            <div class="footer-brand-light">
+                <div class="brand-logo-custom">
+                    <img src="assets/logo.svg" alt="Cortex Logo" class="brand-logo-img">
+                </div>
+                <div>
+                    <span class="brand-name">CORTEX PROTOCOL</span>
+                    <p class="footer-tagline">The Settlement & State Notarization Layer for Autonomous AI Agents.</p>
+                </div>
+            </div>
+
+            <div class="footer-links-group-light">
+                <div class="footer-col-light">
+                    <h4>Protocol</h4>
+                    <a href="#how-it-works" onclick="navigateTo('landing', 'how-it-works')">How it Works</a>
+                    <a href="#stack-explorer" onclick="navigateTo('landing', 'stack-explorer')">Architecture</a>
+                    <a href="#semantic-search" onclick="navigateTo('landing', 'semantic-search')">Semantic Search</a>
+                    <a href="#tokenomics" onclick="navigateTo('landing', 'tokenomics')">Tokenomics</a>
+                </div>
+                <div class="footer-col-light">
+                    <h4>Ecosystem</h4>
+                    <a href="javascript:void(0)" onclick="navigateTo('explorer')">Block Explorer</a>
+                    <a href="#developer-sdk" onclick="navigateTo('landing', 'developer-sdk')">Developer SDKs</a>
+                    <a href="#mining-node" onclick="navigateTo('landing', 'mining-node')">Native Mining</a>
+                    <a href="javascript:void(0)" onclick="navigateTo('wallet')">Web Wallet</a>
+                </div>
+                <div class="footer-col-light">
+                    <h4>Community</h4>
+                    <a href="https://github.com" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
+                    <a href="https://twitter.com" target="_blank"><i class="fa-brands fa-x-twitter"></i> X (Twitter)</a>
+                    <a href="https://discord.com" target="_blank"><i class="fa-brands fa-discord"></i> Discord</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom-light">
+            <p>© 2026 Cortex Protocol Foundation. Open-source under MIT License. 100% Community Fair Launch.</p>
+            <div class="footer-pills-light">
+                <span class="pill-badge pill-green-light">Public Testnet v1.0 Live</span>
+                <span class="pill-badge pill-violet-light">secp256k1 Native</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="toast-light"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "name": "cortex-protocol",
+  "version": "1.0.0",
+  "description": "The Decentralized Neural Memory & Knowledge Ledger for Autonomous AI Agents ($CTX)",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "miner": "node dist/cli/miner-cli.js",
+    "agent": "node dist/agent/autonomous-agent.js",
+    "dev": "tsx src/index.ts",
+    "dev:miner": "tsx src/cli/miner-cli.ts"
+  },
+  "keywords": [
+    "blockchain",
+    "ai",
+    "crypto",
+    "cortex",
+    "neural-memory",
+    "pow",
+    "mining",
+    "secp256k1"
+  ],
+  "author": "Cortex Protocol Foundation",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^17.4.2",
+    "elliptic": "^6.6.1",
+    "express": "^5.2.1",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/crypto-js": "^4.2.2",
+    "@types/elliptic": "^6.4.18",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.4.1",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
