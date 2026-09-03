@@ -2277,7 +2277,7 @@ function importKeystoreFile(event) {
 }
 
 // ========================================================
-// INCENTIVIZED TESTNET 2.0 LEADERBOARD ENGINE
+// INCENTIVIZED TESTNET 2.0 LEADERBOARD & CONVERSION ENGINE
 // ========================================================
 
 let cachedLeaderboardData = [];
@@ -2295,7 +2295,7 @@ async function fetchAndRenderLeaderboard() {
         
         cachedLeaderboardData = data.leaderboard || [];
 
-        // Update KPIs
+        // Update Global KPIs
         const countEl = document.getElementById('lb-participants-count');
         if (countEl) countEl.innerText = data.totalParticipants || cachedLeaderboardData.length;
 
@@ -2310,6 +2310,7 @@ async function fetchAndRenderLeaderboard() {
         if (tabMin) tabMin.innerText = minerCount;
         if (tabTst) tabTst.innerText = testerCount;
 
+        renderLeaderboardPodium();
         renderLeaderboardTable();
     } catch (e) {
         console.warn('[Leaderboard] Fetch error:', e);
@@ -2318,6 +2319,82 @@ async function fetchAndRenderLeaderboard() {
             setTimeout(() => refreshIcon.classList.remove('fa-spin'), 600);
         }
     }
+}
+
+function renderLeaderboardPodium() {
+    const container = document.getElementById('leaderboard-podium-container');
+    if (!container) return;
+
+    if (cachedLeaderboardData.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const top3 = cachedLeaderboardData.slice(0, 3);
+    const podiumStyles = [
+        { class: 'podium-gold', rankText: '🥇 #1 CHAMPION', badgeColor: '#f59e0b', crown: '👑' },
+        { class: 'podium-silver', rankText: '🥈 #2 RUNNER UP', badgeColor: '#94a3b8', crown: '⭐' },
+        { class: 'podium-bronze', rankText: '🥉 #3 THIRD PLACE', badgeColor: '#d97706', crown: '🎖️' }
+    ];
+
+    container.innerHTML = top3.map((item, idx) => {
+        const p = podiumStyles[idx];
+        const shortAddr = `${item.address.substring(0, 8)}...${item.address.substring(item.address.length - 6)}`;
+        const tctxBal = (item.balance || (item.blocksMined * 50)).toLocaleString();
+
+        let typeBadge = `<span class="pill-badge pill-violet-light font-mono text-xs">TESTER</span>`;
+        if (item.type === 'MINER') typeBadge = `<span class="pill-badge pill-green-light font-mono text-xs">MINER ⛏️</span>`;
+        if (item.type === 'HYBRID') typeBadge = `<span class="pill-badge pill-indigo-light font-mono text-xs">HYBRID ⚡</span>`;
+
+        const capPercent = Math.min(100, (item.estimatedReward / 6300) * 100).toFixed(1);
+
+        return `
+            <div class="podium-card ${p.class} spotlight-card">
+                <span class="podium-crown-badge">${p.crown}</span>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-xs tracking-wider" style="color:${p.badgeColor};">${p.rankText}</span>
+                        ${typeBadge}
+                    </div>
+
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="podium-avatar bg-indigo-soft text-indigo">
+                            <i class="fa-solid fa-user-astronaut"></i>
+                        </div>
+                        <div style="overflow:hidden;">
+                            <div class="mono font-bold text-slate-900 text-sm flex items-center gap-1" title="${item.address}">
+                                <span>${shortAddr}</span>
+                                <button class="btn btn-ghost btn-xs p-1" onclick="navigator.clipboard.writeText('${item.address}'); showToast('Address copied!')">
+                                    <i class="fa-regular fa-copy text-slate-400"></i>
+                                </button>
+                            </div>
+                            <div class="text-xs text-slate-500 font-mono">${tctxBal} $tCTX</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-subtle p-3 rounded-12 border-subtle mb-3">
+                        <div class="flex items-center justify-between text-xs text-slate-600 mb-1">
+                            <span>Mainnet Reward:</span>
+                            <span class="font-bold text-slate-900 mono text-sm">${item.estimatedReward.toLocaleString()} <span class="text-xs text-indigo">CTX</span></span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-500 font-mono" style="font-size:0.75rem;">
+                            <span>Day 1 (20%): <strong class="text-emerald">${item.day1Liquid} CTX</strong></span>
+                            <span>Stream (80%): <strong class="text-indigo">${item.vestedStream} CTX</strong></span>
+                        </div>
+                        <div class="cap-progress-bar-wrap">
+                            <div class="cap-progress-bar-fill" style="width: ${capPercent}%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-top-subtle font-mono">
+                    <span>⛏️ ${item.blocksMined || 0} blocks</span>
+                    <span>⚡ ${item.stateCommits || 0} states</span>
+                    <span>🔄 ${item.transfers || 0} txs</span>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 function filterLeaderboard(filter, btnEl) {
@@ -2338,6 +2415,36 @@ function handleLeaderboardSearch(query) {
     renderLeaderboardTable();
 }
 
+function simulateConversion(val) {
+    const raw = parseFloat(val) || 0;
+    // 1000 $tCTX = 1.00 Mainnet $CTX (Capped at 6,300 max)
+    const mainnetCtx = Math.min(6300, +(raw / 1000).toFixed(4));
+    const day1 = +(mainnetCtx * 0.20).toFixed(2);
+    const stream = +(mainnetCtx * 0.80).toFixed(2);
+
+    const elMain = document.getElementById('sim-mainnet-val');
+    const elDay1 = document.getElementById('sim-day1-val');
+    const elStream = document.getElementById('sim-stream-val');
+
+    if (elMain) elMain.innerText = `${mainnetCtx.toLocaleString()} $CTX Mainnet`;
+    if (elDay1) elDay1.innerText = `${day1.toLocaleString()} CTX`;
+    if (elStream) elStream.innerText = `${stream.toLocaleString()} CTX`;
+}
+
+function simulateWithCurrentWallet() {
+    if (!currentWallet || !currentWallet.address) {
+        showToast('Please open or create a wallet first');
+        return;
+    }
+    const bal = currentWallet.balance || 0;
+    const input = document.getElementById('sim-input-tctx');
+    if (input) {
+        input.value = bal;
+        simulateConversion(bal);
+        showToast(`Loaded ${bal} $tCTX from connected wallet!`);
+    }
+}
+
 function renderLeaderboardTable() {
     const tbody = document.getElementById('leaderboard-table-body');
     if (!tbody) return;
@@ -2354,7 +2461,7 @@ function renderLeaderboardTable() {
     if (list.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align:center; padding:32px; color:var(--slate-500);">
+                <td colspan="7" style="text-align:center; padding:36px; color:var(--slate-500);">
                     <i class="fa-solid fa-circle-nodes text-indigo text-2xl mb-2"></i>
                     <div>No participants found matching current filter or search.</div>
                 </td>
@@ -2370,7 +2477,7 @@ function renderLeaderboardTable() {
         else if (rank === 2) rankBadge = `<span style="font-size:1.2rem;">🥈</span>`;
         else if (rank === 3) rankBadge = `<span style="font-size:1.2rem;">🥉</span>`;
 
-        let typeBadge = `<span class="pill-badge pill-violet-light font-mono text-xs">TESTER</span>`;
+        let typeBadge = `<span class="pill-badge pill-violet-light font-mono text-xs">TESTER 🧪</span>`;
         if (item.type === 'MINER') {
             typeBadge = `<span class="pill-badge pill-green-light font-mono text-xs">MINER ⛏️</span>`;
         } else if (item.type === 'HYBRID') {
@@ -2378,14 +2485,16 @@ function renderLeaderboardTable() {
         }
 
         const shortAddr = `${item.address.substring(0, 8)}...${item.address.substring(item.address.length - 6)}`;
+        const tctxBal = (item.balance || (item.blocksMined * 50)).toLocaleString();
 
         return `
             <tr style="border-bottom: 1px solid var(--border-light); transition: background 0.2s;" class="hover-row">
                 <td style="padding: 12px 10px; font-weight:700;">${rankBadge}</td>
                 <td style="padding: 12px 10px;">
                     <div class="flex items-center gap-2">
+                        <span class="user-identicon-dot" style="background: #${item.address.substring(4, 10)};"></span>
                         <span class="mono text-indigo font-semibold" title="${item.address}">${shortAddr}</span>
-                        <button class="btn btn-ghost btn-xs" onclick="navigator.clipboard.writeText('${item.address}'); showToast('Address copied!')" title="Copy Address">
+                        <button class="btn btn-ghost btn-xs p-1" onclick="navigator.clipboard.writeText('${item.address}'); showToast('Address copied!')" title="Copy Address">
                             <i class="fa-regular fa-copy text-slate-400"></i>
                         </button>
                     </div>
@@ -2393,14 +2502,17 @@ function renderLeaderboardTable() {
                 <td style="padding: 12px 10px;">${typeBadge}</td>
                 <td style="padding: 12px 10px;">
                     <div class="flex items-center gap-3 text-xs text-slate-600">
-                        <span><strong class="text-amber mono">${item.blocksMined || 0}</strong> blocks</span>
-                        <span><strong class="text-indigo mono">${item.stateCommits || 0}</strong> commits</span>
+                        <span><strong class="text-amber mono">${item.blocksMined || 0}</strong> blks</span>
+                        <span><strong class="text-indigo mono">${item.stateCommits || 0}</strong> st</span>
                         <span><strong class="text-emerald mono">${item.transfers || 0}</strong> txs</span>
                     </div>
                 </td>
                 <td style="padding: 12px 10px; text-align: right;">
+                    <span class="mono font-semibold text-slate-800">${tctxBal}</span> <span class="text-xs text-slate-500">$tCTX</span>
+                </td>
+                <td style="padding: 12px 10px; text-align: right;">
                     <div class="text-sm font-bold text-slate-900 mono">${item.estimatedReward.toLocaleString()} <span class="text-xs text-indigo">CTX</span></div>
-                    <span class="text-xs text-emerald mono">${item.sharePercent || 0}% share</span>
+                    <span class="text-xs text-emerald mono">${item.sharePercent || 0}% of pool</span>
                 </td>
                 <td style="padding: 12px 10px; text-align: right;">
                     <div class="text-xs mono">

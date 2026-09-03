@@ -372,6 +372,10 @@ export function createApiServer(
                 minerPool: MINER_POOL,
                 testerPool: TESTER_POOL,
                 antiWhaleCap: MAX_CAP_PER_USER,
+                conversionRatio: '1,000 $tCTX = 1.00 $CTX Mainnet',
+                ratioValue: 1000,
+                testnetSymbol: 'tCTX',
+                mainnetSymbol: 'CTX',
                 vestingSchedule: '20% Day 1 Liquid, 80% Streamed block-by-block over 90 Days',
                 leaderboard
             });
