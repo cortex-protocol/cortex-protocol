@@ -254,6 +254,132 @@ export function createApiServer(
         }
     });
 
+    // --- INCENTIVIZED TESTNET 2.0 LEADERBOARD ENDPOINT ---
+    app.get('/api/leaderboard', (req, res) => {
+        try {
+            const TOTAL_INCENTIVE_POOL = 210000; // 1% of 21,000,000 CTX
+            const MINER_POOL = 147000;          // 70%
+            const TESTER_POOL = 63000;          // 30%
+            const MAX_CAP_PER_USER = 6300;      // 3% anti-whale hard cap
+
+            const addressStats = new Map<string, {
+                address: string;
+                blocksMined: number;
+                sharesSubmitted: number;
+                stateCommits: number;
+                transfers: number;
+                balance: number;
+                type: 'MINER' | 'TESTER' | 'HYBRID';
+            }>();
+
+            const getOrCreate = (addr: string) => {
+                const norm = addr.trim();
+                if (!addressStats.has(norm)) {
+                    addressStats.set(norm, {
+                        address: norm,
+                        blocksMined: 0,
+                        sharesSubmitted: 0,
+                        stateCommits: 0,
+                        transfers: 0,
+                        balance: blockchain.getBalance(norm),
+                        type: 'TESTER'
+                    });
+                }
+                return addressStats.get(norm)!;
+            };
+
+            // 1. Scan confirmed blockchain
+            for (const block of blockchain.chain) {
+                if (block.minerAddress && !block.minerAddress.includes('genesis')) {
+                    const s = getOrCreate(block.minerAddress);
+                    s.blocksMined += 1;
+                }
+
+                for (const tx of block.transactions) {
+                    if (tx.sender && !tx.sender.includes('COINBASE') && !tx.sender.includes('genesis')) {
+                        const s = getOrCreate(tx.sender);
+                        if (tx.type === 'MEMORY_COMMIT') {
+                            s.stateCommits += 1;
+                        } else {
+                            s.transfers += 1;
+                        }
+                    }
+                    if (tx.recipient && !tx.recipient.includes('0000000000000') && !tx.recipient.includes('genesis')) {
+                        const s = getOrCreate(tx.recipient);
+                        s.transfers += 1;
+                    }
+                }
+            }
+
+            // 2. Include pool shares
+            const poolStats = pool.getStats();
+            for (const m of poolStats.topMiners || []) {
+                if (m.address) {
+                    const s = getOrCreate(m.address);
+                    s.sharesSubmitted += m.roundShares || 0;
+                }
+            }
+
+            // 3. Filter valid accounts
+            const entries = Array.from(addressStats.values()).filter(u => 
+                u.address.length >= 20 &&
+                !u.address.includes('0000000000000') && 
+                !u.address.includes('ctx1genesis') && 
+                !u.address.includes('COINBASE')
+            );
+
+            const totalScoreMiners = entries.reduce((sum, e) => sum + (e.blocksMined * 10 + e.sharesSubmitted), 0);
+            const totalScoreTesters = entries.reduce((sum, e) => sum + (e.stateCommits * 5 + e.transfers), 0);
+
+            const ranked = entries.map(e => {
+                const minerRatio = totalScoreMiners > 0 ? (e.blocksMined * 10 + e.sharesSubmitted) / totalScoreMiners : 0;
+                const testerRatio = totalScoreTesters > 0 ? (e.stateCommits * 5 + e.transfers) / totalScoreTesters : 0;
+
+                let rawReward = (minerRatio * MINER_POOL) + (testerRatio * TESTER_POOL);
+                if (rawReward <= 0 && (e.balance > 0 || e.transfers > 0)) {
+                    rawReward = 15.0; // participation boost
+                }
+
+                const cappedReward = Math.min(rawReward, MAX_CAP_PER_USER);
+                const day1Liquid = +(cappedReward * 0.20).toFixed(2);
+                const vestedStream = +(cappedReward * 0.80).toFixed(2);
+
+                const isMiner = e.blocksMined > 0 || e.sharesSubmitted > 0;
+                const isTester = e.stateCommits > 0 || e.transfers > 0;
+                const type: 'MINER' | 'TESTER' | 'HYBRID' = isMiner && isTester ? 'HYBRID' : isMiner ? 'MINER' : 'TESTER';
+
+                return {
+                    ...e,
+                    type,
+                    estimatedReward: +cappedReward.toFixed(2),
+                    day1Liquid,
+                    vestedStream,
+                    sharePercent: +(cappedReward / TOTAL_INCENTIVE_POOL * 100).toFixed(3)
+                };
+            });
+
+            // Sort by estimated reward descending
+            ranked.sort((a, b) => b.estimatedReward - a.estimatedReward || b.blocksMined - a.blocksMined);
+
+            const leaderboard = ranked.map((item, idx) => ({
+                rank: idx + 1,
+                ...item
+            }));
+
+            res.json({
+                totalParticipants: leaderboard.length,
+                totalIncentivePool: TOTAL_INCENTIVE_POOL,
+                minerPool: MINER_POOL,
+                testerPool: TESTER_POOL,
+                antiWhaleCap: MAX_CAP_PER_USER,
+                vestingSchedule: '20% Day 1 Liquid, 80% Streamed block-by-block over 90 Days',
+                leaderboard
+            });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
     // --- REAL AMM DEX ENGINE & LIQUIDITY POOL WITH DISK PERSISTENCE ---
     const dexStateFile = path.join(__dirname, '../../data/dex_state.json');
     let poolCtxReserve = 500000;

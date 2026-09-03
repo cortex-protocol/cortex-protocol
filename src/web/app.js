@@ -2276,8 +2276,149 @@ function importKeystoreFile(event) {
     reader.readAsText(file);
 }
 
+// ========================================================
+// INCENTIVIZED TESTNET 2.0 LEADERBOARD ENGINE
+// ========================================================
+
+let cachedLeaderboardData = [];
+let currentLeaderboardFilter = 'all';
+let currentLeaderboardSearch = '';
+
+async function fetchAndRenderLeaderboard() {
+    const refreshIcon = document.getElementById('lb-refresh-icon');
+    if (refreshIcon) refreshIcon.classList.add('fa-spin');
+
+    try {
+        const res = await fetch('/api/leaderboard');
+        if (!res.ok) throw new Error('Failed to load leaderboard');
+        const data = await res.json();
+        
+        cachedLeaderboardData = data.leaderboard || [];
+
+        // Update KPIs
+        const countEl = document.getElementById('lb-participants-count');
+        if (countEl) countEl.innerText = data.totalParticipants || cachedLeaderboardData.length;
+
+        const allCount = cachedLeaderboardData.length;
+        const minerCount = cachedLeaderboardData.filter(u => u.type === 'MINER' || u.type === 'HYBRID').length;
+        const testerCount = cachedLeaderboardData.filter(u => u.type === 'TESTER' || u.type === 'HYBRID').length;
+
+        const tabAll = document.getElementById('lb-tab-all-count');
+        const tabMin = document.getElementById('lb-tab-miner-count');
+        const tabTst = document.getElementById('lb-tab-tester-count');
+        if (tabAll) tabAll.innerText = allCount;
+        if (tabMin) tabMin.innerText = minerCount;
+        if (tabTst) tabTst.innerText = testerCount;
+
+        renderLeaderboardTable();
+    } catch (e) {
+        console.warn('[Leaderboard] Fetch error:', e);
+    } finally {
+        if (refreshIcon) {
+            setTimeout(() => refreshIcon.classList.remove('fa-spin'), 600);
+        }
+    }
+}
+
+function filterLeaderboard(filter, btnEl) {
+    currentLeaderboardFilter = filter;
+    document.querySelectorAll('.lb-filter-btn').forEach(b => {
+        b.classList.remove('active', 'btn-primary');
+        b.classList.add('btn-outline');
+    });
+    if (btnEl) {
+        btnEl.classList.add('active', 'btn-primary');
+        btnEl.classList.remove('btn-outline');
+    }
+    renderLeaderboardTable();
+}
+
+function handleLeaderboardSearch(query) {
+    currentLeaderboardSearch = (query || '').toLowerCase().trim();
+    renderLeaderboardTable();
+}
+
+function renderLeaderboardTable() {
+    const tbody = document.getElementById('leaderboard-table-body');
+    if (!tbody) return;
+
+    let list = cachedLeaderboardData.filter(item => {
+        if (currentLeaderboardFilter === 'miner' && item.type !== 'MINER' && item.type !== 'HYBRID') return false;
+        if (currentLeaderboardFilter === 'tester' && item.type !== 'TESTER' && item.type !== 'HYBRID') return false;
+        if (currentLeaderboardSearch) {
+            return item.address.toLowerCase().includes(currentLeaderboardSearch);
+        }
+        return true;
+    });
+
+    if (list.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center; padding:32px; color:var(--slate-500);">
+                    <i class="fa-solid fa-circle-nodes text-indigo text-2xl mb-2"></i>
+                    <div>No participants found matching current filter or search.</div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = list.map((item, idx) => {
+        const rank = item.rank || (idx + 1);
+        let rankBadge = `<span class="mono font-bold text-slate-700">#${rank}</span>`;
+        if (rank === 1) rankBadge = `<span style="font-size:1.2rem;">🥇</span>`;
+        else if (rank === 2) rankBadge = `<span style="font-size:1.2rem;">🥈</span>`;
+        else if (rank === 3) rankBadge = `<span style="font-size:1.2rem;">🥉</span>`;
+
+        let typeBadge = `<span class="pill-badge pill-violet-light font-mono text-xs">TESTER</span>`;
+        if (item.type === 'MINER') {
+            typeBadge = `<span class="pill-badge pill-green-light font-mono text-xs">MINER ⛏️</span>`;
+        } else if (item.type === 'HYBRID') {
+            typeBadge = `<span class="pill-badge pill-indigo-light font-mono text-xs">HYBRID ⚡</span>`;
+        }
+
+        const shortAddr = `${item.address.substring(0, 8)}...${item.address.substring(item.address.length - 6)}`;
+
+        return `
+            <tr style="border-bottom: 1px solid var(--border-light); transition: background 0.2s;" class="hover-row">
+                <td style="padding: 12px 10px; font-weight:700;">${rankBadge}</td>
+                <td style="padding: 12px 10px;">
+                    <div class="flex items-center gap-2">
+                        <span class="mono text-indigo font-semibold" title="${item.address}">${shortAddr}</span>
+                        <button class="btn btn-ghost btn-xs" onclick="navigator.clipboard.writeText('${item.address}'); showToast('Address copied!')" title="Copy Address">
+                            <i class="fa-regular fa-copy text-slate-400"></i>
+                        </button>
+                    </div>
+                </td>
+                <td style="padding: 12px 10px;">${typeBadge}</td>
+                <td style="padding: 12px 10px;">
+                    <div class="flex items-center gap-3 text-xs text-slate-600">
+                        <span><strong class="text-amber mono">${item.blocksMined || 0}</strong> blocks</span>
+                        <span><strong class="text-indigo mono">${item.stateCommits || 0}</strong> commits</span>
+                        <span><strong class="text-emerald mono">${item.transfers || 0}</strong> txs</span>
+                    </div>
+                </td>
+                <td style="padding: 12px 10px; text-align: right;">
+                    <div class="text-sm font-bold text-slate-900 mono">${item.estimatedReward.toLocaleString()} <span class="text-xs text-indigo">CTX</span></div>
+                    <span class="text-xs text-emerald mono">${item.sharePercent || 0}% share</span>
+                </td>
+                <td style="padding: 12px 10px; text-align: right;">
+                    <div class="text-xs mono">
+                        <span class="text-emerald font-bold">20% (${item.day1Liquid} CTX) Day 1</span>
+                    </div>
+                    <div class="text-xs text-slate-500 mono">
+                        <span>80% (${item.vestedStream} CTX) 90d Stream</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initDex();
+    fetchAndRenderLeaderboard();
+    setInterval(fetchAndRenderLeaderboard, 10000);
 });
 
 

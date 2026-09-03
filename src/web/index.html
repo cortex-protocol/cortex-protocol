@@ -34,8 +34,8 @@
                 <a href="#how-it-works" class="nav-link" onclick="navigateTo('landing', 'how-it-works')">Vision</a>
                 <a href="#stack-explorer" class="nav-link" onclick="navigateTo('landing', 'stack-explorer')">Architecture</a>
                 <a href="#ai-swarm" class="nav-link" onclick="navigateTo('landing', 'ai-swarm')">Swarm</a>
-                <a href="#semantic-search" class="nav-link" onclick="navigateTo('landing', 'semantic-search')">Semantic</a>
                 <a href="#tokenomics" class="nav-link" onclick="navigateTo('landing', 'tokenomics')">Tokenomics</a>
+                <a href="#leaderboard" class="nav-link font-bold text-indigo" onclick="navigateTo('landing', 'leaderboard')"><i class="fa-solid fa-trophy text-amber"></i> Leaderboard</a>
                 <a href="#roadmap" class="nav-link" onclick="navigateTo('landing', 'roadmap')">Roadmap</a>
                 <a href="whitepaper.html" class="nav-link" target="_blank">Whitepaper</a>
             </div>
@@ -65,6 +65,7 @@
         <!-- MOBILE SLIDE-DOWN NAVIGATION DRAWER -->
         <div class="mobile-nav-drawer" id="mobile-nav-drawer">
             <div class="mobile-drawer-links">
+                <a href="#leaderboard" class="mobile-drawer-link" onclick="closeAndNavigate('landing', 'leaderboard')"><i class="fa-solid fa-trophy text-amber"></i> Testnet Leaderboard (210k $CTX)</a>
                 <a href="https://github.com/cortex-protocol/cortex-protocol" class="mobile-drawer-link" target="_blank"><i class="fa-brands fa-github text-slate-800"></i> Official GitHub Repository</a>
                 <a href="whitepaper.html" class="mobile-drawer-link" target="_blank"><i class="fa-solid fa-file-lines text-indigo"></i> Whitepaper</a>
                 <a href="/dex" class="mobile-drawer-link"><i class="fa-solid fa-arrows-rotate text-emerald"></i> AMM DEX Exchange</a>
@@ -997,7 +998,97 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
             </section>
 
             <!-- ======================================================== -->
-            <!-- SECTION 11: STRATEGIC PROTOCOL ROADMAP                   -->
+            <!-- SECTION 11: INCENTIVIZED TESTNET 2.0 LEADERBOARD         -->
+            <!-- ======================================================== -->
+            <section class="section-container reveal-on-scroll" id="leaderboard">
+                <div class="section-header">
+                    <span class="section-eyebrow"><i class="fa-solid fa-trophy text-amber"></i> INCENTIVIZED TESTNET 2.0 LEADERBOARD</span>
+                    <h2 class="section-title">Live Mining & Ecosystem Rewards</h2>
+                    <p class="section-subtitle">Real-time tracking of the 1.0% Genesis Bootstrap Allocation (210,000 $CTX) distributed to active RandomX CPU miners and community testers with 3-month linear vesting.</p>
+                </div>
+
+                <div class="leaderboard-kpi-grid mb-4" style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;">
+                    <div class="light-card p-3 spotlight-card">
+                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Active Participants</span>
+                        <div class="text-2xl font-bold text-indigo mono mt-1" id="lb-participants-count">--</div>
+                        <span class="text-xs text-slate-500">Tracked on Testnet 2.0</span>
+                    </div>
+                    <div class="light-card p-3 spotlight-card">
+                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Incentive Pot</span>
+                        <div class="text-2xl font-bold text-slate-900 mono mt-1">210,000 <span class="text-xs text-indigo">CTX</span></div>
+                        <span class="text-xs text-emerald font-semibold">1.0% of Total Max Supply</span>
+                    </div>
+                    <div class="light-card p-3 spotlight-card">
+                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">70% Miner Share</span>
+                        <div class="text-2xl font-bold text-amber mono mt-1">147,000 <span class="text-xs text-amber">CTX</span></div>
+                        <span class="text-xs text-slate-500">Pro-rata per block & share</span>
+                    </div>
+                    <div class="light-card p-3 spotlight-card">
+                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">30% Tester Share</span>
+                        <div class="text-2xl font-bold text-emerald mono mt-1">63,000 <span class="text-xs text-emerald">CTX</span></div>
+                        <span class="text-xs text-slate-500">DEX swaps, wallet & states</span>
+                    </div>
+                </div>
+
+                <div class="leaderboard-container-card light-card spotlight-card p-4">
+                    <!-- CONTROLS & FILTER BAR -->
+                    <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-bottom-subtle">
+                        <div class="flex items-center gap-2">
+                            <button class="btn btn-sm btn-primary lb-filter-btn active" onclick="filterLeaderboard('all', this)">
+                                <i class="fa-solid fa-users"></i> All Participants (<span id="lb-tab-all-count">0</span>)
+                            </button>
+                            <button class="btn btn-sm btn-outline lb-filter-btn" onclick="filterLeaderboard('miner', this)">
+                                <i class="fa-solid fa-hammer text-amber"></i> Miners (<span id="lb-tab-miner-count">0</span>)
+                            </button>
+                            <button class="btn btn-sm btn-outline lb-filter-btn" onclick="filterLeaderboard('tester', this)">
+                                <i class="fa-solid fa-flask text-emerald"></i> Testers (<span id="lb-tab-tester-count">0</span>)
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <div class="search-input-wrap" style="position:relative; min-width:240px;">
+                                <i class="fa-solid fa-magnifying-glass text-slate-400" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.85rem;"></i>
+                                <input type="text" id="lb-search-input" placeholder="Search address ctx1..." oninput="handleLeaderboardSearch(this.value)" class="form-control" style="padding-left:34px; font-size:0.84rem; height:36px; border-radius:9999px;">
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="fetchAndRenderLeaderboard()" title="Refresh Leaderboard">
+                                <i class="fa-solid fa-rotate" id="lb-refresh-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- LEADERBOARD TABLE -->
+                    <div class="table-responsive mt-3" style="max-height: 520px; overflow-y: auto;">
+                        <table class="table-modern" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border-light); text-align: left; color: var(--slate-500); font-size: 0.76rem; text-transform: uppercase;">
+                                    <th style="padding: 12px 10px; width: 60px;">Rank</th>
+                                    <th style="padding: 12px 10px;">Address</th>
+                                    <th style="padding: 12px 10px; width: 110px;">Category</th>
+                                    <th style="padding: 12px 10px;">Activity Stats</th>
+                                    <th style="padding: 12px 10px; text-align: right;">Est. $CTX Airdrop</th>
+                                    <th style="padding: 12px 10px; text-align: right;">Vesting Breakdown</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-table-body">
+                                <tr>
+                                    <td colspan="6" style="text-align:center; padding: 36px; color: var(--slate-400);">
+                                        <i class="fa-solid fa-spinner fa-spin text-indigo text-2xl mb-2"></i>
+                                        <div>Loading Live Testnet 2.0 Leaderboard...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex items-center justify-between flex-wrap gap-2 mt-3 pt-3 border-top-subtle text-xs text-slate-500">
+                        <div><span class="dot-indicator"></span> <strong>Live Sync:</strong> Synchronized with confirmed blocks on Testnet 2.0. Updates every 10s.</div>
+                        <div><i class="fa-solid fa-shield-halved text-indigo"></i> Anti-Whale 3% Hard Cap (6,300 $CTX max per address) applied automatically.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 12: STRATEGIC PROTOCOL ROADMAP                   -->
             <!-- ======================================================== -->
             <section class="section-container reveal-on-scroll" id="roadmap">
                 <div class="section-header">
