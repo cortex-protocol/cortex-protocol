@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cortex Protocol ($CTX) | The Settlement & State Layer for Autonomous AI Agents</title>
     <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3.5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -998,131 +998,135 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
             </section>
 
             <!-- ======================================================== -->
-            <!-- SECTION 11: INCENTIVIZED TESTNET 2.0 LEADERBOARD (V2.0)  -->
+            <!-- SECTION 11: INCENTIVIZED TESTNET 2.0 LEADERBOARD (V3.0)  -->
             <!-- ======================================================== -->
             <section class="section-container reveal-on-scroll" id="leaderboard">
-                <div class="section-header">
-                    <span class="section-eyebrow"><i class="fa-solid fa-trophy text-amber"></i> INCENTIVIZED TESTNET 2.0 LEADERBOARD</span>
-                    <h2 class="section-title">Genesis Bootstrap Allocation & Live Rankings</h2>
-                    <p class="section-subtitle">Real-time distribution of the 1.0% Genesis Bootstrap Allocation (210,000 $CTX) awarded to active RandomX CPU miners and verified ecosystem testers.</p>
-                </div>
-
-                <!-- INSTITUTIONAL CONVERSION & PEG BANNER -->
-                <div class="leaderboard-hero-banner mb-4">
-                    <div class="flex items-center justify-between flex-wrap gap-4">
-                        <div style="max-width: 620px;">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="ratio-badge-pill"><i class="fa-solid fa-scale-balanced text-indigo"></i> 1,000 $tCTX = 1.00 $CTX Mainnet</span>
-                                <span class="badge-subtle badge-indigo text-xs font-bold">1000:1 Conversion Peg</span>
-                            </div>
-                            <h3 class="text-lg font-bold text-slate-900 mt-1">Proof-of-Work & State Activity Convertible to Mainnet Genesis Airdrop</h3>
-                            <p class="text-xs text-slate-600 mt-1">All testnet tokens (<strong>$tCTX</strong>) accumulated via CPU mining and state notarization qualify directly for the 210,000 $CTX Mainnet distribution with 3-month linear vesting.</p>
+                <div class="leaderboard-tier1-card">
+                    <div class="section-header text-center mb-4">
+                        <div class="inline-flex items-center gap-2 mb-2" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 5px 14px; border-radius: 9999px; color: #fbbf24; font-size: 0.82rem; font-weight: 800;">
+                            <i class="fa-solid fa-trophy text-amber"></i> INCENTIVIZED TESTNET 2.0 LEADERBOARD
                         </div>
+                        <h2 class="text-3xl font-extrabold text-white" style="letter-spacing: -0.02em;">Genesis Bootstrap Allocation & Live Rankings</h2>
+                        <p class="text-sm text-slate-400 max-w-2xl mx-auto mt-2">Real-time tracking of the 1.0% Genesis Bootstrap Allocation (210,000 $CTX) awarded to active RandomX CPU miners and verified ecosystem testers.</p>
+                    </div>
 
-                        <!-- INTERACTIVE REWARDS SIMULATOR BOX -->
-                        <div class="sim-box-wrapper" style="min-width: 320px; flex: 1; max-width: 440px;">
-                            <div style="width: 100%;">
-                                <div class="flex items-center justify-between text-xs font-bold text-slate-700 mb-1">
-                                    <span><i class="fa-solid fa-calculator text-indigo"></i> REWARD SIMULATOR</span>
-                                    <span class="text-indigo mono" id="sim-mainnet-val">0.00 $CTX Mainnet</span>
+                    <!-- INSTITUTIONAL CONVERSION & PEG BANNER -->
+                    <div class="leaderboard-hero-banner-dark mb-4">
+                        <div class="flex items-center justify-between flex-wrap gap-4">
+                            <div style="max-width: 620px;">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="ratio-badge-pill-dark"><i class="fa-solid fa-scale-balanced text-indigo"></i> 1,000 $tCTX = 1.00 $CTX Mainnet</span>
+                                    <span class="badge-subtle badge-indigo text-xs font-bold">1000:1 Conversion Peg</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <input type="number" id="sim-input-tctx" placeholder="Enter your $tCTX (e.g. 5000)" oninput="simulateConversion(this.value)" class="form-control" style="font-size: 0.84rem; height: 36px; border-radius: 10px; font-family: var(--font-mono);">
-                                    <button class="btn btn-primary btn-sm" onclick="simulateWithCurrentWallet()" title="Calculate for my connected wallet">My Wallet</button>
-                                </div>
-                                <div class="flex items-center justify-between text-xs text-slate-500 mt-2 font-mono" style="font-size: 0.74rem;">
-                                    <span>Day 1 Liquid (20%): <strong class="text-emerald" id="sim-day1-val">0.00 CTX</strong></span>
-                                    <span>90d Stream (80%): <strong class="text-indigo" id="sim-stream-val">0.00 CTX</strong></span>
+                                <h3 class="text-lg font-bold text-white mt-1">Proof-of-Work & State Activity Convertible to Mainnet Genesis Airdrop</h3>
+                                <p class="text-xs text-slate-300 mt-1">All testnet tokens (<strong>$tCTX</strong>) accumulated via CPU mining and state notarization qualify directly for the 210,000 $CTX Mainnet distribution with 3-month linear vesting.</p>
+                            </div>
+
+                            <!-- INTERACTIVE REWARDS SIMULATOR BOX -->
+                            <div class="sim-box-dark" style="min-width: 320px; flex: 1; max-width: 440px;">
+                                <div style="width: 100%;">
+                                    <div class="flex items-center justify-between text-xs font-bold text-slate-300 mb-1">
+                                        <span><i class="fa-solid fa-calculator text-indigo"></i> REWARD SIMULATOR</span>
+                                        <span class="text-emerald font-bold mono text-sm" id="sim-mainnet-val">0.00 $CTX Mainnet</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" id="sim-input-tctx" placeholder="Enter your $tCTX (e.g. 5000)" oninput="simulateConversion(this.value)" class="form-control" style="background: rgba(15,23,42,0.9); border: 1px solid rgba(255,255,255,0.15); color:#ffffff; font-size: 0.84rem; height: 38px; border-radius: 10px; font-family: var(--font-mono);">
+                                        <button class="btn btn-primary btn-sm" onclick="simulateWithCurrentWallet()" title="Calculate for my connected wallet">My Wallet</button>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs text-slate-400 mt-2 font-mono" style="font-size: 0.74rem;">
+                                        <span>Day 1 Liquid (20%): <strong class="text-emerald" id="sim-day1-val">0.00 CTX</strong></span>
+                                        <span>90d Stream (80%): <strong class="text-cyan-400" id="sim-stream-val">0.00 CTX</strong></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 4 METRIC CARDS -->
-                <div class="leaderboard-kpi-grid mb-4" style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;">
-                    <div class="light-card p-3 spotlight-card">
-                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Active Participants</span>
-                        <div class="text-2xl font-bold text-indigo mono mt-1" id="lb-participants-count">--</div>
-                        <span class="text-xs text-slate-500"><span class="dot-indicator"></span> Verified Nodes & Wallets</span>
-                    </div>
-                    <div class="light-card p-3 spotlight-card">
-                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Genesis Bootstrap Pool</span>
-                        <div class="text-2xl font-bold text-slate-900 mono mt-1">210,000 <span class="text-xs text-indigo">CTX</span></div>
-                        <span class="text-xs text-emerald font-semibold">1.0% Fixed Hard Cap Allocation</span>
-                    </div>
-                    <div class="light-card p-3 spotlight-card">
-                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">70% Miner Share</span>
-                        <div class="text-2xl font-bold text-amber mono mt-1">147,000 <span class="text-xs text-amber">CTX</span></div>
-                        <span class="text-xs text-slate-500">Pro-rata CPU RandomX hashrate</span>
-                    </div>
-                    <div class="light-card p-3 spotlight-card">
-                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">30% Ecosystem Share</span>
-                        <div class="text-2xl font-bold text-emerald mono mt-1">63,000 <span class="text-xs text-emerald">CTX</span></div>
-                        <span class="text-xs text-slate-500">DEX trades, states & commits</span>
-                    </div>
-                </div>
-
-                <!-- TOP 3 PODIUM CARDS -->
-                <div class="podium-grid" id="leaderboard-podium-container">
-                    <!-- Dynamic Podium Generated by JS -->
-                </div>
-
-                <!-- FULL LEADERBOARD TABLE CARD -->
-                <div class="leaderboard-container-card light-card spotlight-card p-4">
-                    <!-- CONTROLS & FILTER BAR -->
-                    <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-bottom-subtle">
-                        <div class="flex items-center gap-2">
-                            <button class="btn btn-sm btn-primary lb-filter-btn active" onclick="filterLeaderboard('all', this)">
-                                <i class="fa-solid fa-users"></i> All (<span id="lb-tab-all-count">0</span>)
-                            </button>
-                            <button class="btn btn-sm btn-outline lb-filter-btn" onclick="filterLeaderboard('miner', this)">
-                                <i class="fa-solid fa-hammer text-amber"></i> Miners (<span id="lb-tab-miner-count">0</span>)
-                            </button>
-                            <button class="btn btn-sm btn-outline lb-filter-btn" onclick="filterLeaderboard('tester', this)">
-                                <i class="fa-solid fa-flask text-emerald"></i> Testers (<span id="lb-tab-tester-count">0</span>)
-                            </button>
+                    <!-- 4 METRIC TILES -->
+                    <div class="leaderboard-kpi-grid mb-4" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+                        <div class="kpi-tile-dark">
+                            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Active Participants</span>
+                            <div class="text-2xl font-bold text-white mono mt-1" id="lb-participants-count">--</div>
+                            <span class="text-xs text-indigo"><span class="dot-indicator"></span> Live Testnet Nodes</span>
                         </div>
+                        <div class="kpi-tile-dark">
+                            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Genesis Bootstrap Pool</span>
+                            <div class="text-2xl font-bold text-white mono mt-1">210,000 <span class="text-xs text-indigo">CTX</span></div>
+                            <span class="text-xs text-emerald font-semibold">1.0% Fixed Hard Cap Allocation</span>
+                        </div>
+                        <div class="kpi-tile-dark">
+                            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">70% Miner Share</span>
+                            <div class="text-2xl font-bold text-amber mono mt-1">147,000 <span class="text-xs text-amber">CTX</span></div>
+                            <span class="text-xs text-slate-400">Pro-rata RandomX hashrate</span>
+                        </div>
+                        <div class="kpi-tile-dark">
+                            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">30% Ecosystem Share</span>
+                            <div class="text-2xl font-bold text-emerald mono mt-1">63,000 <span class="text-xs text-emerald">CTX</span></div>
+                            <span class="text-xs text-slate-400">DEX trades, states & commits</span>
+                        </div>
+                    </div>
 
-                        <div class="flex items-center gap-3">
-                            <div class="search-input-wrap" style="position:relative; min-width:260px;">
-                                <i class="fa-solid fa-magnifying-glass text-slate-400" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.85rem;"></i>
-                                <input type="text" id="lb-search-input" placeholder="Search address ctx1..." oninput="handleLeaderboardSearch(this.value)" class="form-control" style="padding-left:34px; font-size:0.84rem; height:36px; border-radius:9999px;">
+                    <!-- TOP 3 PODIUM CARDS -->
+                    <div class="podium-grid" id="leaderboard-podium-container">
+                        <!-- Dynamic Podium Generated by JS -->
+                    </div>
+
+                    <!-- FULL LEADERBOARD TABLE -->
+                    <div class="leaderboard-container-card p-4" style="background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px;">
+                        <!-- CONTROLS & FILTER BAR -->
+                        <div class="flex items-center justify-between flex-wrap gap-3 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                            <div class="flex items-center gap-2">
+                                <button class="btn btn-sm btn-primary lb-filter-btn active" onclick="filterLeaderboard('all', this)">
+                                    <i class="fa-solid fa-users"></i> All (<span id="lb-tab-all-count">0</span>)
+                                </button>
+                                <button class="btn btn-sm btn-outline lb-filter-btn" style="color:#f1f5f9; border-color:rgba(255,255,255,0.2);" onclick="filterLeaderboard('miner', this)">
+                                    <i class="fa-solid fa-hammer text-amber"></i> Miners (<span id="lb-tab-miner-count">0</span>)
+                                </button>
+                                <button class="btn btn-sm btn-outline lb-filter-btn" style="color:#f1f5f9; border-color:rgba(255,255,255,0.2);" onclick="filterLeaderboard('tester', this)">
+                                    <i class="fa-solid fa-flask text-emerald"></i> Testers (<span id="lb-tab-tester-count">0</span>)
+                                </button>
                             </div>
-                            <button class="btn btn-outline btn-sm" onclick="fetchAndRenderLeaderboard()" title="Refresh Live Leaderboard">
-                                <i class="fa-solid fa-rotate" id="lb-refresh-icon"></i>
-                            </button>
+
+                            <div class="flex items-center gap-3">
+                                <div class="search-input-wrap" style="position:relative; min-width:260px;">
+                                    <i class="fa-solid fa-magnifying-glass text-slate-400" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:0.85rem;"></i>
+                                    <input type="text" id="lb-search-input" placeholder="Search address ctx1..." oninput="handleLeaderboardSearch(this.value)" class="form-control" style="background: rgba(11,15,25,0.9); border: 1px solid rgba(255,255,255,0.15); color:#ffffff; padding-left:34px; font-size:0.84rem; height:36px; border-radius:9999px;">
+                                </div>
+                                <button class="btn btn-outline btn-sm" style="color:#ffffff; border-color:rgba(255,255,255,0.2);" onclick="fetchAndRenderLeaderboard()" title="Refresh Live Leaderboard">
+                                    <i class="fa-solid fa-rotate" id="lb-refresh-icon"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- LEADERBOARD TABLE -->
-                    <div class="table-responsive mt-3" style="max-height: 540px; overflow-y: auto;">
-                        <table class="table-modern" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid var(--border-light); text-align: left; color: var(--slate-500); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    <th style="padding: 12px 10px; width: 60px;">Rank</th>
-                                    <th style="padding: 12px 10px;">Participant Address</th>
-                                    <th style="padding: 12px 10px; width: 110px;">Category</th>
-                                    <th style="padding: 12px 10px;">Activity Metrics</th>
-                                    <th style="padding: 12px 10px; text-align: right;">$tCTX Balance</th>
-                                    <th style="padding: 12px 10px; text-align: right;">Est. Mainnet $CTX Airdrop</th>
-                                    <th style="padding: 12px 10px; text-align: right; width: 170px;">3-Month Vesting Stream</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leaderboard-table-body">
-                                <tr>
-                                    <td colspan="7" style="text-align:center; padding: 36px; color: var(--slate-400);">
-                                        <i class="fa-solid fa-spinner fa-spin text-indigo text-2xl mb-2"></i>
-                                        <div>Loading Live Testnet 2.0 Leaderboard...</div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                        <!-- TABLE -->
+                        <div class="table-responsive mt-3" style="max-height: 540px; overflow-y: auto;">
+                            <table class="table-dark-custom" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 12px 10px; width: 60px;">Rank</th>
+                                        <th style="padding: 12px 10px;">Participant Address</th>
+                                        <th style="padding: 12px 10px; width: 110px;">Category</th>
+                                        <th style="padding: 12px 10px;">Activity Metrics</th>
+                                        <th style="padding: 12px 10px; text-align: right;">$tCTX Balance</th>
+                                        <th style="padding: 12px 10px; text-align: right;">Est. Mainnet $CTX Airdrop</th>
+                                        <th style="padding: 12px 10px; text-align: right; width: 180px;">3-Month Vesting Stream</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboard-table-body">
+                                    <tr>
+                                        <td colspan="7" style="text-align:center; padding: 36px; color: var(--slate-400);">
+                                            <i class="fa-solid fa-spinner fa-spin text-indigo text-2xl mb-2"></i>
+                                            <div>Loading Live Testnet 2.0 Leaderboard...</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
-                    <div class="flex items-center justify-between flex-wrap gap-2 mt-3 pt-3 border-top-subtle text-xs text-slate-500">
-                        <div><span class="dot-indicator"></span> <strong>Live Telemetry:</strong> Synchronized directly with confirmed Testnet 2.0 blocks. Auto-refreshes every 10s.</div>
-                        <div><i class="fa-solid fa-shield-halved text-indigo"></i> <strong>Anti-Whale Hard Cap:</strong> 3.0% (6,300 $CTX max per address). Linear vesting: 20% Genesis / 80% 90-Day Stream.</div>
+                        <div class="flex items-center justify-between flex-wrap gap-2 mt-3 pt-3 text-xs text-slate-400" style="border-top: 1px solid rgba(255,255,255,0.08);">
+                            <div><span class="dot-indicator"></span> <strong>Live Telemetry:</strong> Synchronized directly with confirmed Testnet 2.0 blocks. Auto-refreshes every 10s.</div>
+                            <div><i class="fa-solid fa-shield-halved text-indigo"></i> <strong>Anti-Whale Hard Cap:</strong> 3.0% (6,300 $CTX max per address). Linear vesting: 20% Genesis / 80% 90-Day Stream.</div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1421,6 +1425,6 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
     <!-- NOTIFICATION TOAST -->
     <div id="toast" class="toast-light"></div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=3.5"></script>
 </body>
 </html>
