@@ -79,7 +79,7 @@ export class CortexMiner {
         const headerSuffix = `:${block.minerAddress}`;
         const seed = CortexRandomX.getSeedForBlock(nextIndex);
 
-        const CHUNK_SIZE = 50;
+        const CHUNK_SIZE = 20;
 
         while (hashes < maxIterations) {
             // Run a small chunk of hashes
@@ -110,7 +110,7 @@ export class CortexMiner {
             }
 
             // Yield control back to Node.js event loop so HTTP requests never stall
-            await new Promise(resolve => setTimeout(resolve, 8));
+            await new Promise(resolve => setTimeout(resolve, 15));
         }
 
         const timeTaken = Date.now() - startTime;
@@ -130,7 +130,7 @@ export class CortexMiner {
         const miningLoop = async () => {
             if (!this.isMining) return;
 
-            await this.mineNextBlockAsync(50000);
+            await this.mineNextBlockAsync(2000);
 
             const now = Date.now();
             const elapsed = (now - lastTime) / 1000;

@@ -254,9 +254,17 @@ export function createApiServer(
         }
     });
 
-    // --- INCENTIVIZED TESTNET 2.0 LEADERBOARD ENDPOINT ---
+    // --- INCENTIVIZED TESTNET 2.0 LEADERBOARD ENDPOINT (OPTIMIZED O(N) WITH IN-MEMORY CACHING) ---
+    let cachedLeaderboardResult: any = null;
+    let lastLeaderboardComputedTime = 0;
+
     app.get('/api/leaderboard', (req, res) => {
         try {
+            const now = Date.now();
+            if (cachedLeaderboardResult && (now - lastLeaderboardComputedTime < 5000)) {
+                return res.json(cachedLeaderboardResult);
+            }
+
             const TOTAL_INCENTIVE_POOL = 210000; // 1% of 21,000,000 CTX
             const MINER_POOL = 147000;          // 70%
             const TESTER_POOL = 63000;          // 30%
@@ -281,14 +289,14 @@ export function createApiServer(
                         sharesSubmitted: 0,
                         stateCommits: 0,
                         transfers: 0,
-                        balance: blockchain.getBalance(norm),
+                        balance: 0,
                         type: 'TESTER'
                     });
                 }
                 return addressStats.get(norm)!;
             };
 
-            // 1. Scan confirmed blockchain
+            // Single linear pass over entire blockchain (O(N) time)
             for (const block of blockchain.chain) {
                 if (block.minerAddress && !block.minerAddress.includes('genesis')) {
                     const s = getOrCreate(block.minerAddress);
@@ -296,22 +304,24 @@ export function createApiServer(
                 }
 
                 for (const tx of block.transactions) {
-                    if (tx.sender && !tx.sender.includes('COINBASE') && !tx.sender.includes('genesis')) {
+                    if (tx.sender && tx.sender.startsWith('ctx1') && !tx.sender.includes('genesis')) {
                         const s = getOrCreate(tx.sender);
+                        s.balance -= (tx.amount + tx.fee + (tx.burnAmount || 0));
                         if (tx.type === 'MEMORY_COMMIT') {
                             s.stateCommits += 1;
                         } else {
                             s.transfers += 1;
                         }
                     }
-                    if (tx.recipient && !tx.recipient.includes('0000000000000') && !tx.recipient.includes('genesis')) {
-                        const s = getOrCreate(tx.recipient);
-                        s.transfers += 1;
+                    if (tx.recipient && tx.recipient.startsWith('ctx1') && !tx.recipient.includes('0000000000000') && !tx.recipient.includes('genesis')) {
+                        const r = getOrCreate(tx.recipient);
+                        r.balance += tx.amount;
+                        r.transfers += 1;
                     }
                 }
             }
 
-            // 2. Include pool shares
+            // Include pool shares
             const poolStats = pool.getStats();
             for (const m of poolStats.miners || []) {
                 if (m.address) {
@@ -320,7 +330,7 @@ export function createApiServer(
                 }
             }
 
-            // 3. Filter valid accounts
+            // Filter valid accounts
             const entries = Array.from(addressStats.values()).filter(u => 
                 u.address.length >= 20 &&
                 !u.address.includes('0000000000000') && 
@@ -350,6 +360,7 @@ export function createApiServer(
 
                 return {
                     ...e,
+                    balance: Math.max(0, +e.balance.toFixed(4)),
                     type,
                     estimatedReward: +cappedReward.toFixed(2),
                     day1Liquid,
@@ -366,7 +377,7 @@ export function createApiServer(
                 ...item
             }));
 
-            res.json({
+            cachedLeaderboardResult = {
                 totalParticipants: leaderboard.length,
                 totalIncentivePool: TOTAL_INCENTIVE_POOL,
                 minerPool: MINER_POOL,
@@ -378,7 +389,10 @@ export function createApiServer(
                 mainnetSymbol: 'CTX',
                 vestingSchedule: '20% Day 1 Liquid, 80% Streamed block-by-block over 90 Days',
                 leaderboard
-            });
+            };
+            lastLeaderboardComputedTime = now;
+
+            res.json(cachedLeaderboardResult);
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
@@ -420,14 +434,22 @@ export function createApiServer(
 
     loadDexState();
 
-    app.get('/api/dex/pool', (req, res) => {
+    const getDexPoolData = () => {
         const spotPrice = +(poolUsdcReserve / poolCtxReserve).toFixed(4);
-        res.json({
+        return {
             poolCtx: poolCtxReserve,
             poolUsdc: poolUsdcReserve,
             spotPrice,
             feeTier: 0.003
-        });
+        };
+    };
+
+    app.get('/api/dex/pool', (req, res) => {
+        res.json(getDexPoolData());
+    });
+
+    app.get('/api/dex/stats', (req, res) => {
+        res.json(getDexPoolData());
     });
 
     app.get('/api/dex/balance/:address', (req, res) => {
