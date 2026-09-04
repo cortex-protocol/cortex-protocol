@@ -17,15 +17,61 @@ const MINER_ADDRESS = process.env.MINER_ADDRESS || pool.getPoolAddress();
 const miner = new CortexMiner(blockchain, MINER_ADDRESS);
 const p2p = new P2PNetwork(blockchain, P2P_PORT, PEERS);
 
-// Hook miner & pool to broadcast new blocks to P2P network
+import https from 'https';
+
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1545577139359846520/n31MX7B8kdFZReiDr8cVQXbhgxJSfPQs_PoX4sSY50eKXtFAjYtcDtvN6yI2aBa9qBuZ';
+
+function notifyDiscordBlock(block: any, source: string = 'Node Miner') {
+    if (!DISCORD_WEBHOOK_URL) return;
+    try {
+        const shortMiner = `${block.minerAddress.substring(0, 10)}...${block.minerAddress.substring(block.minerAddress.length - 6)}`;
+        const shortHash = `${block.hash.substring(0, 16)}...`;
+        const memoryCount = block.transactions.filter((t: any) => t.type === 'MEMORY_COMMIT').length;
+
+        const payload = JSON.stringify({
+            username: 'Cortex Network Bot',
+            avatar_url: 'https://cortex-protocol.xyz/assets/logo.svg',
+            embeds: [{
+                title: `💎 Block #${block.index} Confirmed on Layer-1`,
+                description: `Successfully mined via **RandomX CPU PoW** by \`${source}\`\n[View Block on Explorer](https://cortex-protocol.xyz)`,
+                color: 0x6366f1,
+                fields: [
+                    { name: 'Block Hash', value: `\`${shortHash}\``, inline: true },
+                    { name: 'Difficulty', value: `\`${block.difficulty}\``, inline: true },
+                    { name: 'Reward', value: `**+50 $tCTX**`, inline: true },
+                    { name: 'Miner Address', value: `[\`${shortMiner}\`](https://cortex-protocol.xyz/#leaderboard)`, inline: true },
+                    { name: 'Transactions', value: `\`${block.transactions.length} txs\``, inline: true },
+                    { name: 'AI States Anchored', value: `\`${memoryCount} states\``, inline: true }
+                ],
+                footer: { text: 'Cortex Protocol • Incentivized Testnet 2.0' },
+                timestamp: new Date().toISOString()
+            }]
+        });
+
+        const req = https.request(DISCORD_WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        });
+        req.on('error', () => {});
+        req.write(payload);
+        req.end();
+    } catch(e) {}
+}
+
+// Hook miner & pool to broadcast new blocks to P2P network and Discord
 miner.onBlockFound((block) => {
     console.log(`\n💎 [MINED] Block #${block.index} successfully mined! Hash: ${block.hash.substring(0, 16)}...`);
     p2p.broadcastBlock(block);
+    notifyDiscordBlock(block, 'Solo CPU Miner');
 });
 
 pool.onBlockFound((block) => {
     console.log(`\n🎉 [POOL MINED] Block #${block.index} successfully solved by pool worker!`);
     p2p.broadcastBlock(block);
+    notifyDiscordBlock(block, 'P2P Mining Pool Worker');
 });
 
 // Start P2P

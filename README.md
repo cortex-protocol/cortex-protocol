@@ -1,11 +1,19 @@
 # Cortex Protocol ($CTX)
 ### The Settlement & State Layer for Autonomous AI Agents
 
+[![Discord Community](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/WK7tYSse2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Network](https://img.shields.io/badge/Network-Incentivized%20Testnet%201.0%20(Live)-6366f1.svg)](https://cortex-protocol.xyz)
+[![Network](https://img.shields.io/badge/Network-Incentivized%20Testnet%202.0%20(Live)-6366f1.svg)](https://cortex-protocol.xyz)
 [![Consensus](https://img.shields.io/badge/Consensus-RandomX%20CPU%20PoW-10b981.svg)](https://cortex-protocol.xyz)
 [![Tokenomics](https://img.shields.io/badge/Fair%20Launch-0%25%20VC%20Premine-f59e0b.svg)](https://cortex-protocol.xyz)
 [![Deflation](https://img.shields.io/badge/Gas%20Burn-30%25%20Permanent-ef4444.svg)](https://cortex-protocol.xyz)
+
+---
+
+## 💬 Official Community
+* **Discord Community**: [https://discord.gg/WK7tYSse2](https://discord.gg/WK7tYSse2)
+* **Official Website**: [https://cortex-protocol.xyz](https://cortex-protocol.xyz)
+* **Live Incentivized Leaderboard**: [https://cortex-protocol.xyz/#leaderboard](https://cortex-protocol.xyz/#leaderboard)
 
 ---
 
