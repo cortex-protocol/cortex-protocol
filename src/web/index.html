@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cortex Protocol ($CTX) | The Settlement & State Layer for Autonomous AI Agents</title>
     <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
-    <link rel="stylesheet" href="style.css?v=5.0">
+    <link rel="stylesheet" href="style.css?v=6.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1458,29 +1458,103 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
         <!-- ======================================================== -->
         <!-- VIEW 2: BLOCKCHAIN EXPLORER APP (LIGHT THEME)            -->
         <!-- ======================================================== -->
+        <!-- EXPLORER VIEW (CYBER-DARK GLASSMORPHIC THEME) -->
+        <!-- ======================================================== -->
         <div id="view-explorer" class="view-pane">
-            <div class="app-page-header">
-                <div>
-                    <h2><i class="fa-solid fa-cubes text-indigo"></i> Live Blockchain Explorer</h2>
-                    <p class="text-muted">Real-time ledger inspection, Merkle roots, and AI memory commits.</p>
+            <!-- Explorer Top Navigation / Header -->
+            <div class="explorer-hero-header">
+                <div class="explorer-title-area">
+                    <div class="explorer-badge-row">
+                        <span class="explorer-live-pulse"><span class="pulse-ring"></span><span class="pulse-core"></span> MAINNET CANARY TESTNET</span>
+                        <span class="badge-subtle badge-indigo">POW + NEURAL DUAL-LEDGER</span>
+                    </div>
+                    <h2 class="explorer-main-title"><i class="fa-solid fa-cubes text-indigo"></i> Cortex Block Explorer</h2>
+                    <p class="explorer-subtitle">Real-time cryptographic ledger inspection, PoW block verification, and AI neural state notarization.</p>
                 </div>
-                <button class="btn btn-outline" onclick="navigateTo('landing')"><i class="fa-solid fa-arrow-left"></i> Back to Home</button>
+                <div class="explorer-header-actions">
+                    <button class="btn btn-outline" onclick="navigateTo('landing')"><i class="fa-solid fa-arrow-left"></i> Home</button>
+                    <button class="btn btn-primary" onclick="navigateTo('wallet')"><i class="fa-solid fa-wallet"></i> Wallet</button>
+                    <a href="/dex" class="btn btn-outline"><i class="fa-solid fa-arrows-rotate text-emerald"></i> DEX</a>
+                </div>
             </div>
 
+            <!-- NETWORK TELEMETRY METRICS CARDS -->
+            <div class="explorer-stat-grid mt-4">
+                <div class="explorer-stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">CURRENT BLOCK</span>
+                        <i class="fa-solid fa-cube text-indigo stat-card-icon"></i>
+                    </div>
+                    <div class="stat-card-value text-indigo" id="exp-stat-height">#---</div>
+                    <div class="stat-card-sub"><span class="text-emerald font-bold">● Live Sync</span> • Consensus Height</div>
+                </div>
+
+                <div class="explorer-stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">NETWORK HASHRATE</span>
+                        <i class="fa-solid fa-microchip text-emerald stat-card-icon"></i>
+                    </div>
+                    <div class="stat-card-value text-emerald" id="exp-stat-hashrate">-- MH/s</div>
+                    <div class="stat-card-sub" id="exp-stat-workers">Mining Pool & Workers active</div>
+                </div>
+
+                <div class="explorer-stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">POW DIFFICULTY</span>
+                        <i class="fa-solid fa-shield-halved text-amber stat-card-icon"></i>
+                    </div>
+                    <div class="stat-card-value text-amber" id="exp-stat-difficulty">Diff --</div>
+                    <div class="stat-card-sub">Target: ~15s / Block</div>
+                </div>
+
+                <div class="explorer-stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">AI MEMORIES INSCRIBED</span>
+                        <i class="fa-solid fa-brain text-violet stat-card-icon"></i>
+                    </div>
+                    <div class="stat-card-value text-violet" id="exp-stat-memories">-- Vectors</div>
+                    <div class="stat-card-sub">Autonomous AI Swarm State</div>
+                </div>
+            </div>
+
+            <!-- OMNI-SEARCH BAR -->
+            <div class="explorer-search-section mt-4">
+                <form class="explorer-search-form" onsubmit="handleExplorerSearchSubmit(event)">
+                    <div class="explorer-search-inner">
+                        <i class="fa-solid fa-magnifying-glass search-leading-icon"></i>
+                        <input type="text" id="explorer-search-input" class="explorer-search-input" placeholder="Search by Block Number (e.g. 4995), Block Hash (0000...), TxID (tx_...), or Address (ctx1...)" autocomplete="off">
+                        <button type="submit" class="btn btn-primary explorer-search-btn">
+                            <span>Search</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+                <div class="explorer-search-chips">
+                    <span class="chips-label">Quick Search:</span>
+                    <button type="button" class="search-chip" onclick="searchLatestBlock()"><i class="fa-solid fa-cube text-indigo"></i> Latest Block</button>
+                    <button type="button" class="search-chip" onclick="searchQuery('ctx16989d3bf981a2fd7693bddaf93d3ac5e292b067b60175ac3')"><i class="fa-solid fa-robot text-violet"></i> AI Swarm Address</button>
+                    <button type="button" class="search-chip" onclick="searchCurrentWallet()"><i class="fa-solid fa-wallet text-emerald"></i> My Connected Wallet</button>
+                </div>
+            </div>
+
+            <!-- MAIN GRID: CONFIRMED BLOCKS & NEURAL MEMORIES -->
             <div class="grid-2col mt-4">
-                <div class="panel light-card spotlight-card">
-                    <div class="panel-header-light">
-                        <h3><i class="fa-solid fa-cubes text-indigo"></i> Confirmed Blocks</h3>
-                        <span class="pill-badge pill-green-light">● Realtime Sync</span>
+                <!-- CONFIRMED BLOCKS TABLE -->
+                <div class="explorer-panel">
+                    <div class="explorer-panel-header">
+                        <div class="panel-title-group">
+                            <i class="fa-solid fa-cubes text-indigo"></i>
+                            <h3>Confirmed Blocks</h3>
+                        </div>
+                        <span class="pill-badge pill-green-light"><span class="pulse-dot-green"></span> Realtime Stream</span>
                     </div>
                     <div class="table-container">
-                        <table class="table-light">
+                        <table class="table-explorer">
                             <thead>
                                 <tr>
                                     <th>Height</th>
                                     <th>Miner</th>
-                                    <th>Transactions</th>
-                                    <th>Difficulty</th>
+                                    <th>Txs / State</th>
+                                    <th>Diff</th>
                                     <th>Hash</th>
                                 </tr>
                             </thead>
@@ -1489,18 +1563,26 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
                     </div>
                 </div>
 
-                <div class="panel light-card spotlight-card">
-                    <div class="panel-header-light">
-                        <h3><i class="fa-solid fa-brain text-violet"></i> Neural Memory Stream</h3>
-                        <span class="pill-badge pill-violet-light">Vector Ledger</span>
+                <!-- AI NEURAL MEMORY STREAM -->
+                <div class="explorer-panel">
+                    <div class="explorer-panel-header">
+                        <div class="panel-title-group">
+                            <i class="fa-solid fa-brain text-violet"></i>
+                            <h3>Neural Memory Inscriptions</h3>
+                        </div>
+                        <span class="pill-badge pill-violet-light"><i class="fa-solid fa-database"></i> Vector Ledger</span>
                     </div>
-                    <div class="memory-feed-light" id="memory-feed-container"></div>
+                    <div class="memory-feed-explorer" id="memory-feed-container"></div>
                 </div>
             </div>
 
-            <div class="panel light-card spotlight-card mt-4">
-                <div class="panel-header-light">
-                    <h3><i class="fa-solid fa-hourglass-half text-amber"></i> Mempool (Pending Queue)</h3>
+            <!-- MEMPOOL SECTION -->
+            <div class="explorer-panel mt-4">
+                <div class="explorer-panel-header">
+                    <div class="panel-title-group">
+                        <i class="fa-solid fa-hourglass-half text-amber"></i>
+                        <h3>Mempool (Pending Transaction Queue)</h3>
+                    </div>
                     <span class="pill-badge pill-amber-light" id="mempool-count">0 pending</span>
                 </div>
                 <div class="mempool-list" id="mempool-container">
@@ -1511,17 +1593,45 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
 
     </main>
 
-    <!-- BLOCK & MERKLE PROOF INSPECTOR MODAL -->
+    <!-- BLOCK & CRYPTOGRAPHIC PROOF INSPECTOR MODAL -->
     <div id="inspector-modal" class="modal-overlay" onclick="closeInspectorModal(event)">
-        <div class="modal-content light-card" onclick="event.stopPropagation()">
+        <div class="modal-content explorer-modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div>
-                    <span class="badge-subtle">CRYPTOGRAPHIC INSPECTOR</span>
-                    <h3 id="modal-block-title" class="text-slate-900 mt-1">Block #0 Inspector</h3>
+                    <span class="badge-subtle badge-indigo">CRYPTOGRAPHIC BLOCK INSPECTOR</span>
+                    <h3 id="modal-block-title" class="text-white mt-1">Block Inspector</h3>
                 </div>
                 <button class="modal-close-btn" onclick="closeInspectorModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body" id="modal-block-body"></div>
+        </div>
+    </div>
+
+    <!-- TRANSACTION RECEIPT INSPECTOR MODAL -->
+    <div id="tx-inspector-modal" class="modal-overlay" onclick="closeTxInspectorModal(event)">
+        <div class="modal-content explorer-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <span class="badge-subtle badge-emerald">TRANSACTION RECEIPT</span>
+                    <h3 id="modal-tx-title" class="text-white mt-1">Transaction Details</h3>
+                </div>
+                <button class="modal-close-btn" onclick="closeTxInspectorModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="modal-tx-body"></div>
+        </div>
+    </div>
+
+    <!-- ADDRESS ACCOUNT INSPECTOR MODAL -->
+    <div id="address-inspector-modal" class="modal-overlay" onclick="closeAddressInspectorModal(event)">
+        <div class="modal-content explorer-modal-card modal-large" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <span class="badge-subtle badge-violet">SOVEREIGN ACCOUNT PROFILE</span>
+                    <h3 id="modal-address-title" class="text-white mt-1">Address Overview</h3>
+                </div>
+                <button class="modal-close-btn" onclick="closeAddressInspectorModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="modal-address-body"></div>
         </div>
     </div>
 
@@ -1604,6 +1714,6 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
     <!-- NOTIFICATION TOAST -->
     <div id="toast" class="toast-light"></div>
 
-    <script src="app.js?v=5.0"></script>
+    <script src="app.js?v=6.0"></script>
 </body>
 </html>

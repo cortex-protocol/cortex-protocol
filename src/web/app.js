@@ -618,6 +618,9 @@ function initChartInteraction() {
 // ========================================================
 // 3. BLOCK & MERKLE PROOF INSPECTOR MODAL
 // ========================================================
+// 3. BLOCK, TRANSACTION & ADDRESS INSPECTOR MODALS
+// ========================================================
+
 async function openBlockInspector(blockIndex) {
     const modal = document.getElementById('inspector-modal');
     const title = document.getElementById('modal-block-title');
@@ -625,49 +628,318 @@ async function openBlockInspector(blockIndex) {
     if (!modal || !body) return;
 
     try {
+        title.innerHTML = `<i class="fa-solid fa-cube text-indigo"></i> Block #${blockIndex}`;
+        body.innerHTML = `
+            <div style="text-align:center; padding:30px; color:#94a3b8;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x text-indigo"></i>
+                <div class="mt-2 font-bold">Querying Consensus Ledger...</div>
+            </div>
+        `;
+        modal.classList.add('show');
+
         const res = await fetch(`/api/blocks/${blockIndex}`);
         const block = await res.json();
+        if (block.error) {
+            body.innerHTML = `<div class="p-3 text-flame font-bold">Error: ${block.error}</div>`;
+            return;
+        }
 
-        title.textContent = `Block #${block.index} • Cryptographic Proofs`;
+        const dateStr = new Date(block.timestamp).toLocaleString();
+        const shortMiner = block.minerAddress || 'Genesis';
+
         body.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:14px;">
-                <div class="light-card p-3" style="background:var(--bg-subtle);">
-                    <div style="font-size:0.8rem; color:var(--slate-500);">Block Hash (SHA-256d):</div>
-                    <code class="mono text-indigo font-bold text-break" style="font-size:0.88rem;">${block.hash}</code>
+                <div class="inspector-data-box">
+                    <div style="font-size:0.75rem; color:#64748b; font-family:var(--font-mono); margin-bottom:4px;">BLOCK HASH (SHA-256d):</div>
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <code class="mono text-indigo font-bold text-break" style="font-size:0.85rem;">${block.hash}</code>
+                        <button class="copy-btn-inline" onclick="navigator.clipboard.writeText('${block.hash}'); showToast('Hash copied!')"><i class="fa-regular fa-copy"></i></button>
+                    </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem;">
-                    <div><strong>Difficulty Target:</strong> <span class="mono">${block.difficulty}</span></div>
-                    <div><strong>Nonce:</strong> <span class="mono">${block.nonce}</span></div>
-                    <div><strong>Timestamp:</strong> <span class="mono">${new Date(block.timestamp).toLocaleString()}</span></div>
-                    <div><strong>Miner Address:</strong> <span class="mono text-truncate">${block.minerAddress || 'Genesis'}</span></div>
+                <div class="inspector-data-box">
+                    <div class="inspector-key-value">
+                        <span class="inspector-key"><i class="fa-solid fa-shield-halved text-amber"></i> PoW Difficulty:</span>
+                        <span class="inspector-value font-bold text-amber">${block.difficulty}</span>
+                    </div>
+                    <div class="inspector-key-value">
+                        <span class="inspector-key"><i class="fa-solid fa-gear text-slate-400"></i> Nonce:</span>
+                        <span class="inspector-value font-bold">${block.nonce}</span>
+                    </div>
+                    <div class="inspector-key-value">
+                        <span class="inspector-key"><i class="fa-regular fa-clock text-slate-400"></i> Timestamp:</span>
+                        <span class="inspector-value">${dateStr}</span>
+                    </div>
+                    <div class="inspector-key-value">
+                        <span class="inspector-key"><i class="fa-solid fa-helmet-safety text-indigo"></i> Miner:</span>
+                        <span class="inspector-value">
+                            <span class="mono text-indigo clickable-link" onclick="openAddressInspector('${shortMiner}')">${shortMiner.substring(0, 16)}...</span>
+                            <button class="copy-btn-inline" onclick="navigator.clipboard.writeText('${shortMiner}'); showToast('Address copied!')"><i class="fa-regular fa-copy"></i></button>
+                        </span>
+                    </div>
                 </div>
 
-                <div class="light-card p-3" style="background:#0f172a; color:#f8fafc; border-radius:12px;">
-                    <div style="color:#38bdf8; font-size:0.75rem; font-family:var(--font-mono); font-weight:800; margin-bottom:4px;">DUAL MERKLE TREE ROOTS:</div>
-                    <div style="font-size:0.82rem; margin-bottom:6px;"><strong>Tx Merkle Root:</strong> <span class="mono text-emerald">${block.merkleRoot}</span></div>
-                    <div style="font-size:0.82rem;"><strong>Memory Vector Root:</strong> <span class="mono text-violet">${block.memoryRoot}</span></div>
+                <div class="inspector-data-box" style="background:#020617; border-color:rgba(99, 102, 241, 0.3);">
+                    <div style="color:#38bdf8; font-size:0.75rem; font-family:var(--font-mono); font-weight:800; margin-bottom:6px;">DUAL MERKLE ROOTS:</div>
+                    <div style="font-size:0.8rem; margin-bottom:6px;">
+                        <span class="text-slate-400">Transactions Root:</span> 
+                        <code class="mono text-emerald text-break" style="font-size:0.75rem;">${block.merkleRoot}</code>
+                    </div>
+                    <div style="font-size:0.8rem;">
+                        <span class="text-slate-400">AI Memory Root:</span> 
+                        <code class="mono text-violet text-break" style="font-size:0.75rem;">${block.memoryRoot}</code>
+                    </div>
                 </div>
 
-                <h4 style="margin-top:8px;">Included Transactions (${block.transactions.length})</h4>
-                <div style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <h4 class="text-white" style="font-size:0.95rem; margin:0;"><i class="fa-solid fa-list text-indigo"></i> Transactions (${block.transactions.length})</h4>
+                    <span class="pill-badge pill-green-light text-xs">Consensus Finalized</span>
+                </div>
+
+                <div style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
                     ${block.transactions.map(tx => `
-                        <div style="background:var(--bg-subtle); padding:10px; border-radius:8px; font-size:0.82rem;">
-                            <div style="display:flex; justify-content:space-between;">
-                                <strong class="text-indigo">${tx.type}</strong>
-                                <span class="mono">${tx.amount} CTX</span>
+                        <div class="memory-card-dark" style="cursor:pointer;" onclick="openTxInspector('${tx.id}')">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong class="${tx.type === 'MEMORY_COMMIT' ? 'text-violet' : tx.type === 'COINBASE' ? 'text-emerald' : 'text-indigo'} font-bold">${tx.type}</strong>
+                                <span class="mono text-emerald font-bold">${tx.amount} CTX</span>
                             </div>
-                            <div class="mono text-muted text-break" style="font-size:0.75rem;">TxID: ${tx.id}</div>
-                            ${tx.memoryPayload ? `<div style="margin-top:4px; color:var(--slate-800);"><em>"${escapeHtml(tx.memoryPayload.content)}"</em></div>` : ''}
+                            <div class="mono text-muted text-break" style="font-size:0.74rem; margin:4px 0;">TxID: ${tx.id}</div>
+                            ${tx.memoryPayload ? `<div style="color:#e2e8f0; font-size:0.78rem;"><em>"${escapeHtml(tx.memoryPayload.content.substring(0, 90))}..."</em></div>` : ''}
                         </div>
                     `).join('')}
                 </div>
             </div>
         `;
-
-        modal.classList.add('show');
     } catch (e) {
         showToast('Error opening block inspector', true);
+    }
+}
+
+async function openTxInspector(txId) {
+    const modal = document.getElementById('tx-inspector-modal');
+    const title = document.getElementById('modal-tx-title');
+    const body = document.getElementById('modal-tx-body');
+    if (!modal || !body) return;
+
+    try {
+        title.innerHTML = `<i class="fa-solid fa-receipt text-emerald"></i> Transaction Receipt`;
+        body.innerHTML = `
+            <div style="text-align:center; padding:30px; color:#94a3b8;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x text-emerald"></i>
+                <div class="mt-2 font-bold">Verifying cryptographic signature...</div>
+            </div>
+        `;
+        modal.classList.add('show');
+
+        const res = await fetch(`/api/transaction/${txId}`);
+        const data = await res.json();
+        if (!data.found || !data.transaction) {
+            body.innerHTML = `<div class="p-3 text-flame font-bold">Transaction not found on Cortex Ledger.</div>`;
+            return;
+        }
+
+        const tx = data.transaction;
+        const isConfirmed = data.status === 'CONFIRMED';
+        const dateStr = new Date(data.timestamp || tx.timestamp).toLocaleString();
+        const shortSender = tx.sender || 'Coinbase Subsidy';
+        const shortRecipient = tx.recipient || 'Burn Vault';
+
+        body.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:14px;">
+                <div class="inspector-data-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span class="stat-card-label">TRANSACTION ID</span>
+                        <span class="${isConfirmed ? 'pill-badge pill-green-light' : 'pill-badge pill-amber-light'}">
+                            ${isConfirmed ? `● Confirmed (${data.confirmations} confs)` : '● Mempool Pending'}
+                        </span>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <code class="mono text-emerald font-bold text-break" style="font-size:0.85rem;">${tx.id}</code>
+                        <button class="copy-btn-inline" onclick="navigator.clipboard.writeText('${tx.id}'); showToast('TxID copied!')"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                </div>
+
+                <div class="inspector-data-box">
+                    <div class="inspector-key-value">
+                        <span class="inspector-key">Status:</span>
+                        <span class="inspector-value font-bold ${isConfirmed ? 'text-emerald' : 'text-amber'}">${isConfirmed ? `Confirmed in Block #${data.blockIndex}` : 'Pending Confirmation'}</span>
+                    </div>
+                    <div class="inspector-key-value">
+                        <span class="inspector-key">Type:</span>
+                        <span class="inspector-value font-bold text-indigo">${tx.type}</span>
+                    </div>
+                    <div class="inspector-key-value">
+                        <span class="inspector-key">Amount:</span>
+                        <span class="inspector-value font-bold text-emerald" style="font-size:1.1rem;">${tx.amount} CTX</span>
+                    </div>
+                    <div class="inspector-key-value">
+                        <span class="inspector-key">PoW Gas Fee:</span>
+                        <span class="inspector-value">${tx.fee || 0.01} CTX</span>
+                    </div>
+                    ${tx.burnAmount ? `
+                    <div class="inspector-key-value">
+                        <span class="inspector-key text-flame">Deflationary Burn (30%):</span>
+                        <span class="inspector-value text-flame font-bold">🔥 -${tx.burnAmount} CTX</span>
+                    </div>` : ''}
+                    <div class="inspector-key-value">
+                        <span class="inspector-key">Timestamp:</span>
+                        <span class="inspector-value">${dateStr}</span>
+                    </div>
+                    <div class="inspector-key-value">
+                        <span class="inspector-key">From (Sender):</span>
+                        <span class="inspector-value">
+                            <span class="mono text-indigo clickable-link" onclick="openAddressInspector('${shortSender}')">${shortSender.substring(0, 16)}...</span>
+                            <button class="copy-btn-inline" onclick="navigator.clipboard.writeText('${shortSender}'); showToast('Sender copied!')"><i class="fa-regular fa-copy"></i></button>
+                        </span>
+                    </div>
+                    <div class="inspector-key-value">
+                        <span class="inspector-key">To (Recipient):</span>
+                        <span class="inspector-value">
+                            <span class="mono text-indigo clickable-link" onclick="openAddressInspector('${shortRecipient}')">${shortRecipient.substring(0, 16)}...</span>
+                            <button class="copy-btn-inline" onclick="navigator.clipboard.writeText('${shortRecipient}'); showToast('Recipient copied!')"><i class="fa-regular fa-copy"></i></button>
+                        </span>
+                    </div>
+                </div>
+
+                ${tx.memoryPayload ? `
+                <div class="inspector-data-box" style="background:#020617; border-color:rgba(168, 85, 247, 0.4);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="color:#a855f7; font-size:0.75rem; font-family:var(--font-mono); font-weight:800;">AI SWARM MEMORY NOTARIZATION</span>
+                        <button class="btn btn-outline" style="padding:2px 8px; font-size:0.72rem; border-color:#a855f7; color:#c084fc;" onclick="openMerkleProofModal('${tx.id}')">
+                            <i class="fa-solid fa-tree"></i> Verify Merkle Proof
+                        </button>
+                    </div>
+                    <div style="font-size:0.8rem; margin-bottom:4px;"><strong class="text-slate-400">Agent ID:</strong> <span class="text-violet font-bold">${escapeHtml(tx.memoryPayload.agentId)}</span></div>
+                    <div style="font-size:0.8rem; margin-bottom:6px;"><strong class="text-slate-400">Topic:</strong> <span class="badge-subtle badge-violet">${escapeHtml(tx.memoryPayload.topic)}</span></div>
+                    <div style="font-size:0.82rem; color:#cbd5e1; background:rgba(255,255,255,0.04); padding:10px; border-radius:8px; margin-bottom:6px;">
+                        "${escapeHtml(tx.memoryPayload.content)}"
+                    </div>
+                    <div style="font-size:0.75rem; color:#64748b; font-family:var(--font-mono);">
+                        Vector Hash: <code class="mono text-indigo">${tx.memoryPayload.vectorHash}</code>
+                    </div>
+                </div>` : ''}
+
+                <div class="inspector-data-box" style="font-size:0.75rem; color:#64748b;">
+                    <div style="margin-bottom:4px;"><strong>Signature (secp256k1):</strong></div>
+                    <div class="mono text-break" style="color:#94a3b8;">${tx.signature ? tx.signature.substring(0, 48) + '...' : 'System Validated'}</div>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        showToast('Error opening transaction inspector', true);
+    }
+}
+
+async function openAddressInspector(address) {
+    const modal = document.getElementById('address-inspector-modal');
+    const title = document.getElementById('modal-address-title');
+    const body = document.getElementById('modal-address-body');
+    if (!modal || !body) return;
+
+    try {
+        title.innerHTML = `<i class="fa-solid fa-wallet text-violet"></i> Account Profile`;
+        body.innerHTML = `
+            <div style="text-align:center; padding:30px; color:#94a3b8;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x text-violet"></i>
+                <div class="mt-2 font-bold">Scanning address across entire ledger...</div>
+            </div>
+        `;
+        modal.classList.add('show');
+
+        const res = await fetch(`/api/address/${encodeURIComponent(address)}`);
+        const data = await res.json();
+        if (data.error) {
+            body.innerHTML = `<div class="p-3 text-flame font-bold">Error: ${data.error}</div>`;
+            return;
+        }
+
+        const typeBadge = data.accountType === 'MINER'
+            ? `<span class="badge-subtle badge-emerald"><i class="fa-solid fa-helmet-safety"></i> Miner</span>`
+            : data.accountType === 'AI_AGENT'
+            ? `<span class="badge-subtle badge-violet"><i class="fa-solid fa-robot"></i> AI Swarm Agent</span>`
+            : data.accountType === 'TREASURY'
+            ? `<span class="badge-subtle badge-indigo"><i class="fa-solid fa-building-columns"></i> Genesis Treasury</span>`
+            : `<span class="badge-subtle badge-indigo"><i class="fa-solid fa-flask"></i> Network Tester</span>`;
+
+        body.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <div class="inspector-data-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span class="stat-card-label">ACCOUNT ADDRESS</span>
+                        ${typeBadge}
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <code class="mono text-violet font-bold text-break" style="font-size:0.9rem;">${data.address}</code>
+                        <button class="copy-btn-inline" onclick="navigator.clipboard.writeText('${data.address}'); showToast('Address copied!')"><i class="fa-regular fa-copy"></i> Copy</button>
+                    </div>
+                </div>
+
+                <div class="explorer-stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
+                    <div class="explorer-stat-card" style="padding:14px;">
+                        <span class="stat-card-label">BALANCE</span>
+                        <div class="stat-card-value text-emerald" style="font-size:1.3rem;">${data.balance.toFixed(2)} <span style="font-size:0.8rem;">CTX</span></div>
+                        <div class="stat-card-sub">Confirmed: ${data.confirmedBalance.toFixed(2)}</div>
+                    </div>
+                    <div class="explorer-stat-card" style="padding:14px;">
+                        <span class="stat-card-label">BLOCKS MINED</span>
+                        <div class="stat-card-value text-indigo" style="font-size:1.3rem;">${data.blocksMined}</div>
+                        <div class="stat-card-sub">+${data.totalMinedRewards} CTX Rewards</div>
+                    </div>
+                    <div class="explorer-stat-card" style="padding:14px;">
+                        <span class="stat-card-label">TOTAL SENT</span>
+                        <div class="stat-card-value text-amber" style="font-size:1.3rem;">${data.totalSent.toFixed(2)}</div>
+                        <div class="stat-card-sub">Account Nonce: ${data.nonce}</div>
+                    </div>
+                    <div class="explorer-stat-card" style="padding:14px;">
+                        <span class="stat-card-label">TOTAL RECEIVED</span>
+                        <div class="stat-card-value text-emerald" style="font-size:1.3rem;">${data.totalReceived.toFixed(2)}</div>
+                        <div class="stat-card-sub">${data.transactions.length} Transactions</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h4 class="text-white" style="font-size:0.95rem; margin:0;"><i class="fa-solid fa-clock-rotate-left text-violet"></i> Transaction Activity</h4>
+                    <span class="text-muted" style="font-size:0.75rem;">Showing latest transactions</span>
+                </div>
+
+                <div style="max-height:280px; overflow-y:auto;">
+                    ${data.transactions.length === 0 ? `
+                        <div class="p-3 text-center text-muted" style="font-size:0.85rem;">No transaction activity recorded for this address yet.</div>
+                    ` : `
+                        <table class="table-explorer" style="font-size:0.8rem;">
+                            <thead>
+                                <tr>
+                                    <th>Direction</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Counterparty</th>
+                                    <th>TxID</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.transactions.map(t => {
+                                    const isOut = t.direction === 'OUT';
+                                    const otherAddr = isOut ? t.recipient : t.sender;
+                                    const shortOther = otherAddr ? `${otherAddr.substring(0, 10)}...` : 'Coinbase';
+                                    const shortTx = `${t.id.substring(0, 10)}...`;
+                                    return `
+                                        <tr class="explorer-tr" onclick="openTxInspector('${t.id}')">
+                                            <td><span class="${isOut ? 'tx-dir-pill-out' : 'tx-dir-pill-in'}">${isOut ? 'OUT ➜' : 'IN ⬅'}</span></td>
+                                            <td><strong class="text-indigo">${t.type}</strong></td>
+                                            <td><span class="mono font-bold ${isOut ? 'text-slate-200' : 'text-emerald'}">${t.amount} CTX</span></td>
+                                            <td><span class="mono text-muted clickable-link" onclick="event.stopPropagation(); openAddressInspector('${otherAddr}')">${shortOther}</span></td>
+                                            <td><span class="mono text-indigo">${shortTx}</span></td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    `}
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        showToast('Error opening address inspector', true);
     }
 }
 
@@ -678,35 +950,44 @@ async function openMerkleProofModal(txId) {
     if (!modal || !body) return;
 
     try {
+        title.innerHTML = `<i class="fa-solid fa-tree text-emerald"></i> Cryptographic Merkle Path Proof`;
+        body.innerHTML = `
+            <div style="text-align:center; padding:30px; color:#94a3b8;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x text-emerald"></i>
+                <div class="mt-2 font-bold">Computing authentication path...</div>
+            </div>
+        `;
+        modal.classList.add('show');
+
         const res = await fetch(`/api/memories/proof/${txId}`);
         const data = await res.json();
 
-        title.textContent = `Cryptographic Merkle Path Proof`;
         body.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:14px;">
-                <div class="light-card p-3" style="background:var(--emerald-soft); border-color:var(--emerald);">
-                    <div style="display:flex; align-items:center; gap:8px; color:var(--emerald); font-weight:800; font-size:0.95rem;">
+                <div class="light-card p-3" style="background:rgba(16, 185, 129, 0.12); border:1px solid #10b981; border-radius:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; color:#34d399; font-weight:800; font-size:0.95rem;">
                         <i class="fa-solid fa-circle-check"></i> Merkle Proof Verified by Consensus Root
                     </div>
                 </div>
 
-                <div class="light-card p-3" style="background:#0f172a; color:#f8fafc; border-radius:12px; font-size:0.85rem;">
+                <div class="inspector-data-box" style="background:#020617; border-color:rgba(168, 85, 247, 0.3);">
                     <div style="color:#a855f7; font-size:0.75rem; font-family:var(--font-mono); margin-bottom:4px;">BLOCK #${data.blockIndex} MEMORY ROOT:</div>
-                    <code class="mono text-violet text-break">${data.memoryRoot}</code>
+                    <code class="mono text-violet text-break" style="font-size:0.8rem;">${data.memoryRoot}</code>
                 </div>
 
-                <div style="background:var(--bg-subtle); padding:14px; border-radius:12px; font-size:0.85rem;">
-                    <div style="margin-bottom:6px;"><strong>Target Leaf Hash:</strong> <code class="mono text-indigo text-break">${data.leafHash}</code></div>
+                <div class="inspector-data-box">
+                    <div style="margin-bottom:8px;"><strong>Target Leaf Hash:</strong> <code class="mono text-indigo text-break" style="font-size:0.8rem;">${data.leafHash}</code></div>
                     <div><strong>Merkle Authentication Steps:</strong></div>
-                    <ul class="mono text-muted mt-2" style="font-size:0.78rem; list-style:none;">
-                        <li>Step 1 (Left Hash): ${data.merkleProofPath[0].hash.substring(0, 24)}...</li>
-                        <li>Step 2 (Right Hash): ${data.merkleProofPath[1].hash.substring(0, 24)}...</li>
+                    <ul class="mono text-muted mt-2" style="font-size:0.78rem; list-style:none; padding-left:0;">
+                        ${data.merkleProofPath && data.merkleProofPath.length > 0 ? data.merkleProofPath.map((s, idx) => `
+                            <li style="padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.04);">
+                                <span class="text-slate-400">Step ${idx + 1} (${s.position}):</span> <code class="text-indigo">${s.hash.substring(0, 24)}...</code>
+                            </li>
+                        `).join('') : '<li class="text-muted">Direct Root Leaf</li>'}
                     </ul>
                 </div>
             </div>
         `;
-
-        modal.classList.add('show');
     } catch (e) {
         showToast('Error generating Merkle proof', true);
     }
@@ -715,6 +996,127 @@ async function openMerkleProofModal(txId) {
 function closeInspectorModal(e) {
     const modal = document.getElementById('inspector-modal');
     if (modal) modal.classList.remove('show');
+}
+
+function closeTxInspectorModal(e) {
+    const modal = document.getElementById('tx-inspector-modal');
+    if (modal) modal.classList.remove('show');
+}
+
+function closeAddressInspectorModal(e) {
+    const modal = document.getElementById('address-inspector-modal');
+    if (modal) modal.classList.remove('show');
+}
+
+// OMNI-SEARCH HANDLERS
+function handleExplorerSearchSubmit(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('explorer-search-input');
+    if (!input) return;
+    searchQuery(input.value);
+}
+
+async function searchQuery(query) {
+    const q = (query || '').trim();
+    if (!q) {
+        showToast('Please enter a block number, hash, TxID, or address', true);
+        return;
+    }
+
+    try {
+        showToast(`Searching ledger for "${q.substring(0, 16)}..."`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const result = await res.json();
+
+        if (result.found === false || result.error) {
+            showToast(result.error || 'No matching block, transaction, or address found', true);
+            return;
+        }
+
+        if (result.type === 'BLOCK') {
+            openBlockInspector(result.data.index);
+        } else if (result.type === 'TRANSACTION') {
+            openTxInspector(result.target);
+        } else if (result.type === 'ADDRESS') {
+            openAddressInspector(result.target);
+        }
+    } catch (e) {
+        showToast('Search query failed: ' + e.message, true);
+    }
+}
+
+async function searchLatestBlock() {
+    try {
+        const res = await fetch('/api/blocks?limit=1');
+        const blocks = await res.json();
+        if (blocks && blocks.length > 0) {
+            openBlockInspector(blocks[0].index);
+        }
+    } catch (e) {
+        showToast('Could not load latest block', true);
+    }
+}
+
+function searchCurrentWallet() {
+    if (typeof cortexWeb3State !== 'undefined' && cortexWeb3State.address) {
+        openAddressInspector(cortexWeb3State.address);
+        return;
+    }
+    if (currentWallet && currentWallet.address) {
+        openAddressInspector(currentWallet.address);
+        return;
+    }
+    const saved = localStorage.getItem('cortex_wallet');
+    if (saved) {
+        try {
+            const w = JSON.parse(saved);
+            if (w.address) {
+                openAddressInspector(w.address);
+                return;
+            }
+        } catch(e) {}
+    }
+    showToast('No wallet connected yet. Connect or create one first!', true);
+}
+
+async function fetchExplorerTelemetry() {
+    try {
+        const [statsRes, memsRes] = await Promise.all([
+            fetch('/api/stats').then(r => r.json()).catch(() => ({})),
+            fetch('/api/memories').then(r => r.json()).catch(() => ([]))
+        ]);
+
+        const elHeight = document.getElementById('exp-stat-height');
+        const elHashrate = document.getElementById('exp-stat-hashrate');
+        const elWorkers = document.getElementById('exp-stat-workers');
+        const elDiff = document.getElementById('exp-stat-difficulty');
+        const elMems = document.getElementById('exp-stat-memories');
+
+        if (elHeight && statsRes.height !== undefined) {
+            elHeight.textContent = `#${statsRes.height}`;
+        }
+
+        const hr = statsRes.networkHashrate || (statsRes.miner && statsRes.miner.hashrate) || 0;
+        const hrStr = hr >= 1000000 
+            ? `${(hr/1000000).toFixed(2)} MH/s` 
+            : hr >= 1000 
+            ? `${(hr/1000).toFixed(2)} kH/s` 
+            : `${hr} H/s`;
+
+        if (elHashrate) elHashrate.textContent = hrStr;
+
+        if (elWorkers && statsRes.pool) {
+            elWorkers.textContent = `${statsRes.pool.connectedMinersCount || 0} active workers • ${statsRes.pool.poolBlocksFound || 0} blocks`;
+        }
+
+        if (elDiff && statsRes.difficulty !== undefined) {
+            elDiff.textContent = `Diff ${statsRes.difficulty}`;
+        }
+
+        if (elMems && Array.isArray(memsRes)) {
+            elMems.textContent = `${memsRes.length} Vectors`;
+        }
+    } catch(e) {}
 }
 
 // ========================================================
@@ -1095,6 +1497,7 @@ async function fetchBlocks() {
 
         blocks.forEach(block => {
             const tr = document.createElement('tr');
+            tr.className = 'explorer-tr';
             tr.onclick = () => openBlockInspector(block.index);
             const memoryCount = block.transactions.filter(t => t.type === 'MEMORY_COMMIT').length;
             const shortHash = `${block.hash.substring(0, 10)}...${block.hash.substring(block.hash.length - 6)}`;
@@ -1102,10 +1505,13 @@ async function fetchBlocks() {
 
             tr.innerHTML = `
                 <td><strong class="text-indigo">#${block.index}</strong></td>
-                <td><span class="mono text-muted">${shortMiner}</span></td>
-                <td><span class="text-amber font-bold">${block.transactions.length} tx</span> ${memoryCount > 0 ? `<span class="pill-badge pill-violet-light" style="padding: 2px 6px; font-size:0.65rem;">${memoryCount} AI</span>` : ''}</td>
-                <td><span class="mono">${block.difficulty}</span></td>
-                <td><span class="mono text-indigo">${shortHash}</span></td>
+                <td><span class="mono text-muted clickable-link" onclick="event.stopPropagation(); openAddressInspector('${block.minerAddress || ''}')">${shortMiner}</span></td>
+                <td>
+                    <span class="text-amber font-bold">${block.transactions.length} tx</span>
+                    ${memoryCount > 0 ? `<span class="pill-badge pill-violet-light" style="padding: 2px 6px; font-size:0.65rem;"><i class="fa-solid fa-brain"></i> ${memoryCount} AI</span>` : ''}
+                </td>
+                <td><span class="mono text-slate-400">${block.difficulty}</span></td>
+                <td><span class="mono text-indigo clickable-link" onclick="event.stopPropagation(); openBlockInspector(${block.index})">${shortHash}</span></td>
             `;
             tbody.appendChild(tr);
         });
@@ -1121,26 +1527,29 @@ async function fetchMemories() {
         if (!container) return;
 
         if (memories.length === 0) {
-            container.innerHTML = '<p class="empty-state">No AI memories recorded yet.</p>';
+            container.innerHTML = '<p class="empty-state">No AI neural memories recorded on ledger yet.</p>';
             return;
         }
 
         container.innerHTML = '';
         memories.reverse().slice(0, 20).forEach(item => {
             const card = document.createElement('div');
-            card.className = 'memory-card-light';
+            card.className = 'memory-card-dark';
             card.onclick = () => openBlockInspector(item.blockIndex);
             const dateStr = new Date(item.timestamp).toLocaleTimeString();
 
             card.innerHTML = `
-                <div class="memory-card-header-light">
-                    <span class="memory-agent-light"><i class="fa-solid fa-robot"></i> ${escapeHtml(item.memory.agentId)}</span>
-                    <span class="pill-badge pill-violet-light" style="font-size: 0.65rem;">${escapeHtml(item.memory.topic)}</span>
+                <div class="memory-card-header-dark">
+                    <span class="memory-agent-dark"><i class="fa-solid fa-robot text-violet"></i> ${escapeHtml(item.memory.agentId)}</span>
+                    <span class="badge-subtle badge-violet" style="font-size: 0.65rem;">${escapeHtml(item.memory.topic)}</span>
                 </div>
-                <div class="memory-content-light">${escapeHtml(item.memory.content)}</div>
-                <div class="memory-footer-light">
+                <div class="memory-content-dark">"${escapeHtml(item.memory.content)}"</div>
+                <div class="memory-footer-dark">
                     <span>Block #${item.blockIndex} • ${dateStr}</span>
-                    <span class="text-indigo font-bold">Vector: ${item.memory.vectorHash.substring(0, 8)}...</span>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="text-indigo font-bold">Vector: ${item.memory.vectorHash ? item.memory.vectorHash.substring(0, 8) : '00000000'}...</span>
+                        ${item.txId ? `<button class="copy-btn-inline" title="Verify Merkle Proof" onclick="event.stopPropagation(); openMerkleProofModal('${item.txId}')"><i class="fa-solid fa-tree"></i> Proof</button>` : ''}
+                    </div>
                 </div>
             `;
             container.appendChild(card);
@@ -1160,22 +1569,24 @@ async function fetchMempool() {
         countBadge.textContent = `${txs.length} pending`;
 
         if (txs.length === 0) {
-            container.innerHTML = '<p class="empty-state">No pending transactions. Network state is synchronized.</p>';
+            container.innerHTML = '<p class="empty-state">No pending transactions. Consensus network is synchronized.</p>';
             return;
         }
 
         container.innerHTML = '';
         txs.forEach(tx => {
             const div = document.createElement('div');
-            div.className = 'memory-card-light';
+            div.className = 'memory-card-dark';
             div.style.borderLeftColor = 'var(--amber)';
+            div.onclick = () => openTxInspector(tx.id);
             div.innerHTML = `
-                <div class="memory-card-header-light">
-                    <span class="text-amber font-bold">Type: ${tx.type}</span>
-                    <span class="mono">Fee: ${tx.fee} CTX</span>
+                <div class="memory-card-header-dark">
+                    <span class="text-amber font-bold"><i class="fa-solid fa-hourglass-half"></i> ${tx.type}</span>
+                    <span class="mono text-emerald font-bold">${tx.amount} CTX (Fee: ${tx.fee} CTX)</span>
                 </div>
-                <div class="mono" style="font-size:0.8rem; color: var(--slate-600);">
-                    From: ${tx.sender.substring(0, 14)}... ➜ To: ${tx.recipient.substring(0, 14)}... | Amount: ${tx.amount} CTX
+                <div class="mono" style="font-size:0.78rem; color: #94a3b8; margin-top:4px;">
+                    From: <span class="clickable-link text-indigo" onclick="event.stopPropagation(); openAddressInspector('${tx.sender}')">${tx.sender.substring(0, 14)}...</span> 
+                    ➜ To: <span class="clickable-link text-indigo" onclick="event.stopPropagation(); openAddressInspector('${tx.recipient}')">${tx.recipient.substring(0, 14)}...</span>
                 </div>
             `;
             container.appendChild(div);
@@ -2785,10 +3196,10 @@ function openConnectedWebExplorer(e) {
     if (dropdown) dropdown.classList.remove('show');
     if (typeof navigateTo === 'function') {
         navigateTo('explorer');
-        const filterInput = document.getElementById('search-filter-input');
-        if (filterInput && cortexWeb3State.address) {
-            filterInput.value = cortexWeb3State.address;
-            if (typeof filterBlocks === 'function') filterBlocks();
+        if (cortexWeb3State.address) {
+            setTimeout(() => {
+                openAddressInspector(cortexWeb3State.address);
+            }, 150);
         }
     }
 }
@@ -2809,6 +3220,18 @@ document.addEventListener('DOMContentLoaded', () => {
     initWeb3Wallet();
     fetchAndRenderLeaderboard();
     setInterval(fetchAndRenderLeaderboard, 10000);
+
+    // Explorer Realtime Engine
+    fetchExplorerTelemetry();
+    fetchBlocks();
+    fetchMemories();
+    fetchMempool();
+    setInterval(() => {
+        fetchExplorerTelemetry();
+        fetchBlocks();
+        fetchMemories();
+        fetchMempool();
+    }, 4000);
 });
 
 

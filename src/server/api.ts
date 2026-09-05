@@ -103,6 +103,244 @@ export function createApiServer(
         res.json({ address, balance, confirmedBalance, pendingIncoming, nonce });
     });
 
+    // --- TRANSACTION DETAIL ENDPOINT ---
+    app.get('/api/transaction/:txId', (req, res) => {
+        const txId = req.params.txId.trim();
+        const latestBlock = blockchain.getLatestBlock();
+
+        // 1. Check in Mempool first
+        for (const tx of blockchain.mempool.getAll()) {
+            if (tx.id === txId) {
+                return res.json({
+                    found: true,
+                    status: 'PENDING',
+                    confirmations: 0,
+                    blockIndex: null,
+                    blockHash: null,
+                    timestamp: tx.timestamp || Date.now(),
+                    transaction: tx
+                });
+            }
+        }
+
+        // 2. Check in confirmed blocks (newest to oldest)
+        for (let i = blockchain.chain.length - 1; i >= 0; i--) {
+            const block = blockchain.chain[i];
+            for (const tx of block.transactions) {
+                if (tx.id === txId) {
+                    const confirmations = Math.max(1, latestBlock.index - block.index + 1);
+                    return res.json({
+                        found: true,
+                        status: 'CONFIRMED',
+                        confirmations,
+                        blockIndex: block.index,
+                        blockHash: block.hash,
+                        timestamp: tx.timestamp || block.timestamp,
+                        transaction: tx
+                    });
+                }
+            }
+        }
+
+        res.status(404).json({ found: false, error: 'Transaction not found on Cortex Ledger.' });
+    });
+
+    // --- ADDRESS INSPECTOR ENDPOINT ---
+    app.get('/api/address/:address', (req, res) => {
+        const address = req.params.address.trim();
+        const confirmedBalance = blockchain.getBalance(address);
+        const nonce = blockchain.getNextNonce(address);
+
+        let pendingIncoming = 0;
+        let pendingOutgoing = 0;
+        const pendingTxs: any[] = [];
+
+        for (const tx of blockchain.mempool.getAll()) {
+            if (tx.sender === address || tx.recipient === address) {
+                if (tx.recipient === address) pendingIncoming += tx.amount;
+                if (tx.sender === address) pendingOutgoing += (tx.amount + tx.fee + (tx.burnAmount || 0));
+                pendingTxs.push({
+                    id: tx.id,
+                    type: tx.type,
+                    sender: tx.sender,
+                    recipient: tx.recipient,
+                    amount: tx.amount,
+                    fee: tx.fee,
+                    timestamp: tx.timestamp,
+                    status: 'PENDING',
+                    direction: tx.sender === address ? 'OUT' : 'IN'
+                });
+            }
+        }
+
+        const effectiveBalance = +(Math.max(0, confirmedBalance + pendingIncoming - pendingOutgoing)).toFixed(6);
+
+        let blocksMined = 0;
+        let totalMinedRewards = 0;
+        let totalSent = 0;
+        let totalReceived = 0;
+        const history: any[] = [];
+
+        // Traverse chain backwards to get history
+        for (let i = blockchain.chain.length - 1; i >= 0; i--) {
+            const block = blockchain.chain[i];
+            const isMiner = block.minerAddress === address;
+            if (isMiner) {
+                blocksMined++;
+                totalMinedRewards += (block.transactions[0]?.amount || 50);
+            }
+
+            for (const tx of block.transactions) {
+                const isSender = tx.sender === address;
+                const isRecipient = tx.recipient === address;
+                if (isSender || isRecipient) {
+                    if (isSender) totalSent += tx.amount;
+                    if (isRecipient) totalReceived += tx.amount;
+                    if (history.length < 50) { // Keep last 50 transactions for responsive JSON
+                        history.push({
+                            id: tx.id,
+                            type: tx.type,
+                            sender: tx.sender,
+                            recipient: tx.recipient,
+                            amount: tx.amount,
+                            fee: tx.fee,
+                            blockIndex: block.index,
+                            timestamp: tx.timestamp || block.timestamp,
+                            status: 'CONFIRMED',
+                            direction: isSender ? 'OUT' : 'IN',
+                            memoryPayload: tx.memoryPayload
+                        });
+                    }
+                }
+            }
+        }
+
+        // Determine account type
+        let accountType: 'MINER' | 'AI_AGENT' | 'TREASURY' | 'TESTER' | 'STANDARD' = 'STANDARD';
+        if (address === 'ctx1genesis00000000000000000000000000000000000000000' || address === 'ctx14a7f92b93847102938471029384710293847102938471029') {
+            accountType = 'TREASURY';
+        } else if (address === 'ctx16989d3bf981a2fd7693bddaf93d3ac5e292b067b60175ac3') {
+            accountType = 'AI_AGENT';
+        } else if (blocksMined > 0) {
+            accountType = 'MINER';
+        } else if (history.some(h => h.type === 'MEMORY_COMMIT')) {
+            accountType = 'AI_AGENT';
+        } else if (history.length > 0) {
+            accountType = 'TESTER';
+        }
+
+        res.json({
+            address,
+            balance: effectiveBalance,
+            confirmedBalance,
+            pendingIncoming,
+            pendingOutgoing,
+            nonce,
+            blocksMined,
+            totalMinedRewards,
+            totalSent: +totalSent.toFixed(4),
+            totalReceived: +totalReceived.toFixed(4),
+            accountType,
+            pendingTransactions: pendingTxs,
+            transactions: [...pendingTxs, ...history]
+        });
+    });
+
+    // --- UNIVERSAL OMNI-SEARCH ENDPOINT ---
+    app.get('/api/search', (req, res) => {
+        const query = (req.query.q as string || '').trim();
+        if (!query) {
+            return res.status(400).json({ error: 'Query string q is required.' });
+        }
+
+        const latestBlock = blockchain.getLatestBlock();
+
+        // 1. Is it a block height? (integer)
+        if (/^\d+$/.test(query)) {
+            const idx = Number(query);
+            if (idx >= 0 && idx < blockchain.chain.length) {
+                return res.json({
+                    type: 'BLOCK',
+                    target: idx,
+                    data: blockchain.chain[idx]
+                });
+            }
+        }
+
+        // 2. Is it a block hash? (64 chars, typically starting with zeros)
+        if (query.length === 64) {
+            const block = blockchain.chain.find(b => b.hash.toLowerCase() === query.toLowerCase());
+            if (block) {
+                return res.json({
+                    type: 'BLOCK',
+                    target: block.index,
+                    data: block
+                });
+            }
+        }
+
+        // 3. Is it a Transaction ID?
+        // Check mempool
+        for (const tx of blockchain.mempool.getAll()) {
+            if (tx.id.toLowerCase() === query.toLowerCase()) {
+                return res.json({
+                    type: 'TRANSACTION',
+                    target: tx.id,
+                    data: {
+                        status: 'PENDING',
+                        confirmations: 0,
+                        blockIndex: null,
+                        transaction: tx
+                    }
+                });
+            }
+        }
+        // Check blocks
+        for (let i = blockchain.chain.length - 1; i >= 0; i--) {
+            const b = blockchain.chain[i];
+            for (const tx of b.transactions) {
+                if (tx.id.toLowerCase() === query.toLowerCase()) {
+                    return res.json({
+                        type: 'TRANSACTION',
+                        target: tx.id,
+                        data: {
+                            status: 'CONFIRMED',
+                            confirmations: Math.max(1, latestBlock.index - b.index + 1),
+                            blockIndex: b.index,
+                            transaction: tx
+                        }
+                    });
+                }
+            }
+        }
+
+        // 4. Is it an Address?
+        if (query.startsWith('ctx1') || query.length >= 20) {
+            const confirmedBal = blockchain.getBalance(query);
+            let hasActivity = confirmedBal > 0;
+            if (!hasActivity) {
+                hasActivity = blockchain.chain.some(b => b.minerAddress === query || b.transactions.some(t => t.sender === query || t.recipient === query));
+            }
+            if (!hasActivity) {
+                hasActivity = blockchain.mempool.getAll().some(t => t.sender === query || t.recipient === query);
+            }
+
+            return res.json({
+                type: 'ADDRESS',
+                target: query,
+                data: {
+                    address: query,
+                    hasActivity
+                }
+            });
+        }
+
+        return res.status(404).json({
+            found: false,
+            error: `No block, transaction, or address found matching "${query}".`
+        });
+    });
+
     // --- CHART METRICS ENDPOINT ---
     app.get('/api/chart/metrics', (req, res) => {
         const recentBlocks = blockchain.chain.slice(-20);
