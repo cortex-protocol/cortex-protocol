@@ -32,10 +32,28 @@ export function createApiServer(
         const stats = blockchain.getStats();
         const minerStats = miner.getStats();
         const p2pStats = p2p.getNetworkStats();
+        const poolStats = pool.getStats();
+
+        const chainNetworkHashrate = stats.networkHashrate || blockchain.getNetworkHashrate();
+        const poolHashrate = poolStats.totalPoolHashrate || 0;
+        const localMinerHashrate = minerStats.hashrate || 0;
+
+        // Global network hashrate reflects active pool workers, chain PoW difficulty estimation, or local miner
+        const networkHashrate = Math.max(chainNetworkHashrate, poolHashrate, localMinerHashrate);
+
         res.json({
             ...stats,
-            miner: minerStats,
-            network: p2pStats
+            networkHashrate,
+            miner: {
+                ...minerStats,
+                hashrate: networkHashrate > 0 ? networkHashrate : minerStats.hashrate
+            },
+            network: p2pStats,
+            pool: {
+                totalPoolHashrate: poolStats.totalPoolHashrate,
+                connectedMinersCount: poolStats.connectedMinersCount,
+                poolBlocksFound: poolStats.poolBlocksFound
+            }
         });
     });
 
@@ -105,6 +123,10 @@ export function createApiServer(
             }
         }
 
+        const chainNetworkHashrate = blockchain.getNetworkHashrate();
+        const poolHashrate = pool.getStats().totalPoolHashrate || 0;
+        const currentHashrate = Math.max(chainNetworkHashrate, poolHashrate, miner.getStats().hashrate || 0);
+
         res.json({
             labels,
             difficulties,
@@ -113,7 +135,7 @@ export function createApiServer(
             miners,
             memoryCounts,
             blockTimes,
-            currentHashrate: miner.getStats().hashrate || 0
+            currentHashrate
         });
     });
 

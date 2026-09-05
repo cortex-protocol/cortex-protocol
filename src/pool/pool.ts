@@ -1,4 +1,4 @@
-﻿import { Blockchain } from '../core/blockchain';
+import { Blockchain } from '../core/blockchain';
 import { Block } from '../core/block';
 import { Transaction } from '../core/transaction';
 import { CortexCrypto, KeyPair } from '../core/crypto';
@@ -213,18 +213,27 @@ export class CortexMiningPool {
     private recordValidShare(address: string, workerId: string): PoolMinerInfo {
         const key = `${address.toLowerCase()}:${workerId}`;
         let existing = this.miners.get(key);
+        const now = Date.now();
         if (existing) {
             existing.shares++;
             existing.validSharesRound++;
-            existing.lastSeen = Date.now();
+            const deltaSec = Math.max(0.5, (now - existing.lastSeen) / 1000);
+            existing.lastSeen = now;
+            // 1 share = 16^shareDifficulty = 16^3 = 4096 hashes
+            const instantHr = Math.round(4096 / deltaSec);
+            if (existing.hashrate > 0) {
+                existing.hashrate = Math.round(existing.hashrate * 0.7 + instantHr * 0.3);
+            } else {
+                existing.hashrate = Math.max(18000, instantHr);
+            }
         } else {
             existing = {
                 address,
                 workerId,
                 shares: 1,
                 validSharesRound: 1,
-                hashrate: 0,
-                lastSeen: Date.now(),
+                hashrate: 18000,
+                lastSeen: now,
                 pendingPayout: 0,
                 totalPaid: 0
             };

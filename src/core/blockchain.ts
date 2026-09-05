@@ -369,6 +369,34 @@ export class Blockchain {
     }
 
     /**
+     * Calculate estimated network hashrate (hashes/second) based on recent block intervals and difficulties
+     */
+    public getNetworkHashrate(windowBlocks: number = 20): number {
+        if (this.chain.length < 2) {
+            return 0;
+        }
+
+        const count = Math.min(windowBlocks, this.chain.length - 1);
+        const startBlock = this.chain[this.chain.length - 1 - count];
+        const endBlock = this.chain[this.chain.length - 1];
+
+        const timeSpanSeconds = (endBlock.timestamp - startBlock.timestamp) / 1000;
+        if (timeSpanSeconds <= 0) {
+            const latestDiff = endBlock.difficulty;
+            return Math.round(Math.pow(16, latestDiff) / this.config.targetBlockTimeSeconds);
+        }
+
+        let totalHashes = 0;
+        for (let i = this.chain.length - count; i < this.chain.length; i++) {
+            const b = this.chain[i];
+            totalHashes += Math.pow(16, b.difficulty);
+        }
+
+        const calculatedRate = Math.round(totalHashes / Math.max(1, timeSpanSeconds));
+        return Math.max(0, calculatedRate);
+    }
+
+    /**
      * Get global network statistics
      */
     public getStats() {
@@ -394,6 +422,7 @@ export class Blockchain {
             height: this.chain.length - 1,
             totalBlocks: this.chain.length,
             difficulty: this.getDifficulty(),
+            networkHashrate: this.getNetworkHashrate(),
             currentReward: this.getCurrentBlockReward(),
             totalSupply: +totalSupply.toFixed(6),
             circulatingSupply: +(totalSupply - totalBurned).toFixed(6),
@@ -404,3 +433,4 @@ export class Blockchain {
         };
     }
 }
+

@@ -1029,16 +1029,28 @@ async function fetchStats() {
 
         currentDifficulty = data.difficulty;
 
-        document.getElementById('ticker-height').textContent = `#${data.height}`;
-        document.getElementById('ticker-diff').textContent = data.difficulty;
-        document.getElementById('ticker-burned').textContent = `${data.totalBurned.toFixed(3)} CTX 🔥`;
+        const elHeight = document.getElementById('ticker-height');
+        if (elHeight) elHeight.textContent = `#${data.height}`;
+        const elDiff = document.getElementById('ticker-diff');
+        if (elDiff) elDiff.textContent = data.difficulty;
+        const elBurned = document.getElementById('ticker-burned');
+        if (elBurned) elBurned.textContent = `${(data.totalBurned || 0).toFixed(3)} CTX 🔥`;
 
-        document.getElementById('hero-stat-blocks').textContent = data.height.toLocaleString();
-        document.getElementById('hero-stat-memories').textContent = data.totalMemories.toLocaleString();
+        const elHeroBlocks = document.getElementById('hero-stat-blocks');
+        if (elHeroBlocks) elHeroBlocks.textContent = (data.height || 0).toLocaleString();
+        const elHeroMemories = document.getElementById('hero-stat-memories');
+        if (elHeroMemories) elHeroMemories.textContent = (data.totalMemories || 0).toLocaleString();
 
-        const hr = data.miner.hashrate || 0;
-        const hrText = hr > 1000000 ? `${(hr/1000000).toFixed(2)} MH/s` : hr > 1000 ? `${(hr/1000).toFixed(2)} kH/s` : `${hr} H/s`;
-        document.getElementById('ticker-hr').textContent = hrText;
+        const hr = (data.networkHashrate !== undefined && data.networkHashrate !== null && data.networkHashrate > 0)
+            ? data.networkHashrate
+            : ((data.miner && data.miner.hashrate) || 0);
+        const hrText = hr >= 1000000 
+            ? `${(hr/1000000).toFixed(2)} MH/s` 
+            : hr >= 1000 
+            ? `${(hr/1000).toFixed(2)} kH/s` 
+            : `${hr} H/s`;
+        const elTickerHr = document.getElementById('ticker-hr');
+        if (elTickerHr) elTickerHr.textContent = hrText;
 
         updateMiningCalculator();
     } catch (e) {}
