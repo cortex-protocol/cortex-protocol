@@ -30,6 +30,9 @@
         <button class="icon-btn" id="btn-lock-wallet" title="Lock Wallet">
           <i class="fa-solid fa-lock"></i>
         </button>
+        <button class="icon-btn" id="btn-open-settings" title="Wallet Settings">
+          <i class="fa-solid fa-gear"></i>
+        </button>
       </div>
     </header>
 
@@ -354,6 +357,264 @@
         <button class="btn btn-primary btn-shimmer" id="btn-confirm-approval" style="flex:1.4;">
           <i class="fa-solid fa-signature"></i> Sign & Confirm
         </button>
+      </div>
+    </div>
+
+    <!-- OVERLAY VIEW: SETTINGS -->
+    <div id="overlay-settings" class="overlay-modal">
+      <div class="overlay-header">
+        <button class="back-btn" id="btn-close-settings"><i class="fa-solid fa-arrow-left"></i></button>
+        <span class="overlay-title">Settings</span>
+        <div style="width:24px;"></div>
+      </div>
+      <div class="overlay-body settings-scroll-body">
+        
+        <!-- ACCOUNT CARD -->
+        <div class="settings-account-card">
+          <div class="settings-avatar">
+            <i class="fa-solid fa-user-astronaut"></i>
+          </div>
+          <div class="settings-account-details">
+            <div class="settings-account-name" id="settings-acc-label">Account 1</div>
+            <div class="settings-account-address mono" id="settings-acc-addr">ctx1...</div>
+          </div>
+          <button class="icon-btn-sm" id="btn-settings-copy-addr" title="Copy Address">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
+
+        <!-- SECTION: SECURITY & KEYS -->
+        <div class="settings-group-title">SECURITY & VAULT</div>
+        <div class="settings-card">
+          <div class="settings-item" id="btn-settings-export-key">
+            <div class="settings-item-left">
+              <div class="settings-item-icon bg-indigo-soft text-indigo">
+                <i class="fa-solid fa-key"></i>
+              </div>
+              <div class="settings-item-text">
+                <div class="settings-item-title">Export Private Key</div>
+                <div class="settings-item-desc">Reveal secret key for this account</div>
+              </div>
+            </div>
+            <i class="fa-solid fa-chevron-right settings-item-arrow"></i>
+          </div>
+
+          <div class="settings-item" id="btn-settings-import-key">
+            <div class="settings-item-left">
+              <div class="settings-item-icon bg-emerald-soft text-emerald">
+                <i class="fa-solid fa-file-import"></i>
+              </div>
+              <div class="settings-item-text">
+                <div class="settings-item-title">Import Account / Key</div>
+                <div class="settings-item-desc">Import existing 64-char hex key</div>
+              </div>
+            </div>
+            <i class="fa-solid fa-chevron-right settings-item-arrow"></i>
+          </div>
+
+          <div class="settings-item" id="btn-settings-lock">
+            <div class="settings-item-left">
+              <div class="settings-item-icon bg-amber-soft text-amber">
+                <i class="fa-solid fa-lock"></i>
+              </div>
+              <div class="settings-item-text">
+                <div class="settings-item-title">Lock Wallet</div>
+                <div class="settings-item-desc">Require password to unlock</div>
+              </div>
+            </div>
+            <i class="fa-solid fa-chevron-right settings-item-arrow"></i>
+          </div>
+
+          <div class="settings-item settings-item-danger" id="btn-settings-disconnect">
+            <div class="settings-item-left">
+              <div class="settings-item-icon bg-flame-soft text-flame">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              </div>
+              <div class="settings-item-text">
+                <div class="settings-item-title text-flame">Disconnect / Reset</div>
+                <div class="settings-item-desc">Remove keys & reset local vault</div>
+              </div>
+            </div>
+            <i class="fa-solid fa-chevron-right settings-item-arrow"></i>
+          </div>
+        </div>
+
+        <!-- SECTION: NETWORK & RPC -->
+        <div class="settings-group-title">NETWORK & RPC NODE</div>
+        <div class="settings-card">
+          <div class="form-group p-3">
+            <div class="flex justify-between items-center mb-1">
+              <label class="form-label m-0">RPC Endpoint URL</label>
+              <span class="badge-status-dot" id="rpc-ping-badge">
+                <span class="status-dot"></span> <span id="rpc-latency-text">Online</span>
+              </span>
+            </div>
+            <input type="text" id="settings-rpc-input" class="input-field mono text-xs" value="https://cortex-protocol.xyz">
+            <div class="flex gap-2 mt-2">
+              <button class="btn btn-outline btn-xs flex-1" id="btn-test-rpc">
+                <i class="fa-solid fa-bolt"></i> Test Latency
+              </button>
+              <button class="btn btn-primary btn-xs flex-1" id="btn-save-rpc">
+                <i class="fa-solid fa-floppy-disk"></i> Save RPC
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: PREFERENCES -->
+        <div class="settings-group-title">PREFERENCES</div>
+        <div class="settings-card">
+          <div class="settings-item">
+            <div class="settings-item-left">
+              <div class="settings-item-icon bg-violet-soft text-violet">
+                <i class="fa-solid fa-coins"></i>
+              </div>
+              <div class="settings-item-text">
+                <div class="settings-item-title">Display Currency</div>
+                <div class="settings-item-desc">Unit for portfolio pricing</div>
+              </div>
+            </div>
+            <select id="settings-currency-select" class="settings-select">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="CTX">CTX (Native)</option>
+            </select>
+          </div>
+
+          <div class="settings-item">
+            <div class="settings-item-left">
+              <div class="settings-item-icon bg-cyan-soft text-cyan">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </div>
+              <div class="settings-item-text">
+                <div class="settings-item-title">Auto-Lock Timer</div>
+                <div class="settings-item-desc">Lock vault after inactivity</div>
+              </div>
+            </div>
+            <select id="settings-autolock-select" class="settings-select">
+              <option value="5">5 minutes</option>
+              <option value="15" selected>15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="0">Never</option>
+            </select>
+          </div>
+
+          <div class="settings-item" id="btn-settings-explorer">
+            <div class="settings-item-left">
+              <div class="settings-item-icon bg-indigo-soft text-indigo">
+                <i class="fa-solid fa-compass"></i>
+              </div>
+              <div class="settings-item-text">
+                <div class="settings-item-title">Block Explorer</div>
+                <div class="settings-item-desc">View live transactions on L1</div>
+              </div>
+            </div>
+            <i class="fa-solid fa-arrow-up-right-from-square settings-item-arrow"></i>
+          </div>
+        </div>
+
+        <!-- SECTION: ABOUT -->
+        <div class="settings-group-title">ABOUT CORTEX</div>
+        <div class="settings-card p-3 text-center">
+          <div class="flex items-center justify-center gap-2 mb-1">
+            <img src="icons/logo.svg" style="width:20px; height:20px;">
+            <span class="font-bold text-sm text-slate-200">Cortex Sovereign Vault</span>
+          </div>
+          <div class="text-xs text-slate-400 mb-2">Version 3.0.0 (Official Extension)</div>
+          <div class="flex justify-center gap-4 text-slate-400 text-sm mt-2">
+            <a href="https://cortex-protocol.xyz" target="_blank" class="settings-link"><i class="fa-solid fa-globe"></i> Website</a>
+            <a href="https://discord.gg" target="_blank" class="settings-link"><i class="fa-brands fa-discord"></i> Discord</a>
+            <a href="https://github.com/cortex-protocol" target="_blank" class="settings-link"><i class="fa-brands fa-github"></i> GitHub</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SUB-MODAL: EXPORT PRIVATE KEY -->
+    <div id="modal-export-key" class="overlay-modal sub-modal-level2">
+      <div class="overlay-header">
+        <button class="back-btn" id="btn-close-export-key"><i class="fa-solid fa-arrow-left"></i></button>
+        <span class="overlay-title">Export Private Key</span>
+        <div style="width:24px;"></div>
+      </div>
+      <div class="overlay-body">
+        <div class="alert-box-warning mb-3">
+          <i class="fa-solid fa-triangle-exclamation text-amber"></i>
+          <div><strong>NEVER</strong> share your private key. Anyone with this key has full control of your funds and AI assets.</div>
+        </div>
+
+        <div id="export-key-pwd-step">
+          <label class="form-label">Enter Password to Confirm</label>
+          <input type="password" id="export-key-password" class="input-field" placeholder="Enter vault password">
+          <button class="btn btn-primary btn-block mt-3" id="btn-confirm-export-key">
+            <i class="fa-solid fa-unlock"></i> Reveal Private Key
+          </button>
+        </div>
+
+        <div id="export-key-reveal-step" style="display:none;">
+          <label class="form-label">Your Private Key (Hex 64 Chars)</label>
+          <div class="private-key-display-card">
+            <div class="private-key-text mono blurred" id="export-revealed-key">••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••</div>
+            <button class="btn-reveal-toggle" id="btn-toggle-reveal-key">
+              <i class="fa-solid fa-eye" id="icon-reveal-eye"></i> Tap to unmask
+            </button>
+          </div>
+          <button class="btn btn-outline btn-block mt-3" id="btn-copy-exported-key">
+            <i class="fa-regular fa-copy"></i> Copy to Clipboard
+          </button>
+          <button class="btn btn-hero btn-block mt-2" id="btn-done-export-key">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-MODAL: IMPORT KEY IN SETTINGS -->
+    <div id="modal-import-key" class="overlay-modal sub-modal-level2">
+      <div class="overlay-header">
+        <button class="back-btn" id="btn-close-import-key"><i class="fa-solid fa-arrow-left"></i></button>
+        <span class="overlay-title">Import Private Key</span>
+        <div style="width:24px;"></div>
+      </div>
+      <div class="overlay-body">
+        <div class="form-group">
+          <label class="form-label">Private Key (64-char Hex)</label>
+          <input type="password" id="settings-import-key-input" class="input-field mono text-xs" placeholder="Paste private key hex">
+        </div>
+        <div class="form-group mt-3">
+          <label class="form-label">New Password for Vault</label>
+          <input type="password" id="settings-import-pwd-input" class="input-field" placeholder="Enter unlock password">
+        </div>
+        <button class="btn btn-primary btn-block mt-4" id="btn-confirm-settings-import">
+          <i class="fa-solid fa-file-import"></i> Import & Switch Account
+        </button>
+      </div>
+    </div>
+
+    <!-- SUB-MODAL: CONFIRM DISCONNECT / RESET -->
+    <div id="modal-confirm-disconnect" class="overlay-modal sub-modal-level2">
+      <div class="overlay-header">
+        <button class="back-btn" id="btn-close-disconnect"><i class="fa-solid fa-arrow-left"></i></button>
+        <span class="overlay-title text-flame">Disconnect Vault</span>
+        <div style="width:24px;"></div>
+      </div>
+      <div class="overlay-body text-center">
+        <div class="disconnect-warning-icon">
+          <i class="fa-solid fa-triangle-exclamation text-flame"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-100 mt-2">Are you sure?</h3>
+        <p class="text-xs text-slate-400 mt-2" style="line-height:1.5;">
+          Disconnecting will completely remove this private key and wallet from this browser. 
+          <strong>You will lose access to this wallet permanently</strong> unless you have backed up your private key.
+        </p>
+
+        <div class="mt-4 flex flex-col gap-2">
+          <button class="btn btn-danger btn-block" id="btn-execute-disconnect">
+            <i class="fa-solid fa-trash-can"></i> Yes, Remove Vault & Disconnect
+          </button>
+          <button class="btn btn-outline btn-block mt-1" id="btn-cancel-disconnect">
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
 

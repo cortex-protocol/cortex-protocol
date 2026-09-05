@@ -1,6 +1,6 @@
 // CORTEX PROTOCOL - OFFICIAL BROWSER EXTENSION CONTROLLER (MANIFEST V3 STRICT CSP)
 
-const RPC_URL = "https://cortex-protocol.xyz";
+let RPC_URL = localStorage.getItem("cortex_rpc_url") || "https://cortex-protocol.xyz";
 let currentWallet = null;
 let pollInterval = null;
 let pendingApprovalData = null;
@@ -9,6 +9,11 @@ let pendingApprovalData = null;
 // DOM READY & EVENT ATTACHMENT
 // ========================================================
 document.addEventListener("DOMContentLoaded", () => {
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.get(["cortex_rpc_url"], (res) => {
+            if (res && res.cortex_rpc_url) RPC_URL = res.cortex_rpc_url;
+        });
+    }
     bindAllEventListeners();
     checkExistingWallet();
 });
@@ -17,7 +22,31 @@ function bindAllEventListeners() {
     // Header actions
     safeAddListener("btn-copy-header-addr", "click", copyAddress);
     safeAddListener("btn-lock-wallet", "click", lockWallet);
+    safeAddListener("btn-open-settings", "click", openSettingsView);
     safeAddListener("btn-network-select", "click", () => showToast("Connected to Cortex L1 Testnet"));
+
+    // Settings actions
+    safeAddListener("btn-close-settings", "click", () => closeOverlay("overlay-settings"));
+    safeAddListener("btn-settings-copy-addr", "click", copyAddress);
+    safeAddListener("btn-settings-export-key", "click", openExportKeyModal);
+    safeAddListener("btn-close-export-key", "click", () => closeOverlay("modal-export-key"));
+    safeAddListener("btn-confirm-export-key", "click", confirmExportKey);
+    safeAddListener("btn-toggle-reveal-key", "click", toggleRevealKey);
+    safeAddListener("btn-copy-exported-key", "click", copyExportedKey);
+    safeAddListener("btn-done-export-key", "click", () => closeOverlay("modal-export-key"));
+    safeAddListener("btn-settings-import-key", "click", openSettingsImportModal);
+    safeAddListener("btn-close-import-key", "click", () => closeOverlay("modal-import-key"));
+    safeAddListener("btn-confirm-settings-import", "click", confirmSettingsImport);
+    safeAddListener("btn-settings-lock", "click", () => { closeOverlay("overlay-settings"); lockWallet(); });
+    safeAddListener("btn-settings-disconnect", "click", openDisconnectModal);
+    safeAddListener("btn-close-disconnect", "click", () => closeOverlay("modal-confirm-disconnect"));
+    safeAddListener("btn-cancel-disconnect", "click", () => closeOverlay("modal-confirm-disconnect"));
+    safeAddListener("btn-execute-disconnect", "click", executeDisconnectWallet);
+    safeAddListener("btn-test-rpc", "click", testRpcConnection);
+    safeAddListener("btn-save-rpc", "click", saveCustomRpc);
+    safeAddListener("settings-currency-select", "change", handleCurrencyChange);
+    safeAddListener("settings-autolock-select", "change", handleAutoLockChange);
+    safeAddListener("btn-settings-explorer", "click", openExplorerInTab);
 
     // Onboarding buttons
     safeAddListener("btn-show-create", "click", showCreateView);
@@ -104,6 +133,7 @@ function showOnboardingScreen() {
     setViewActive("view-onboarding");
     setDisplay("btn-copy-header-addr", "none");
     setDisplay("btn-lock-wallet", "none");
+    setDisplay("btn-open-settings", "none");
     setDisplay("onboarding-buttons", "block");
     setDisplay("create-wallet-box", "none");
     setDisplay("import-wallet-box", "none");
@@ -114,6 +144,7 @@ function showUnlockScreen() {
     setViewActive("view-onboarding");
     setDisplay("btn-copy-header-addr", "none");
     setDisplay("btn-lock-wallet", "none");
+    setDisplay("btn-open-settings", "none");
     setDisplay("onboarding-buttons", "none");
     setDisplay("create-wallet-box", "none");
     setDisplay("import-wallet-box", "none");
@@ -143,6 +174,7 @@ async function confirmCreateWallet() {
     try {
         const res = await fetch(`${RPC_URL}/api/wallet/create`, { method: "POST" });
         const wallet = await res.json();
+        wallet.password = p1;
         currentWallet = wallet;
         saveVault(wallet, false);
         showDashboard();
@@ -154,7 +186,8 @@ async function confirmCreateWallet() {
         const localWallet = {
             privateKey: randHex,
             address: `ctx1${randHex.substring(0, 48)}`,
-            balance: 0
+            balance: 0,
+            password: p1
         };
         currentWallet = localWallet;
         saveVault(localWallet, false);
@@ -177,6 +210,7 @@ async function confirmImportWallet() {
         });
         const wallet = await res.json();
         if (wallet.error) return showToast(wallet.error, true);
+        wallet.password = pwd;
         currentWallet = wallet;
         saveVault(wallet, false);
         showDashboard();
@@ -185,7 +219,8 @@ async function confirmImportWallet() {
         const localWallet = {
             privateKey: key,
             address: `ctx1${key.substring(0, 48)}`,
-            balance: 0
+            balance: 0,
+            password: pwd
         };
         currentWallet = localWallet;
         saveVault(localWallet, false);
@@ -201,6 +236,9 @@ function unlockWallet() {
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
         chrome.storage.local.get(["cortex_vault"], (res) => {
             if (res && res.cortex_vault) {
+                if (res.cortex_vault.password && res.cortex_vault.password !== pwd) {
+                    return showToast("Incorrect password", true);
+                }
                 currentWallet = res.cortex_vault;
                 chrome.storage.local.set({ cortex_locked: false });
                 showDashboard();
@@ -210,7 +248,11 @@ function unlockWallet() {
     } else {
         const saved = localStorage.getItem("cortex_vault");
         if (saved) {
-            currentWallet = JSON.parse(saved);
+            const vault = JSON.parse(saved);
+            if (vault.password && vault.password !== pwd) {
+                return showToast("Incorrect password", true);
+            }
+            currentWallet = vault;
             showDashboard();
             showToast("🔓 Vault Unlocked");
         }
@@ -240,6 +282,7 @@ function showDashboard() {
     setViewActive("view-dashboard");
     setDisplay("btn-copy-header-addr", "inline-flex");
     setDisplay("btn-lock-wallet", "flex");
+    setDisplay("btn-open-settings", "flex");
 
     if (currentWallet && currentWallet.address) {
         const shortAddr = `${currentWallet.address.substring(0, 8)}...${currentWallet.address.substring(currentWallet.address.length - 4)}`;
@@ -336,7 +379,210 @@ function openSwapView() {
     }
 }
 function openInscribeView() { document.getElementById("overlay-inscribe")?.classList.add("active"); }
+function openOverlay(id) { document.getElementById(id)?.classList.add("active"); }
 function closeOverlay(id) { document.getElementById(id)?.classList.remove("active"); }
+
+// ========================================================
+// SETTINGS & ADVANCED CONTROLS
+// ========================================================
+function openSettingsView() {
+    if (!currentWallet) return;
+    openOverlay("overlay-settings");
+
+    setText("settings-acc-addr", currentWallet.address || "ctx1...");
+    const rpcInput = document.getElementById("settings-rpc-input");
+    if (rpcInput) rpcInput.value = RPC_URL;
+
+    const currSelect = document.getElementById("settings-currency-select");
+    if (currSelect) currSelect.value = localStorage.getItem("cortex_currency") || "USD";
+
+    const lockSelect = document.getElementById("settings-autolock-select");
+    if (lockSelect) lockSelect.value = localStorage.getItem("cortex_autolock") || "15";
+}
+
+function openExportKeyModal() {
+    openOverlay("modal-export-key");
+    setDisplay("export-key-pwd-step", "block");
+    setDisplay("export-key-reveal-step", "none");
+    const pwdInput = document.getElementById("export-key-password");
+    if (pwdInput) pwdInput.value = "";
+    const keyText = document.getElementById("export-revealed-key");
+    if (keyText) {
+        keyText.classList.add("blurred");
+        keyText.textContent = "••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••";
+    }
+}
+
+function confirmExportKey() {
+    const pwd = document.getElementById("export-key-password")?.value || "";
+    if (!pwd) return showToast("Please enter password", true);
+
+    if (currentWallet && currentWallet.password && currentWallet.password !== pwd) {
+        return showToast("Incorrect password", true);
+    }
+
+    if (!currentWallet || !currentWallet.privateKey) {
+        return showToast("No private key available", true);
+    }
+
+    setDisplay("export-key-pwd-step", "none");
+    setDisplay("export-key-reveal-step", "block");
+
+    const keyText = document.getElementById("export-revealed-key");
+    if (keyText) {
+        keyText.textContent = currentWallet.privateKey;
+    }
+}
+
+function toggleRevealKey() {
+    const keyText = document.getElementById("export-revealed-key");
+    const eyeIcon = document.getElementById("icon-reveal-eye");
+    const toggleBtn = document.getElementById("btn-toggle-reveal-key");
+    if (!keyText) return;
+
+    if (keyText.classList.contains("blurred")) {
+        keyText.classList.remove("blurred");
+        if (eyeIcon) eyeIcon.className = "fa-solid fa-eye-slash";
+        if (toggleBtn) toggleBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Tap to hide';
+    } else {
+        keyText.classList.add("blurred");
+        if (eyeIcon) eyeIcon.className = "fa-solid fa-eye";
+        if (toggleBtn) toggleBtn.innerHTML = '<i class="fa-solid fa-eye"></i> Tap to unmask';
+    }
+}
+
+function copyExportedKey() {
+    if (!currentWallet || !currentWallet.privateKey) return;
+    navigator.clipboard.writeText(currentWallet.privateKey)
+        .then(() => showToast("🔑 Private Key copied to clipboard!"))
+        .catch(() => showToast("Failed to copy", true));
+}
+
+function openSettingsImportModal() {
+    openOverlay("modal-import-key");
+    const keyInput = document.getElementById("settings-import-key-input");
+    const pwdInput = document.getElementById("settings-import-pwd-input");
+    if (keyInput) keyInput.value = "";
+    if (pwdInput) pwdInput.value = "";
+}
+
+async function confirmSettingsImport() {
+    const key = document.getElementById("settings-import-key-input")?.value.trim() || "";
+    const pwd = document.getElementById("settings-import-pwd-input")?.value || "";
+    if (!key || key.length < 32) return showToast("Invalid private key format", true);
+    if (!pwd || pwd.length < 6) return showToast("Password must be at least 6 chars", true);
+
+    try {
+        const res = await fetch(`${RPC_URL}/api/wallet/import`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ privateKey: key })
+        });
+        const wallet = await res.json();
+        if (wallet.error) throw new Error(wallet.error);
+        wallet.password = pwd;
+        currentWallet = wallet;
+        saveVault(wallet, false);
+    } catch(e) {
+        const localWallet = {
+            privateKey: key,
+            address: `ctx1${key.substring(0, 48)}`,
+            balance: 0,
+            password: pwd
+        };
+        currentWallet = localWallet;
+        saveVault(localWallet, false);
+    }
+
+    closeOverlay("modal-import-key");
+    closeOverlay("overlay-settings");
+    showDashboard();
+    showToast("🎉 Account Switched & Imported!");
+}
+
+function openDisconnectModal() {
+    openOverlay("modal-confirm-disconnect");
+}
+
+function executeDisconnectWallet() {
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.remove(["cortex_vault", "cortex_locked", "cortex_pending_approval"]);
+    }
+    localStorage.removeItem("cortex_vault");
+    localStorage.removeItem("cortex_locked");
+    currentWallet = null;
+    if (pollInterval) clearInterval(pollInterval);
+
+    closeOverlay("modal-confirm-disconnect");
+    closeOverlay("overlay-settings");
+    showOnboardingScreen();
+    showToast("🔒 Vault disconnected successfully");
+}
+
+async function testRpcConnection() {
+    const rpcInput = document.getElementById("settings-rpc-input");
+    const latencyText = document.getElementById("rpc-latency-text");
+    const url = rpcInput?.value.trim() || RPC_URL;
+
+    if (latencyText) latencyText.textContent = "Pinging...";
+
+    const t0 = performance.now();
+    try {
+        const res = await fetch(`${url}/api/stats`, { cache: "no-store" });
+        const dt = Math.round(performance.now() - t0);
+        if (res.ok) {
+            if (latencyText) latencyText.textContent = `${dt}ms`;
+            showToast(`✓ Node reachable (${dt}ms latency)`);
+        } else {
+            throw new Error(`HTTP ${res.status}`);
+        }
+    } catch(e) {
+        if (latencyText) latencyText.textContent = "Offline";
+        showToast("⚠️ Could not reach RPC endpoint", true);
+    }
+}
+
+function saveCustomRpc() {
+    const rpcInput = document.getElementById("settings-rpc-input");
+    const url = rpcInput?.value.trim();
+    if (!url || !url.startsWith("http")) {
+        return showToast("Please enter a valid URL (http/https)", true);
+    }
+
+    RPC_URL = url;
+    localStorage.setItem("cortex_rpc_url", url);
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.set({ cortex_rpc_url: url });
+    }
+    showToast(`✓ RPC URL updated to ${url}`);
+    if (currentWallet) {
+        updateBalance();
+        fetchActivity();
+    }
+}
+
+function handleCurrencyChange(e) {
+    const val = e.target.value;
+    localStorage.setItem("cortex_currency", val);
+    showToast(`Currency set to ${val}`);
+}
+
+function handleAutoLockChange(e) {
+    const val = e.target.value;
+    localStorage.setItem("cortex_autolock", val);
+    showToast(`Auto-lock set to ${val === "0" ? "Never" : val + " min"}`);
+}
+
+function openExplorerInTab() {
+    const url = currentWallet && currentWallet.address 
+        ? `${RPC_URL}/#explorer` 
+        : `${RPC_URL}`;
+    if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.create) {
+        chrome.tabs.create({ url });
+    } else {
+        window.open(url, "_blank");
+    }
+}
 
 function setSendMax() {
     const avail = Math.max(0, (currentWallet?.balance || 0) - 0.01);
