@@ -1,0 +1,207 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cortex Wallet - Sovereign Web3 & AI Memory Browser Extension</title>
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+    <link rel="stylesheet" href="style.css?v=3.5">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            background: #080b12;
+            color: #f8fafc;
+            min-height: 100vh;
+            font-family: var(--font-sans);
+            position: relative;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 1000px; height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(56, 189, 248, 0.05) 50%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .ext-header {
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .ext-hero-container {
+            max-width: 1240px;
+            margin: 60px auto;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 48px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        @media (max-width: 960px) {
+            .ext-hero-container {
+                grid-template-columns: 1fr;
+                margin: 32px auto;
+                text-align: center;
+            }
+        }
+        .wallet-frame-mockup {
+            width: 380px;
+            height: 600px;
+            background: #0b0f19;
+            border-radius: 28px;
+            border: 1.5px solid rgba(99, 102, 241, 0.4);
+            box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 40px rgba(99, 102, 241, 0.25);
+            overflow: hidden;
+            margin: 0 auto;
+            position: relative;
+        }
+        .guide-step-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.2s ease;
+        }
+        .guide-step-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+        }
+        .step-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #ffffff;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            margin-bottom: 14px;
+        }
+        .browser-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- STANDALONE HEADER -->
+    <header class="ext-header">
+        <a href="/" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <img src="assets/logo.svg" alt="Cortex" style="width: 34px; height: 34px;">
+            <span style="font-weight: 800; font-size: 1.15rem; color: #ffffff; letter-spacing: -0.02em;">Cortex <span style="color:#818cf8;">Wallet</span></span>
+        </a>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="https://discord.gg/WK7tYSse2" target="_blank" class="btn btn-outline" style="border-color: rgba(99,102,241,0.4); color: #818cf8;">
+                <i class="fa-brands fa-discord"></i> Discord
+            </a>
+            <a href="https://github.com/cortex-protocol/cortex-protocol" target="_blank" class="btn btn-outline">
+                <i class="fa-brands fa-github"></i> GitHub
+            </a>
+            <a href="/" class="btn btn-primary">
+                <i class="fa-solid fa-arrow-left"></i> Back to Main Portal
+            </a>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <div class="ext-hero-container">
+        <div>
+            <div class="inline-flex items-center gap-2 mb-3" style="background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.4); padding: 5px 14px; border-radius: 9999px; color: #a5b4fc; font-size: 0.82rem; font-weight: 800;">
+                <i class="fa-solid fa-shield-halved text-indigo"></i> MANIFEST V3 SOVEREIGN VAULT V2.0
+            </div>
+            <h1 style="font-size: 2.8rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 16px;">
+                Your Sovereign Key to the <span style="background: linear-gradient(135deg, #818cf8, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Autonomous AI Economy</span>
+            </h1>
+            <p style="font-size: 1.05rem; color: #94a3b8; line-height: 1.6; margin-bottom: 24px; max-width: 580px;">
+                Cortex Wallet is the official browser extension for interacting with Cortex Protocol ($CTX Layer-1). Manage your secp256k1 keys, swap on the native AMM DEX, and sign autonomous AI memory notarizations with zero custody.
+            </p>
+
+            <!-- BROWSER COMPATIBILITY BADGES -->
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 28px;">
+                <span class="browser-badge"><i class="fa-brands fa-chrome text-amber"></i> Google Chrome</span>
+                <span class="browser-badge"><i class="fa-brands fa-brave text-flame" style="color:#f97316;"></i> Brave Browser</span>
+                <span class="browser-badge"><i class="fa-brands fa-edge text-cyan-400" style="color:#38bdf8;"></i> Microsoft Edge</span>
+                <span class="browser-badge"><i class="fa-solid fa-code text-emerald"></i> Manifest V3 Compliant</span>
+            </div>
+
+            <!-- DOWNLOAD CTA -->
+            <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom: 36px;">
+                <a href="/downloads/cortex-wallet-extension.zip" download class="btn btn-hero" style="padding: 14px 28px; font-size: 1rem; border-radius: 14px;">
+                    <i class="fa-solid fa-download"></i> Download Extension Bundle (.zip)
+                </a>
+                <a href="https://github.com/cortex-protocol/cortex-protocol/tree/main/src/extension" target="_blank" class="btn btn-outline" style="padding: 14px 22px; font-size: 1rem; border-radius: 14px;">
+                    <i class="fa-solid fa-code"></i> Inspect Source Code
+                </a>
+            </div>
+        </div>
+
+        <!-- LIVE INTERACTIVE IFRAME MOCKUP -->
+        <div style="display:flex; justify-content:center;">
+            <div class="wallet-frame-mockup">
+                <iframe src="/downloads/cortex-extension-preview.html" style="width:100%; height:100%; border:none;" title="Cortex Wallet Live Preview"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3-STEP INSTALLATION GUIDE -->
+    <div style="max-width: 1240px; margin: 40px auto 80px auto; padding: 0 24px; position: relative; z-index: 1;">
+        <div class="text-center mb-5">
+            <h2 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">How to Install in 60 Seconds</h2>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin-top: 6px;">No store account needed. Run fully decentralized directly in your browser.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+            <div class="guide-step-card">
+                <div class="step-number">1</div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Download & Extract</h3>
+                <p style="font-size: 0.88rem; color: #94a3b8; line-height: 1.5;">
+                    Download the official <strong style="color:#ffffff;">cortex-wallet-extension.zip</strong> and unzip the folder to your computer (e.g. into your Documents or Desktop).
+                </p>
+            </div>
+
+            <div class="guide-step-card">
+                <div class="step-number">2</div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Open Extensions & Enable Dev Mode</h3>
+                <p style="font-size: 0.88rem; color: #94a3b8; line-height: 1.5;">
+                    Open Chrome or Brave, navigate to <code style="color:#818cf8; font-family:var(--font-mono);">chrome://extensions</code>, and toggle on the <strong style="color:#ffffff;">"Developer mode"</strong> switch in the top right corner.
+                </p>
+            </div>
+
+            <div class="guide-step-card">
+                <div class="step-number">3</div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Click "Load Unpacked"</h3>
+                <p style="font-size: 0.88rem; color: #94a3b8; line-height: 1.5;">
+                    Click the <strong style="color:#ffffff;">"Load unpacked"</strong> button in the top left, select the unzipped Cortex Wallet folder, and pin the wallet icon to your toolbar!
+                </p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

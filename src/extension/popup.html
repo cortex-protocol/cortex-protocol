@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cortex Wallet - Official</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div id="app-container">
+
+    <!-- TOP HEADER -->
+    <header class="app-header">
+      <div class="network-badge" id="btn-network-select" title="Cortex Layer-1 Network">
+        <span class="status-dot"></span>
+        <span class="net-name">Cortex L1 Testnet</span>
+      </div>
+
+      <div class="account-pill" id="btn-copy-header-addr" title="Click to copy address">
+        <span class="account-name" id="account-label">Account 1</span>
+        <span class="account-address-short" id="account-short-addr">ctx1...</span>
+        <i class="fa-regular fa-copy text-xs"></i>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-lock-wallet" title="Lock Wallet">
+          <i class="fa-solid fa-lock"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- VIEW: ONBOARDING / UNLOCK SCREEN -->
+    <div id="view-onboarding" class="sub-view active">
+      <div class="onboarding-hero">
+        <div class="brand-logo-animated" style="background: transparent; border: none; box-shadow: none;">
+          <img src="icons/logo.svg" alt="Cortex Official Logo" style="width: 64px; height: 64px; filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.5));">
+        </div>
+        <h1 class="brand-title">CORTEX WALLET</h1>
+        <p class="brand-tagline">Official Non-Custodial L1 & AI Memory Vault</p>
+        <span class="verified-pill mt-2">
+          <i class="fa-solid fa-circle-check text-emerald"></i> Official Sovereign Extension
+        </span>
+      </div>
+
+      <!-- INITIAL ONBOARDING CHOICES -->
+      <div class="onboarding-actions" id="onboarding-buttons">
+        <button class="btn btn-primary btn-block btn-shimmer" id="btn-show-create">
+          <i class="fa-solid fa-plus"></i> Create New Sovereign Vault
+        </button>
+        <button class="btn btn-outline btn-block mt-2" id="btn-show-import">
+          <i class="fa-solid fa-key"></i> Import via Private Key
+        </button>
+      </div>
+
+      <!-- CREATE NEW WALLET FORM -->
+      <div id="create-wallet-box" style="display:none;" class="form-card mt-3">
+        <div class="text-xs font-bold text-slate-400 mb-2">PROTECT WITH PASSWORD</div>
+        <input type="password" id="new-password-input" class="input-field" placeholder="Password (min 6 characters)">
+        <input type="password" id="confirm-password-input" class="input-field mt-2" placeholder="Confirm Password">
+        <button class="btn btn-hero btn-block mt-3" id="btn-confirm-create">
+          <i class="fa-solid fa-shield-halved"></i> Generate Vault & Keys
+        </button>
+        <button class="btn btn-text btn-block mt-2" id="btn-cancel-create">Back</button>
+      </div>
+
+      <!-- IMPORT WALLET FORM -->
+      <div id="import-wallet-box" style="display:none;" class="form-card mt-3">
+        <div class="text-xs font-bold text-slate-400 mb-2">IMPORT PRIVATE KEY (HEX 64 CHARS)</div>
+        <input type="password" id="import-key-input" class="input-field mono" placeholder="Paste your 64-char private key">
+        <input type="password" id="import-password-input" class="input-field mt-2" placeholder="Set Unlock Password">
+        <button class="btn btn-primary btn-block mt-3" id="btn-confirm-import">
+          <i class="fa-solid fa-key"></i> Import & Unlock Vault
+        </button>
+        <button class="btn btn-text btn-block mt-2" id="btn-cancel-import">Back</button>
+      </div>
+
+      <!-- UNLOCK SCREEN (WHEN WALLET EXISTS) -->
+      <div id="unlock-wallet-box" style="display:none;" class="form-card mt-3">
+        <div class="text-xs font-bold text-slate-400 mb-2">ENTER PASSWORD TO UNLOCK</div>
+        <input type="password" id="unlock-password-input" class="input-field" placeholder="Enter password">
+        <button class="btn btn-primary btn-block mt-3" id="btn-confirm-unlock">
+          <i class="fa-solid fa-lock-open"></i> Unlock Vault
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW: MAIN DASHBOARD -->
+    <div id="view-dashboard" class="sub-view">
+      <!-- BALANCE HERO CARD -->
+      <div class="balance-card">
+        <div class="balance-header">
+          <span class="text-xs text-slate-400">Total Portfolio Value</span>
+          <span class="badge-fiat">+4.8% 24h</span>
+        </div>
+        <div class="balance-amount">
+          <span class="currency" style="font-size:1.3rem; margin-right:2px;">$</span>
+          <span id="dash-portfolio-usd">0.00</span>
+          <span class="currency">USD</span>
+        </div>
+        <div class="balance-fiat-val mono" id="dash-assets-breakdown">
+          <span id="dash-balance-ctx">0.00</span> CTX • <span id="dash-balance-usdc">0.00</span> tUSDC
+        </div>
+      </div>
+
+      <!-- 4 MAIN QUICK ACTIONS -->
+      <div class="quick-actions-grid">
+        <div class="action-item" id="action-btn-send">
+          <div class="action-icon-circle bg-indigo">
+            <i class="fa-solid fa-arrow-up"></i>
+          </div>
+          <span>Send</span>
+        </div>
+
+        <div class="action-item" id="action-btn-receive">
+          <div class="action-icon-circle bg-emerald">
+            <i class="fa-solid fa-arrow-down"></i>
+          </div>
+          <span>Receive</span>
+        </div>
+
+        <div class="action-item" id="action-btn-swap">
+          <div class="action-icon-circle bg-violet">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </div>
+          <span>Swap</span>
+        </div>
+
+        <div class="action-item" id="action-btn-inscribe">
+          <div class="action-icon-circle bg-flame">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <span>Inscribe</span>
+        </div>
+      </div>
+
+      <!-- TABS CONTAINER -->
+      <div class="dashboard-tabs">
+        <button class="dash-tab active" id="tab-btn-assets">Assets</button>
+        <button class="dash-tab" id="tab-btn-activity">Activity</button>
+        <button class="dash-tab" id="tab-btn-memories">AI Memory</button>
+      </div>
+
+      <!-- TAB CONTENT: ASSETS -->
+      <div id="tab-assets" class="tab-pane active">
+        <div class="asset-row">
+          <div class="asset-info">
+            <div class="token-badge-icon token-badge-ctx">
+              <i class="fa-solid fa-brain"></i>
+            </div>
+            <div>
+              <div class="asset-name">Cortex Native</div>
+              <div class="asset-sub">CTX • Layer-1 Coin</div>
+            </div>
+          </div>
+          <div class="asset-balances">
+            <div class="asset-crypto font-bold" id="row-ctx-amount">0.00 CTX</div>
+            <div class="asset-fiat" id="row-ctx-fiat">$0.00</div>
+          </div>
+        </div>
+
+        <div class="asset-row">
+          <div class="asset-info">
+            <div class="token-badge-icon token-badge-usdc">
+              <i class="fa-solid fa-dollar-sign"></i>
+            </div>
+            <div>
+              <div class="asset-name">Testnet USD Coin</div>
+              <div class="asset-sub">tUSDC • AMM Asset</div>
+            </div>
+          </div>
+          <div class="asset-balances">
+            <div class="asset-crypto font-bold" id="row-usdc-amount">1,000.00 tUSDC</div>
+            <div class="asset-fiat" id="row-usdc-fiat">$1,000.00</div>
+          </div>
+        </div>
+
+        <div class="asset-row">
+          <div class="asset-info">
+            <div class="token-badge-icon token-badge-lp">
+              <i class="fa-solid fa-gem"></i>
+            </div>
+            <div>
+              <div class="asset-name">CTX/USDC Pool LP</div>
+              <div class="asset-sub">18.4% APY • Staking</div>
+            </div>
+          </div>
+          <div class="asset-balances">
+            <div class="asset-crypto font-bold">0.00 LP</div>
+            <div class="asset-fiat" style="color:#34d399;">+0.3% Fee Share</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT: ACTIVITY -->
+      <div id="tab-activity" class="tab-pane">
+        <div id="activity-feed-list" class="activity-feed">
+          <div class="empty-feed">Loading blockchain activity...</div>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT: AI MEMORIES -->
+      <div id="tab-memories" class="tab-pane">
+        <div id="memories-feed-list" class="activity-feed">
+          <div class="empty-feed">No AI memories committed yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERLAY VIEW: SEND CTX -->
+    <div id="overlay-send" class="overlay-modal">
+      <div class="overlay-header">
+        <button class="back-btn" id="btn-close-send"><i class="fa-solid fa-arrow-left"></i></button>
+        <span class="overlay-title">Send $CTX</span>
+        <div style="width:24px;"></div>
+      </div>
+      <div class="overlay-body">
+        <div class="form-group">
+          <label class="form-label">Recipient Address</label>
+          <input type="text" id="tx-recipient-input" class="input-field mono text-xs" placeholder="ctx1...">
+        </div>
+        <div class="form-group mt-3">
+          <div class="flex justify-between items-center mb-1">
+            <label class="form-label m-0">Amount (CTX)</label>
+            <span class="text-xs text-slate-400">Available: <strong class="text-slate-200" id="send-avail-ctx">0.00</strong></span>
+          </div>
+          <div class="input-with-max">
+            <input type="number" id="tx-amount-input" class="input-field mono" placeholder="0.0" step="0.1">
+            <button class="max-btn" id="btn-send-max">MAX</button>
+          </div>
+        </div>
+        <div class="form-group mt-3">
+          <label class="form-label">Network Fee: 0.01 CTX</label>
+        </div>
+        <button class="btn btn-primary btn-block btn-shimmer mt-4" id="btn-broadcast-tx">
+          <i class="fa-solid fa-paper-plane"></i> Sign & Broadcast
+        </button>
+        <div id="send-status" class="mt-2 text-center text-xs"></div>
+      </div>
+    </div>
+
+    <!-- OVERLAY VIEW: RECEIVE QR CODE -->
+    <div id="overlay-receive" class="overlay-modal">
+      <div class="overlay-header">
+        <button class="back-btn" id="btn-close-receive"><i class="fa-solid fa-arrow-left"></i></button>
+        <span class="overlay-title">Receive $CTX</span>
+        <div style="width:24px;"></div>
+      </div>
+      <div class="overlay-body text-center">
+        <div class="qr-canvas-card">
+          <canvas id="qr-canvas" width="180" height="180"></canvas>
+        </div>
+        <div class="text-xs text-slate-400 mt-3">Your Sovereign Cortex Address</div>
+        <div class="receive-address-box mono mt-1" id="receive-full-addr">ctx1...</div>
+        <button class="btn btn-outline btn-block mt-3" id="btn-copy-receive-addr">
+          <i class="fa-regular fa-copy"></i> Copy Address
+        </button>
+      </div>
+    </div>
+
+    <!-- OVERLAY VIEW: INSCRIBE AI MEMORY -->
+    <div id="overlay-inscribe" class="overlay-modal">
+      <div class="overlay-header">
+        <button class="back-btn" id="btn-close-inscribe"><i class="fa-solid fa-arrow-left"></i></button>
+        <span class="overlay-title">Inscribe AI Memory</span>
+        <div style="width:24px;"></div>
+      </div>
+      <div class="overlay-body">
+        <div class="form-group">
+          <label class="form-label">AI Agent Identifier</label>
+          <input type="text" id="ext-agent-id" class="input-field mono text-xs" value="Cortex-Agent-01">
+        </div>
+        <div class="form-group mt-2">
+          <label class="form-label">Topic / Domain</label>
+          <input type="text" id="ext-topic" class="input-field text-xs" value="Autonomous-Reasoning">
+        </div>
+        <div class="form-group mt-2">
+          <label class="form-label">Memory Payload Content</label>
+          <textarea id="ext-content" class="input-field text-xs" rows="3">Verified decentralized state transition across multi-agent consensus network.</textarea>
+        </div>
+        <div class="fee-badge-box mt-2">
+          <div>Fee: <strong>0.05 CTX</strong></div>
+          <div class="text-flame">🔥 <strong>0.015 CTX Burned</strong></div>
+        </div>
+        <button class="btn btn-hero btn-block btn-shimmer mt-3" id="btn-execute-inscribe">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Inscribe onto L1 Block
+        </button>
+        <div id="inscribe-status" class="mt-2 text-center text-xs"></div>
+      </div>
+    </div>
+
+    <!-- VIEW: DAPP SIGNATURE & SWAP APPROVAL SCREEN -->
+    <div id="view-approval" class="sub-view">
+      <div class="approval-header-box text-center mt-2 mb-3">
+        <div class="brand-logo-animated" style="width: 52px; height: 52px; margin: 0 auto 8px auto; background: transparent; border: none; box-shadow: none;">
+          <img src="icons/logo.svg" alt="Cortex" style="width: 52px; height: 52px; filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.4));">
+        </div>
+        <h2 class="text-base font-bold text-slate-100 m-0" style="font-size: 1.1rem;">Transaction Request</h2>
+        <div class="dapp-origin-chip mt-2" style="display:inline-flex; align-items:center; gap:6px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; color:var(--emerald);">
+          <i class="fa-solid fa-shield-halved text-emerald"></i>
+          <span id="approval-dapp-origin">cortex-protocol.xyz</span>
+        </div>
+      </div>
+
+      <!-- SWAP SUMMARY CARD -->
+      <div class="approval-card mb-3" style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:16px; padding:14px;">
+        <div class="approval-action-badge mb-2">
+          <span class="badge-fiat" id="appr-action-badge" style="background:rgba(99,102,241,0.15); color:#818cf8;">Constant-Product AMM Swap</span>
+        </div>
+        
+        <div class="approval-token-row" style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
+          <div class="text-xs text-muted">You Pay</div>
+          <div class="approval-amount text-flame mono" id="appr-pay-val" style="font-size:1.1rem; font-weight:800; color:var(--flame);">- 20.00 CTX</div>
+        </div>
+
+        <div class="approval-arrow-divider text-center my-1 text-slate-500" style="text-align:center; padding:4px 0; color:#6b7280;">
+          <i class="fa-solid fa-arrow-down"></i>
+        </div>
+
+        <div class="approval-token-row" style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
+          <div class="text-xs text-muted">You Receive (Est)</div>
+          <div class="approval-amount text-emerald mono" id="appr-receive-val" style="font-size:1.1rem; font-weight:800; color:var(--emerald);">+ 24.8243 tUSDC</div>
+        </div>
+      </div>
+
+      <!-- TRANSACTION METADATA -->
+      <div class="approval-meta-card mb-3" style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:12px; padding:10px 14px; display:flex; flex-direction:column; gap:8px;">
+        <div class="meta-item" style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+          <span>Signer Account</span>
+          <strong class="mono text-xs" id="appr-signer-addr" style="color:var(--text-main);">ctx15764...13c7</strong>
+        </div>
+        <div class="meta-item" style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+          <span>Network Fee (Gas)</span>
+          <strong class="mono text-xs text-emerald" style="color:var(--emerald);">0.0100 CTX</strong>
+        </div>
+        <div class="meta-item" style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+          <span>Max Slippage</span>
+          <strong class="mono text-xs" id="appr-slippage-val" style="color:var(--text-main);">0.5%</strong>
+        </div>
+        <div class="meta-item" style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+          <span>Network</span>
+          <strong class="text-xs text-indigo" style="color:var(--indigo);">Cortex Layer-1 Testnet</strong>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="approval-actions-row mt-auto" style="display:flex; gap:10px; padding-bottom:8px;">
+        <button class="btn btn-outline" id="btn-reject-approval" style="flex:1;">
+          <i class="fa-solid fa-xmark"></i> Reject
+        </button>
+        <button class="btn btn-primary btn-shimmer" id="btn-confirm-approval" style="flex:1.4;">
+          <i class="fa-solid fa-signature"></i> Sign & Confirm
+        </button>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="ext-toast" class="ext-toast"></div>
+
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

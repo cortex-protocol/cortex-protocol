@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cortex Wallet Preview</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <!-- TOP HEADER -->
+    <header class="app-header">
+      <div class="network-badge" title="Cortex Layer-1 Network">
+        <span class="status-dot"></span>
+        <span class="net-name">Cortex L1 Testnet</span>
+      </div>
+
+      <div class="account-pill" title="Click to copy address">
+        <span class="account-name">Account 1</span>
+        <span class="account-address-short">ctx1576...13c7</span>
+        <i class="fa-regular fa-copy text-xs"></i>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" title="Lock Wallet">
+          <i class="fa-solid fa-lock"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- VIEW: MAIN DASHBOARD -->
+    <div id="view-dashboard" class="sub-view active">
+      <!-- BALANCE HERO CARD -->
+      <div class="balance-card">
+        <div class="balance-header">
+          <span class="text-xs text-slate-400" style="font-size:0.75rem; color:#94a3b8;">Total Portfolio Value</span>
+          <span class="badge-fiat">+4.8% 24h</span>
+        </div>
+        <div class="balance-amount">
+          <span class="currency" style="font-size:1.3rem; margin-right:2px;">$</span>
+          <span>1,624.50</span>
+          <span class="currency">USD</span>
+        </div>
+        <div class="balance-fiat-val mono">
+          <span>500.00</span> CTX • <span>1,000.00</span> tUSDC
+        </div>
+      </div>
+
+      <!-- 4 MAIN QUICK ACTIONS -->
+      <div class="quick-actions-grid">
+        <div class="action-item">
+          <div class="action-icon-circle bg-indigo">
+            <i class="fa-solid fa-arrow-up"></i>
+          </div>
+          <span>Send</span>
+        </div>
+
+        <div class="action-item">
+          <div class="action-icon-circle bg-emerald">
+            <i class="fa-solid fa-arrow-down"></i>
+          </div>
+          <span>Receive</span>
+        </div>
+
+        <div class="action-item">
+          <div class="action-icon-circle bg-violet">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </div>
+          <span>Swap</span>
+        </div>
+
+        <div class="action-item">
+          <div class="action-icon-circle bg-flame">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <span>Inscribe</span>
+        </div>
+      </div>
+
+      <!-- TABS CONTAINER -->
+      <div class="dashboard-tabs">
+        <button class="dash-tab active">Assets</button>
+        <button class="dash-tab">Activity</button>
+        <button class="dash-tab">AI Memory</button>
+      </div>
+
+      <!-- TAB CONTENT: ASSETS -->
+      <div id="tab-assets" class="tab-pane active">
+        <div class="asset-row">
+          <div class="asset-info">
+            <div class="token-badge-icon token-badge-ctx">
+              <i class="fa-solid fa-brain"></i>
+            </div>
+            <div>
+              <div class="asset-name">Cortex Native</div>
+              <div class="asset-sub">CTX • Layer-1 Coin</div>
+            </div>
+          </div>
+          <div class="asset-balances">
+            <div class="asset-crypto font-bold">500.00 CTX</div>
+            <div class="asset-fiat">$624.50</div>
+          </div>
+        </div>
+
+        <div class="asset-row">
+          <div class="asset-info">
+            <div class="token-badge-icon token-badge-usdc">
+              <i class="fa-solid fa-dollar-sign"></i>
+            </div>
+            <div>
+              <div class="asset-name">Testnet USD Coin</div>
+              <div class="asset-sub">tUSDC • AMM Asset</div>
+            </div>
+          </div>
+          <div class="asset-balances">
+            <div class="asset-crypto font-bold">1,000.00 tUSDC</div>
+            <div class="asset-fiat">$1,000.00</div>
+          </div>
+        </div>
+
+        <div class="asset-row">
+          <div class="asset-info">
+            <div class="token-badge-icon token-badge-lp">
+              <i class="fa-solid fa-gem"></i>
+            </div>
+            <div>
+              <div class="asset-name">CTX/USDC Pool LP</div>
+              <div class="asset-sub">18.4% APY • Staking</div>
+            </div>
+          </div>
+          <div class="asset-balances">
+            <div class="asset-crypto font-bold">125.00 LP</div>
+            <div class="asset-fiat" style="color:#34d399;">+0.3% Fee Share</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
