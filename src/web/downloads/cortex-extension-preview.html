@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    body { margin: 0; padding: 0; }
+    body { margin: 0; padding: 0; overflow: hidden; }
   </style>
 </head>
 <body>
@@ -40,44 +40,44 @@
       <!-- BALANCE HERO CARD -->
       <div class="balance-card">
         <div class="balance-header">
-          <span class="text-xs text-slate-400" style="font-size:0.75rem; color:#94a3b8;">Total Portfolio Value</span>
-          <span class="badge-fiat">+4.8% 24h</span>
+          <span class="balance-subtitle">Total Portfolio Value</span>
+          <span class="badge-fiat"><i class="fa-solid fa-arrow-trend-up"></i> +4.8%</span>
         </div>
         <div class="balance-amount">
-          <span class="currency" style="font-size:1.3rem; margin-right:2px;">$</span>
-          <span>1,624.50</span>
-          <span class="currency">USD</span>
+          <span class="currency-symbol">$</span><span>1,624.50</span>
         </div>
-        <div class="balance-fiat-val mono">
-          <span>500.00</span> CTX • <span>1,000.00</span> tUSDC
+        <div class="balance-fiat-val" id="dash-assets-breakdown">
+          <span>500.00</span> <span class="asset-ticker">CTX</span>
+          <span class="chip-sep">•</span>
+          <span>1,000.00</span> <span class="asset-ticker">tUSDC</span>
         </div>
       </div>
 
       <!-- 4 MAIN QUICK ACTIONS -->
       <div class="quick-actions-grid">
         <div class="action-item">
-          <div class="action-icon-circle bg-indigo">
+          <div class="action-icon-circle action-send">
             <i class="fa-solid fa-arrow-up"></i>
           </div>
           <span>Send</span>
         </div>
 
         <div class="action-item">
-          <div class="action-icon-circle bg-emerald">
+          <div class="action-icon-circle action-receive">
             <i class="fa-solid fa-arrow-down"></i>
           </div>
           <span>Receive</span>
         </div>
 
         <div class="action-item">
-          <div class="action-icon-circle bg-violet">
+          <div class="action-icon-circle action-swap">
             <i class="fa-solid fa-arrows-rotate"></i>
           </div>
           <span>Swap</span>
         </div>
 
         <div class="action-item">
-          <div class="action-icon-circle bg-flame">
+          <div class="action-icon-circle action-inscribe">
             <i class="fa-solid fa-brain"></i>
           </div>
           <span>Inscribe</span>
@@ -96,7 +96,7 @@
         <div class="asset-row">
           <div class="asset-info">
             <div class="token-badge-icon token-badge-ctx">
-              <i class="fa-solid fa-brain"></i>
+              <img src="icons/logo.svg" alt="CTX" style="width: 22px; height: 22px; filter: drop-shadow(0 0 6px rgba(99,102,241,0.6));">
             </div>
             <div>
               <div class="asset-name">Cortex Native</div>
@@ -104,7 +104,7 @@
             </div>
           </div>
           <div class="asset-balances">
-            <div class="asset-crypto font-bold">500.00 CTX</div>
+            <div class="asset-crypto">500.00 CTX</div>
             <div class="asset-fiat">$624.50</div>
           </div>
         </div>
@@ -120,7 +120,7 @@
             </div>
           </div>
           <div class="asset-balances">
-            <div class="asset-crypto font-bold">1,000.00 tUSDC</div>
+            <div class="asset-crypto">1,000.00 tUSDC</div>
             <div class="asset-fiat">$1,000.00</div>
           </div>
         </div>
@@ -128,7 +128,7 @@
         <div class="asset-row">
           <div class="asset-info">
             <div class="token-badge-icon token-badge-lp">
-              <i class="fa-solid fa-gem"></i>
+              <i class="fa-solid fa-layer-group"></i>
             </div>
             <div>
               <div class="asset-name">CTX/USDC Pool LP</div>
@@ -136,7 +136,7 @@
             </div>
           </div>
           <div class="asset-balances">
-            <div class="asset-crypto font-bold">125.00 LP</div>
+            <div class="asset-crypto">125.00 LP</div>
             <div class="asset-fiat" style="color:#34d399;">+0.3% Fee Share</div>
           </div>
         </div>

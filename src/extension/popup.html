@@ -93,44 +93,44 @@
       <!-- BALANCE HERO CARD -->
       <div class="balance-card">
         <div class="balance-header">
-          <span class="text-xs text-slate-400">Total Portfolio Value</span>
-          <span class="badge-fiat">+4.8% 24h</span>
+          <span class="balance-subtitle">Total Portfolio Value</span>
+          <span class="badge-fiat"><i class="fa-solid fa-arrow-trend-up"></i> +4.8%</span>
         </div>
         <div class="balance-amount">
-          <span class="currency" style="font-size:1.3rem; margin-right:2px;">$</span>
-          <span id="dash-portfolio-usd">0.00</span>
-          <span class="currency">USD</span>
+          <span class="currency-symbol">$</span><span id="dash-portfolio-usd">0.00</span>
         </div>
-        <div class="balance-fiat-val mono" id="dash-assets-breakdown">
-          <span id="dash-balance-ctx">0.00</span> CTX • <span id="dash-balance-usdc">0.00</span> tUSDC
+        <div class="balance-fiat-val" id="dash-assets-breakdown">
+          <span id="dash-balance-ctx">0.00</span> <span class="asset-ticker">CTX</span>
+          <span class="chip-sep">•</span>
+          <span id="dash-balance-usdc">0.00</span> <span class="asset-ticker">tUSDC</span>
         </div>
       </div>
 
       <!-- 4 MAIN QUICK ACTIONS -->
       <div class="quick-actions-grid">
         <div class="action-item" id="action-btn-send">
-          <div class="action-icon-circle bg-indigo">
+          <div class="action-icon-circle action-send">
             <i class="fa-solid fa-arrow-up"></i>
           </div>
           <span>Send</span>
         </div>
 
         <div class="action-item" id="action-btn-receive">
-          <div class="action-icon-circle bg-emerald">
+          <div class="action-icon-circle action-receive">
             <i class="fa-solid fa-arrow-down"></i>
           </div>
           <span>Receive</span>
         </div>
 
         <div class="action-item" id="action-btn-swap">
-          <div class="action-icon-circle bg-violet">
+          <div class="action-icon-circle action-swap">
             <i class="fa-solid fa-arrows-rotate"></i>
           </div>
           <span>Swap</span>
         </div>
 
         <div class="action-item" id="action-btn-inscribe">
-          <div class="action-icon-circle bg-flame">
+          <div class="action-icon-circle action-inscribe">
             <i class="fa-solid fa-brain"></i>
           </div>
           <span>Inscribe</span>
@@ -149,7 +149,7 @@
         <div class="asset-row">
           <div class="asset-info">
             <div class="token-badge-icon token-badge-ctx">
-              <i class="fa-solid fa-brain"></i>
+              <img src="icons/logo.svg" alt="CTX" style="width: 22px; height: 22px; filter: drop-shadow(0 0 6px rgba(99,102,241,0.6));">
             </div>
             <div>
               <div class="asset-name">Cortex Native</div>
@@ -157,7 +157,7 @@
             </div>
           </div>
           <div class="asset-balances">
-            <div class="asset-crypto font-bold" id="row-ctx-amount">0.00 CTX</div>
+            <div class="asset-crypto" id="row-ctx-amount">0.00 CTX</div>
             <div class="asset-fiat" id="row-ctx-fiat">$0.00</div>
           </div>
         </div>
@@ -173,7 +173,7 @@
             </div>
           </div>
           <div class="asset-balances">
-            <div class="asset-crypto font-bold" id="row-usdc-amount">1,000.00 tUSDC</div>
+            <div class="asset-crypto" id="row-usdc-amount">1,000.00 tUSDC</div>
             <div class="asset-fiat" id="row-usdc-fiat">$1,000.00</div>
           </div>
         </div>
@@ -181,7 +181,7 @@
         <div class="asset-row">
           <div class="asset-info">
             <div class="token-badge-icon token-badge-lp">
-              <i class="fa-solid fa-gem"></i>
+              <i class="fa-solid fa-layer-group"></i>
             </div>
             <div>
               <div class="asset-name">CTX/USDC Pool LP</div>

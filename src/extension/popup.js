@@ -275,15 +275,16 @@ async function updateBalance() {
         } catch(e) {}
 
         const ctxUsd = bal * 1.2450;
-        const totalPortfolioUsd = (ctxUsd + usdcBal).toFixed(2);
+        const totalUsdNum = ctxUsd + usdcBal;
+        const formattedUsd = totalUsdNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        setText("dash-portfolio-usd", totalPortfolioUsd);
-        setText("dash-balance-ctx", bal.toFixed(2));
-        setText("dash-balance-usdc", usdcBal.toFixed(2));
-        setText("row-ctx-amount", `${bal.toFixed(2)} CTX`);
-        setText("row-ctx-fiat", `$${ctxUsd.toFixed(2)}`);
-        setText("row-usdc-amount", `${usdcBal.toFixed(2)} tUSDC`);
-        setText("row-usdc-fiat", `$${usdcBal.toFixed(2)}`);
+        setText("dash-portfolio-usd", formattedUsd);
+        setText("dash-balance-ctx", bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        setText("dash-balance-usdc", usdcBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        setText("row-ctx-amount", `${bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CTX`);
+        setText("row-ctx-fiat", `$${ctxUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        setText("row-usdc-amount", `${usdcBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} tUSDC`);
+        setText("row-usdc-fiat", `$${usdcBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
         setText("send-avail-ctx", `${bal.toFixed(2)} CTX`);
     } catch(e) {}
 }
