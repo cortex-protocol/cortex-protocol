@@ -25,8 +25,38 @@ function bindAllEventListeners() {
     safeAddListener("btn-open-settings", "click", openSettingsView);
     safeAddListener("btn-network-select", "click", () => showToast("Connected to Cortex L1 Testnet"));
 
+    // Bottom Navigation actions
+    safeAddListener("nav-btn-wallet", "click", () => {
+        closeOverlay("overlay-settings");
+        switchDashTab("assets", document.getElementById("tab-btn-assets"));
+        setActiveNav("nav-btn-wallet");
+    });
+    safeAddListener("nav-btn-activity", "click", () => {
+        closeOverlay("overlay-settings");
+        switchDashTab("activity", document.getElementById("tab-btn-activity"));
+        setActiveNav("nav-btn-activity");
+    });
+    safeAddListener("nav-btn-swap", "click", () => {
+        openSwapView();
+    });
+    safeAddListener("nav-btn-memories", "click", () => {
+        closeOverlay("overlay-settings");
+        switchDashTab("memories", document.getElementById("tab-btn-memories"));
+        setActiveNav("nav-btn-memories");
+    });
+    safeAddListener("nav-btn-settings", "click", () => {
+        openSettingsView();
+    });
+
     // Settings actions
-    safeAddListener("btn-close-settings", "click", () => closeOverlay("overlay-settings"));
+    safeAddListener("btn-close-settings", "click", () => {
+        closeOverlay("overlay-settings");
+        const isActivity = document.getElementById("tab-activity")?.classList.contains("active");
+        const isMemories = document.getElementById("tab-memories")?.classList.contains("active");
+        if (isActivity) setActiveNav("nav-btn-activity");
+        else if (isMemories) setActiveNav("nav-btn-memories");
+        else setActiveNav("nav-btn-wallet");
+    });
     safeAddListener("btn-settings-copy-addr", "click", copyAddress);
     safeAddListener("btn-settings-export-key", "click", openExportKeyModal);
     safeAddListener("btn-close-export-key", "click", () => closeOverlay("modal-export-key"));
@@ -42,6 +72,10 @@ function bindAllEventListeners() {
     safeAddListener("btn-close-disconnect", "click", () => closeOverlay("modal-confirm-disconnect"));
     safeAddListener("btn-cancel-disconnect", "click", () => closeOverlay("modal-confirm-disconnect"));
     safeAddListener("btn-execute-disconnect", "click", executeDisconnectWallet);
+    const expPwd = document.getElementById("export-key-password");
+    if (expPwd) expPwd.addEventListener("keydown", (e) => { if (e.key === "Enter") confirmExportKey(); });
+    const impPwd = document.getElementById("settings-import-pwd-input");
+    if (impPwd) impPwd.addEventListener("keydown", (e) => { if (e.key === "Enter") confirmSettingsImport(); });
     safeAddListener("btn-test-rpc", "click", testRpcConnection);
     safeAddListener("btn-save-rpc", "click", saveCustomRpc);
     safeAddListener("settings-currency-select", "change", handleCurrencyChange);
@@ -134,6 +168,7 @@ function showOnboardingScreen() {
     setDisplay("btn-copy-header-addr", "none");
     setDisplay("btn-lock-wallet", "none");
     setDisplay("btn-open-settings", "none");
+    setDisplay("app-bottom-nav", "none");
     setDisplay("onboarding-buttons", "block");
     setDisplay("create-wallet-box", "none");
     setDisplay("import-wallet-box", "none");
@@ -145,6 +180,7 @@ function showUnlockScreen() {
     setDisplay("btn-copy-header-addr", "none");
     setDisplay("btn-lock-wallet", "none");
     setDisplay("btn-open-settings", "none");
+    setDisplay("app-bottom-nav", "none");
     setDisplay("onboarding-buttons", "none");
     setDisplay("create-wallet-box", "none");
     setDisplay("import-wallet-box", "none");
@@ -281,8 +317,8 @@ function saveVault(wallet, isLocked = false) {
 function showDashboard() {
     setViewActive("view-dashboard");
     setDisplay("btn-copy-header-addr", "inline-flex");
-    setDisplay("btn-lock-wallet", "flex");
-    setDisplay("btn-open-settings", "flex");
+    setDisplay("app-bottom-nav", "flex");
+    setActiveNav("nav-btn-wallet");
 
     if (currentWallet && currentWallet.address) {
         const shortAddr = `${currentWallet.address.substring(0, 8)}...${currentWallet.address.substring(currentWallet.address.length - 4)}`;
@@ -367,6 +403,10 @@ function switchDashTab(tabKey, btnEl) {
     if (btnEl) btnEl.classList.add("active");
     const target = document.getElementById(`tab-${tabKey}`);
     if (target) target.classList.add("active");
+
+    if (tabKey === "assets") setActiveNav("nav-btn-wallet");
+    else if (tabKey === "activity") setActiveNav("nav-btn-activity");
+    else if (tabKey === "memories") setActiveNav("nav-btn-memories");
 }
 
 function openSendView() { document.getElementById("overlay-send")?.classList.add("active"); }
@@ -388,6 +428,7 @@ function closeOverlay(id) { document.getElementById(id)?.classList.remove("activ
 function openSettingsView() {
     if (!currentWallet) return;
     openOverlay("overlay-settings");
+    setActiveNav("nav-btn-settings");
 
     setText("settings-acc-addr", currentWallet.address || "ctx1...");
     const rpcInput = document.getElementById("settings-rpc-input");
@@ -712,8 +753,12 @@ function showToast(msg, isErr = false) {
     if (!t) return;
     t.textContent = msg;
     t.style.borderColor = isErr ? "#ef4444" : "#6366f1";
+    t.classList.add("active");
     t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 3000);
+    setTimeout(() => {
+        t.classList.remove("active");
+        t.classList.remove("show");
+    }, 3000);
 }
 
 function setViewActive(viewId) {
@@ -728,6 +773,10 @@ function setText(id, text) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
 }
+function setActiveNav(btnId) {
+    document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+    document.getElementById(btnId)?.classList.add("active");
+}
 
 // ========================================================
 // WEB3 DAPP APPROVAL LIFECYCLE
@@ -736,18 +785,33 @@ function showApprovalScreen(approval) {
     setViewActive("view-approval");
     setDisplay("btn-copy-header-addr", "none");
     setDisplay("btn-lock-wallet", "none");
+    setDisplay("app-bottom-nav", "none");
 
-    const params = approval.params || {};
-    const origin = approval.origin || "cortex-protocol.xyz/dex";
+    const origin = approval.origin || "cortex-protocol.xyz";
     setText("approval-dapp-origin", origin);
 
-    const fromSym = params.fromSymbol || "CTX";
-    const toSym = params.toSymbol || "tUSDC";
-    const amountIn = params.amountIn || 20;
-    const amountOut = params.amountOut ? (+params.amountOut).toFixed(4) : (amountIn * 1.2450).toFixed(4);
+    const btn = document.getElementById("btn-confirm-approval");
 
-    setText("appr-pay-val", `- ${amountIn} ${fromSym}`);
-    setText("appr-receive-val", `+ ${amountOut} ${toSym}`);
+    if (approval.type === "CONNECT") {
+        setText("approval-title-text", "Connection Request");
+        setDisplay("appr-connect-card", "block");
+        setDisplay("appr-swap-card", "none");
+        if (btn) btn.innerHTML = `<i class="fa-solid fa-plug"></i> Connect & Authorize`;
+    } else {
+        setText("approval-title-text", "Transaction Request");
+        setDisplay("appr-connect-card", "none");
+        setDisplay("appr-swap-card", "block");
+        if (btn) btn.innerHTML = `<i class="fa-solid fa-signature"></i> Sign & Confirm`;
+
+        const params = approval.params || {};
+        const fromSym = params.fromSymbol || "CTX";
+        const toSym = params.toSymbol || "tUSDC";
+        const amountIn = params.amountIn || 20;
+        const amountOut = params.amountOut ? (+params.amountOut).toFixed(4) : (amountIn * 1.2450).toFixed(4);
+
+        setText("appr-pay-val", `- ${amountIn} ${fromSym}`);
+        setText("appr-receive-val", `+ ${amountOut} ${toSym}`);
+    }
 
     if (currentWallet && currentWallet.address) {
         const shortAddr = `${currentWallet.address.substring(0, 10)}...${currentWallet.address.substring(currentWallet.address.length - 4)}`;
@@ -760,7 +824,66 @@ async function confirmDAppApproval() {
     if (!btn || !currentWallet || !pendingApprovalData) return;
 
     btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Signing On-Chain...`;
+
+    // Handle pure connection approval
+    if (pendingApprovalData.type === "CONNECT") {
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Connecting...`;
+        if (typeof chrome !== "undefined" && chrome.runtime) {
+            chrome.runtime.sendMessage({
+                type: "CORTEX_RESOLVE_APPROVAL",
+                reqId: pendingApprovalData.reqId,
+                result: {
+                    accounts: [currentWallet.address]
+                }
+            });
+        }
+        showToast("✓ DApp Connected!");
+        setTimeout(() => window.close(), 600);
+        return;
+    }
+
+    // Handle AI memory inscription approval
+    if (pendingApprovalData.type === "CORTEX_INSCRIBE_MEMORY") {
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Inscribing Memory...`;
+        try {
+            const params = pendingApprovalData.params || {};
+            const res = await fetch(`${RPC_URL}/api/memory/inscribe`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    agentPrivateKey: currentWallet.privateKey,
+                    agentId: params.agentId || "Web3User",
+                    topic: params.topic || "WEB3_KNOWLEDGE",
+                    memoryType: params.memoryType || "KNOWLEDGE_BASE",
+                    content: params.content || "",
+                    fee: 0.05
+                })
+            });
+            const data = await res.json();
+            if (data.error) {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-signature"></i> Sign & Confirm`;
+                return showToast(data.error, true);
+            }
+            if (typeof chrome !== "undefined" && chrome.runtime) {
+                chrome.runtime.sendMessage({
+                    type: "CORTEX_RESOLVE_APPROVAL",
+                    reqId: pendingApprovalData.reqId,
+                    result: data
+                });
+            }
+            showToast("🧠 Memory Inscribed!");
+            setTimeout(() => window.close(), 800);
+            return;
+        } catch(e) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-signature"></i> Sign & Confirm`;
+            return showToast("Failed to inscribe memory", true);
+        }
+    }
+
+    // Handle AMM Swap approval
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Signing Swap On-Chain...`;
 
     try {
         const params = pendingApprovalData.params || {};

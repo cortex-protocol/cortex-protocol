@@ -53,11 +53,34 @@
                 <button class="btn btn-outline nav-btn-desktop" onclick="navigateTo('explorer')" title="Block Explorer">
                     <i class="fa-solid fa-cubes text-indigo"></i> <span>Explorer</span>
                 </button>
-                <button class="btn btn-hero-cta nav-cta-btn" onclick="navigateTo('landing', 'mining-node')" title="Start CPU Mining">
-                    <i class="fa-solid fa-terminal"></i> <span>Mine $CTX</span>
-                </button>
-                <a href="extension.html" class="btn btn-primary nav-wallet-btn" title="Cortex Wallet Official Browser Extension">
-                    <i class="fa-solid fa-puzzle-piece"></i> <span>Extension</span>
+                <!-- WEB3 CONNECT WALLET BUTTON & CONNECTED PILL -->
+                <div id="web-wallet-header-container" class="web-wallet-header-container">
+                    <button class="btn btn-primary nav-wallet-btn" id="btn-web-connect-wallet" onclick="handleWebConnectClick()" title="Connect Cortex Sovereign Wallet">
+                        <i class="fa-solid fa-wallet"></i> <span>Connect Wallet</span>
+                    </button>
+                    <div id="web-wallet-connected-pill" class="web-connected-pill" style="display:none;" onclick="toggleWalletDropdown(event)">
+                        <span class="status-dot-emerald"></span>
+                        <span class="mono font-bold text-xs" id="web-wallet-addr-short">ctx1...</span>
+                        <span class="web-wallet-balance-badge" id="web-wallet-bal-badge">0.00 CTX</span>
+                        <i class="fa-solid fa-chevron-down text-xs" style="font-size:0.65rem; margin-left:2px;"></i>
+                        
+                        <!-- DROPDOWN MENU -->
+                        <div class="web-wallet-dropdown" id="web-wallet-dropdown">
+                            <div class="dropdown-item" onclick="copyConnectedWebAddress(event)">
+                                <i class="fa-regular fa-copy"></i> Copy Address
+                            </div>
+                            <div class="dropdown-item" onclick="openConnectedWebExplorer(event)">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> View in Explorer
+                            </div>
+                            <div class="dropdown-item dropdown-danger" onclick="disconnectWebWallet(event)">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Disconnect
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="extension.html" class="btn btn-outline nav-btn-desktop" title="Official Extension Guide" style="padding:8px 12px;">
+                    <i class="fa-solid fa-puzzle-piece"></i>
                 </a>
                 <button class="mobile-menu-toggle-btn" id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle navigation">
                     <i class="fa-solid fa-bars" id="mobile-menu-icon"></i>
@@ -92,8 +115,11 @@
                 <button class="btn btn-outline btn-block mb-2" onclick="closeAndNavigate('explorer')">
                     <i class="fa-solid fa-cubes text-indigo"></i> Block Explorer
                 </button>
-                <a href="extension.html" class="btn btn-primary btn-block">
-                    <i class="fa-solid fa-puzzle-piece"></i> Cortex Wallet Extension
+                <button class="btn btn-primary btn-block mb-2" id="btn-mobile-connect-wallet" onclick="handleWebConnectClick()">
+                    <i class="fa-solid fa-wallet"></i> <span id="mobile-connect-btn-text">Connect Wallet</span>
+                </button>
+                <a href="extension.html" class="btn btn-outline btn-block">
+                    <i class="fa-solid fa-puzzle-piece"></i> Cortex Wallet Guide
                 </a>
             </div>
         </div>
@@ -1541,6 +1567,36 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
             </div>
         </div>
     </footer>
+
+    <!-- MODAL: CORTEX WALLET INSTALLATION / DETECTION -->
+    <div class="modal-overlay" id="modal-install-extension" style="display:none;" onclick="closeInstallModal(event)">
+        <div class="signature-dialog-card" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                <div class="flex items-center gap-2">
+                    <img src="assets/logo.svg" alt="Cortex" style="width:24px; height:24px;">
+                    <span class="font-bold text-sm text-slate-100">Cortex Wallet Extension</span>
+                </div>
+                <button class="btn-close-modal" onclick="closeInstallModal()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:#94a3b8;">&times;</button>
+            </div>
+            <div style="padding:24px; text-align:center;">
+                <div style="width:60px; height:60px; border-radius:18px; background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; font-size:1.7rem; color:#818cf8;">
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                </div>
+                <h3 style="font-size:1.15rem; font-weight:800; color:#ffffff; margin-bottom:8px;">Extension Not Detected</h3>
+                <p style="font-size:0.84rem; color:#94a3b8; line-height:1.5; margin-bottom:20px;">
+                    To connect seamlessly with <strong>Cortex Protocol L1</strong> and sign decentralized swaps & AI memories, install the official sovereign browser extension.
+                </p>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <a href="/downloads/cortex-wallet-extension.zip" download class="btn btn-primary btn-block btn-shimmer" style="padding:12px; font-weight:700; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <i class="fa-solid fa-download"></i> Download Cortex Wallet (v2.2.0)
+                    </a>
+                    <a href="extension.html" target="_blank" class="btn btn-outline btn-block" style="padding:10px; font-size:0.8rem; text-decoration:none; border-color:rgba(255,255,255,0.15); color:#cbd5e1;">
+                        <i class="fa-solid fa-book-open"></i> Read 1-Minute Setup Guide
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- NOTIFICATION TOAST -->
     <div id="toast" class="toast-light"></div>

@@ -90,6 +90,50 @@ async function setupMiner() {
     console.log(`\x1b[32m[SYSTEM]\x1b[0m Detected CPU Hardware: \x1b[1m${os.cpus()[0]?.model || 'Multi-Core CPU'}\x1b[0m`);
     console.log(`\x1b[32m[SYSTEM]\x1b[0m Available Hardware Threads: \x1b[1;33m${totalCpus} Cores/Threads\x1b[0m\n`);
 
+    // Parse CLI arguments: --address/-a, --threads/-t, --mode/-m, --node/-n
+    const args = process.argv.slice(2);
+    let cliAddress = process.env.MINER_ADDRESS || '';
+    let cliThreads = Number(process.env.MINER_THREADS) || 0;
+    let cliMode = (process.env.MINING_MODE as 'pool' | 'solo') || '';
+    let cliNode = process.env.NODE_URL || '';
+
+    for (let i = 0; i < args.length; i++) {
+        if ((args[i] === '--address' || args[i] === '-a') && args[i + 1]) {
+            cliAddress = args[++i];
+        } else if ((args[i] === '--threads' || args[i] === '-t') && args[i + 1]) {
+            cliThreads = parseInt(args[++i], 10);
+        } else if ((args[i] === '--mode' || args[i] === '-m') && args[i + 1]) {
+            const m = args[++i].toLowerCase();
+            if (m === 'solo' || m === 'pool') cliMode = m as any;
+        } else if ((args[i] === '--node' || args[i] === '-n') && args[i + 1]) {
+            cliNode = args[++i];
+        }
+    }
+
+    if (cliAddress) {
+        minerAddress = cliAddress;
+        if (cliThreads && cliThreads >= 1) allocatedThreads = Math.min(cliThreads, totalCpus);
+        if (cliMode) miningMode = cliMode;
+        if (cliNode) NODE_URL = cliNode;
+        console.log(`\x1b[32m[AUTO-START]\x1b[0m Payout Address : \x1b[1;32m${minerAddress}\x1b[0m`);
+        console.log(`\x1b[32m[AUTO-START]\x1b[0m Mining Mode    : \x1b[1;35m${miningMode.toUpperCase()}\x1b[0m`);
+        console.log(`\x1b[32m[AUTO-START]\x1b[0m CPU Threads    : \x1b[1;33m${allocatedThreads} Threads\x1b[0m`);
+        console.log(`\x1b[32m[AUTO-START]\x1b[0m Node URL       : \x1b[1m${NODE_URL}\x1b[0m\n`);
+
+        saveConfig({
+            minerAddress,
+            miningMode,
+            workerId,
+            threads: allocatedThreads,
+            nodeUrl: NODE_URL,
+            savedAt: new Date().toISOString()
+        });
+
+        console.log('\x1b[35mStarting mining dashboard in 2 seconds...\x1b[0m');
+        await new Promise(r => setTimeout(r, 2000));
+        return;
+    }
+
     const saved = loadSavedConfig();
     if (saved && saved.minerAddress && !process.env.MINER_ADDRESS) {
         console.log(`\x1b[34m[SAVED CONFIG]\x1b[0m Found existing payout wallet: \x1b[1;32m${saved.minerAddress}\x1b[0m`);

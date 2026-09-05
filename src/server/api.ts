@@ -352,12 +352,21 @@ export function createApiServer(
                 }
             }
 
-            // Filter valid accounts
+            // System addresses to exclude from community leaderboard (internal node pool address & AI simulation agents)
+            const excludedAddresses = new Set([
+                'ctx16989d3bf981a2fd7693bddaf93d3ac5e292b067b60175ac3', // Server Autonomous AI Agent
+                'ctx10736408b13f3b0bd730731d9c29a4f2aa8ba8d09b9d68f18', // Server Node / Pool System Miner
+                ...(pool ? [pool.getPoolAddress()] : []),
+                ...(miner ? [miner.getMinerAddress()] : [])
+            ].filter(Boolean));
+
+            // Filter valid community accounts
             const entries = Array.from(addressStats.values()).filter(u => 
                 u.address.length >= 20 &&
                 !u.address.includes('0000000000000') && 
                 !u.address.includes('ctx1genesis') && 
-                !u.address.includes('COINBASE')
+                !u.address.includes('COINBASE') &&
+                !excludedAddresses.has(u.address)
             );
 
             const totalScoreMiners = entries.reduce((sum, e) => sum + (e.blocksMined * 10 + e.sharesSubmitted), 0);

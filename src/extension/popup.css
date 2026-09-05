@@ -775,7 +775,8 @@ html, body {
   z-index: 100;
   white-space: nowrap;
 }
-.ext-toast.active {
+.ext-toast.active,
+.ext-toast.show {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
@@ -957,7 +958,7 @@ html, body {
 }
 
 .sub-modal-level2 {
-  z-index: 40 !important;
+  z-index: 60 !important;
 }
 
 .alert-box-warning {
@@ -1039,5 +1040,87 @@ html, body {
   padding: 5px 10px;
   font-size: 0.7rem;
   border-radius: 7px;
+}
+
+/* ======================================================== */
+/* BOTTOM NAVIGATION BAR (TIER-1 WALLET STYLE)              */
+/* ======================================================== */
+.app-bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: rgba(9, 13, 22, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 4px;
+  z-index: 30;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-family: var(--font-sans);
+  font-size: 0.64rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  flex: 1;
+  max-width: 72px;
+}
+
+.nav-item i {
+  font-size: 1.15rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-item:hover {
+  color: #f1f5f9;
+}
+
+.nav-item:hover i {
+  transform: translateY(-2px);
+  color: #a5b4fc;
+}
+
+.nav-item.active {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.nav-item.active i {
+  color: #818cf8;
+  filter: drop-shadow(0 0 10px rgba(129, 140, 248, 0.75));
+  transform: translateY(-2px) scale(1.1);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  width: 16px;
+  height: 2.5px;
+  background: #818cf8;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #818cf8;
+}
+
+#view-dashboard {
+  padding-bottom: 66px;
 }
 

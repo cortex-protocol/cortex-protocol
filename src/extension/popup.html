@@ -24,16 +24,6 @@
         <span class="account-name" id="account-label">Account 1</span>
         <span class="account-address-short" id="account-short-addr">ctx1...</span>
         <i class="fa-regular fa-copy text-xs"></i>
-      </div>
-
-      <div class="header-actions">
-        <button class="icon-btn" id="btn-lock-wallet" title="Lock Wallet">
-          <i class="fa-solid fa-lock"></i>
-        </button>
-        <button class="icon-btn" id="btn-open-settings" title="Wallet Settings">
-          <i class="fa-solid fa-gear"></i>
-        </button>
-      </div>
     </header>
 
     <!-- VIEW: ONBOARDING / UNLOCK SCREEN -->
@@ -301,15 +291,30 @@
         <div class="brand-logo-animated" style="width: 52px; height: 52px; margin: 0 auto 8px auto; background: transparent; border: none; box-shadow: none;">
           <img src="icons/logo.svg" alt="Cortex" style="width: 52px; height: 52px; filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.4));">
         </div>
-        <h2 class="text-base font-bold text-slate-100 m-0" style="font-size: 1.1rem;">Transaction Request</h2>
+        <h2 class="text-base font-bold text-slate-100 m-0" id="approval-title-text" style="font-size: 1.1rem;">Transaction Request</h2>
         <div class="dapp-origin-chip mt-2" style="display:inline-flex; align-items:center; gap:6px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; color:var(--emerald);">
           <i class="fa-solid fa-shield-halved text-emerald"></i>
           <span id="approval-dapp-origin">cortex-protocol.xyz</span>
         </div>
       </div>
 
+      <!-- CONNECT PERMISSION CARD -->
+      <div id="appr-connect-card" class="approval-card mb-3" style="display:none; background:var(--bg-card); border:1px solid var(--border-light); border-radius:16px; padding:16px; text-align:center;">
+        <div class="mb-2" style="font-size:1.8rem; color:#818cf8;">
+          <i class="fa-solid fa-plug-circle-bolt"></i>
+        </div>
+        <h3 class="text-sm font-bold text-slate-100 mb-1">Connect with Cortex</h3>
+        <p class="text-xs text-slate-400 mb-3" style="line-height:1.4;">
+          This application would like to view your public address and balances. It cannot transfer funds without explicit confirmation.
+        </p>
+        <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:8px 12px; font-size:0.72rem; display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-circle-check text-emerald"></i>
+          <span class="text-slate-300">Read account address ($CTX balance)</span>
+        </div>
+      </div>
+
       <!-- SWAP SUMMARY CARD -->
-      <div class="approval-card mb-3" style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:16px; padding:14px;">
+      <div id="appr-swap-card" class="approval-card mb-3" style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:16px; padding:14px;">
         <div class="approval-action-badge mb-2">
           <span class="badge-fiat" id="appr-action-badge" style="background:rgba(99,102,241,0.15); color:#818cf8;">Constant-Product AMM Swap</span>
         </div>
@@ -617,6 +622,30 @@
         </div>
       </div>
     </div>
+
+    <!-- BOTTOM NAVIGATION BAR -->
+    <nav class="app-bottom-nav" id="app-bottom-nav" style="display: none;">
+      <button class="nav-item active" id="nav-btn-wallet" title="Wallet">
+        <i class="fa-solid fa-wallet"></i>
+        <span>Wallet</span>
+      </button>
+      <button class="nav-item" id="nav-btn-activity" title="Activity">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <span>Activity</span>
+      </button>
+      <button class="nav-item" id="nav-btn-swap" title="Swap DEX">
+        <i class="fa-solid fa-arrows-rotate"></i>
+        <span>Swap</span>
+      </button>
+      <button class="nav-item" id="nav-btn-memories" title="AI Memories">
+        <i class="fa-solid fa-brain"></i>
+        <span>Memory</span>
+      </button>
+      <button class="nav-item" id="nav-btn-settings" title="Settings">
+        <i class="fa-solid fa-gear"></i>
+        <span>Settings</span>
+      </button>
+    </nav>
 
     <!-- TOAST NOTIFICATION -->
     <div id="ext-toast" class="ext-toast"></div>

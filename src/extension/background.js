@@ -45,7 +45,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // 3. DApp requests transaction / swap signature approval
-    if (request.type === "CORTEX_SIGN_TRANSACTION" || request.type === "CORTEX_SIGN_SWAP") {
+    if (request.type === "CORTEX_SIGN_TRANSACTION" || request.type === "CORTEX_SIGN_SWAP" || request.type === "CORTEX_INSCRIBE_MEMORY") {
         const reqId = ++currentReqId;
         pendingRequests.set(reqId, { sendResponse, requestType: request.type, payload: request.params || request.payload });
         

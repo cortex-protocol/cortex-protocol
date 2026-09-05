@@ -3438,3 +3438,133 @@ body {
     transition: width 0.5s ease;
 }
 
+/* ======================================================== */
+/* WEB3 CONNECT WALLET (NAVBAR & DROPDOWN)                  */
+/* ======================================================== */
+.web-wallet-header-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.web-connected-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1.5px solid rgba(99, 102, 241, 0.4);
+    backdrop-filter: blur(12px);
+    padding: 6px 14px;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.web-connected-pill:hover {
+    border-color: #818cf8;
+    background: rgba(30, 41, 59, 0.9);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.status-dot-emerald {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+.web-wallet-balance-badge {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+}
+
+.web-wallet-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 200px;
+    background: #0b0f19;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.2);
+    display: none;
+    flex-direction: column;
+    padding: 6px;
+    z-index: 1000;
+    backdrop-filter: blur(20px);
+}
+
+.web-wallet-dropdown.show {
+    display: flex;
+    animation: slideDropdown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideDropdown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #94a3b8;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.dropdown-item:hover {
+    background: rgba(99, 102, 241, 0.15);
+    color: #ffffff;
+}
+
+.dropdown-danger:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+}
+
+/* Fallback Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10, 14, 23, 0.82);
+    backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.modal-overlay.active {
+    display: flex !important;
+}
+.signature-dialog-card {
+    background: #0f172a;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+    color: #f1f5f9;
+}
+
+

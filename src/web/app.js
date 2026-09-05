@@ -2552,8 +2552,182 @@ function renderLeaderboardTable() {
     }).join('');
 }
 
+// ========================================================
+// WEB3 PROVIDER INTEGRATION (window.cortex)
+// ========================================================
+const cortexWeb3State = {
+    isConnected: false,
+    address: null,
+    balanceCtx: 0,
+    balanceUsdc: 0
+};
+
+function initWeb3Wallet() {
+    window.addEventListener('cortex#initialized', () => {
+        checkWeb3AutoConnect();
+    });
+
+    if (localStorage.getItem('cortex_web3_connected') === 'true') {
+        checkWeb3AutoConnect();
+    }
+
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('web-wallet-dropdown');
+        const pill = document.getElementById('web-wallet-connected-pill');
+        if (dropdown && pill && !pill.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+
+    setInterval(() => {
+        if (cortexWeb3State.isConnected && !document.hidden) {
+            syncWebWalletBalances();
+        }
+    }, 5000);
+}
+
+async function checkWeb3AutoConnect() {
+    if (window.cortex && typeof window.cortex.request === 'function') {
+        try {
+            const accounts = await window.cortex.request({ method: 'ctx_accounts' });
+            if (accounts && accounts.length > 0) {
+                setWebWalletConnected(accounts[0]);
+            }
+        } catch(e) {}
+    }
+}
+
+async function handleWebConnectClick() {
+    if (!window.cortex || typeof window.cortex.request !== 'function') {
+        openInstallModal();
+        return;
+    }
+
+    try {
+        const btn = document.getElementById('btn-web-connect-wallet');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
+
+        const accounts = await window.cortex.request({ method: 'ctx_requestAccounts' });
+        if (accounts && accounts.length > 0) {
+            setWebWalletConnected(accounts[0]);
+            showToast(`🟢 Connected: ${accounts[0].substring(0, 8)}...${accounts[0].substring(accounts[0].length - 4)}`);
+        } else {
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-wallet"></i> <span>Connect Wallet</span>';
+        }
+    } catch(err) {
+        const btn = document.getElementById('btn-web-connect-wallet');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-wallet"></i> <span>Connect Wallet</span>';
+        showToast(err.message || 'Connection rejected', true);
+    }
+}
+
+async function setWebWalletConnected(address) {
+    cortexWeb3State.isConnected = true;
+    cortexWeb3State.address = address;
+    localStorage.setItem('cortex_web3_connected', 'true');
+
+    updateWebWalletHeader();
+    await syncWebWalletBalances();
+}
+
+function disconnectWebWallet(e) {
+    if (e) e.stopPropagation();
+    cortexWeb3State.isConnected = false;
+    cortexWeb3State.address = null;
+    cortexWeb3State.balanceCtx = 0;
+    cortexWeb3State.balanceUsdc = 0;
+    localStorage.removeItem('cortex_web3_connected');
+
+    const dropdown = document.getElementById('web-wallet-dropdown');
+    if (dropdown) dropdown.classList.remove('show');
+
+    updateWebWalletHeader();
+    showToast('Portefeuille déconnecté');
+}
+
+function updateWebWalletHeader() {
+    const btn = document.getElementById('btn-web-connect-wallet');
+    const pill = document.getElementById('web-wallet-connected-pill');
+    const addrEl = document.getElementById('web-wallet-addr-short');
+    const balEl = document.getElementById('web-wallet-bal-badge');
+    const mobileText = document.getElementById('mobile-connect-btn-text');
+
+    if (cortexWeb3State.isConnected && cortexWeb3State.address) {
+        const shortAddr = `${cortexWeb3State.address.substring(0, 6)}...${cortexWeb3State.address.substring(cortexWeb3State.address.length - 4)}`;
+        if (btn) btn.style.display = 'none';
+        if (pill) pill.style.display = 'inline-flex';
+        if (addrEl) addrEl.textContent = shortAddr;
+        if (balEl) balEl.textContent = `${cortexWeb3State.balanceCtx.toFixed(2)} CTX`;
+        if (mobileText) mobileText.textContent = `${shortAddr} (${cortexWeb3State.balanceCtx.toFixed(2)} CTX)`;
+    } else {
+        if (btn) {
+            btn.style.display = 'inline-flex';
+            btn.innerHTML = '<i class="fa-solid fa-wallet"></i> <span>Connect Wallet</span>';
+        }
+        if (pill) pill.style.display = 'none';
+        if (mobileText) mobileText.textContent = 'Connect Wallet';
+    }
+}
+
+async function syncWebWalletBalances() {
+    if (!cortexWeb3State.isConnected || !cortexWeb3State.address) return;
+    try {
+        const [balRes, dexRes] = await Promise.all([
+            fetch(`/api/balance/${cortexWeb3State.address}`).then(r => r.json()).catch(() => ({ balance: 0 })),
+            fetch(`/api/dex/balance/${cortexWeb3State.address}`).then(r => r.json()).catch(() => ({ ctx: 0, usdc: 1000 }))
+        ]);
+
+        cortexWeb3State.balanceCtx = typeof balRes.balance === 'number' ? balRes.balance : 0;
+        cortexWeb3State.balanceUsdc = typeof dexRes.usdc === 'number' ? dexRes.usdc : 1000;
+
+        const balEl = document.getElementById('web-wallet-bal-badge');
+        if (balEl) balEl.textContent = `${cortexWeb3State.balanceCtx.toFixed(2)} CTX`;
+    } catch(e) {}
+}
+
+function toggleWalletDropdown(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('web-wallet-dropdown');
+    if (dropdown) dropdown.classList.toggle('show');
+}
+
+function copyConnectedWebAddress(e) {
+    if (e) e.stopPropagation();
+    if (!cortexWeb3State.address) return;
+    navigator.clipboard.writeText(cortexWeb3State.address);
+    showToast('✓ Adresse copiée dans le presse-papiers');
+    const dropdown = document.getElementById('web-wallet-dropdown');
+    if (dropdown) dropdown.classList.remove('show');
+}
+
+function openConnectedWebExplorer(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('web-wallet-dropdown');
+    if (dropdown) dropdown.classList.remove('show');
+    if (typeof navigateTo === 'function') {
+        navigateTo('explorer');
+        const filterInput = document.getElementById('search-filter-input');
+        if (filterInput && cortexWeb3State.address) {
+            filterInput.value = cortexWeb3State.address;
+            if (typeof filterBlocks === 'function') filterBlocks();
+        }
+    }
+}
+
+function openInstallModal() {
+    const m = document.getElementById('modal-install-extension');
+    if (m) m.style.display = 'flex';
+}
+
+function closeInstallModal(e) {
+    if (e && e.target !== e.currentTarget && !e.target.classList.contains('btn-close-modal')) return;
+    const m = document.getElementById('modal-install-extension');
+    if (m) m.style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initDex();
+    initWeb3Wallet();
     fetchAndRenderLeaderboard();
     setInterval(fetchAndRenderLeaderboard, 10000);
 });
