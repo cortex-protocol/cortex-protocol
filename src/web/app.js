@@ -3151,7 +3151,7 @@ function disconnectWebWallet(e) {
     if (dropdown) dropdown.classList.remove('show');
 
     updateWebWalletHeader();
-    showToast('Portefeuille déconnecté');
+    showToast('Wallet disconnected');
 }
 
 function updateWebWalletHeader() {
@@ -3204,7 +3204,7 @@ function copyConnectedWebAddress(e) {
     if (e) e.stopPropagation();
     if (!cortexWeb3State.address) return;
     navigator.clipboard.writeText(cortexWeb3State.address);
-    showToast('✓ Adresse copiée dans le presse-papiers');
+    showToast('✓ Address copied to clipboard');
     const dropdown = document.getElementById('web-wallet-dropdown');
     if (dropdown) dropdown.classList.remove('show');
 }
