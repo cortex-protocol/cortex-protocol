@@ -45,6 +45,37 @@ const AGENT_PERSONAS = [
             'Computed economic inflation index for virtual resource lumber: price equilibrium reached at 4.2 gold/unit.',
             'Formulated dynamic quest narrative tree based on collective player reputation scores across Northern Strongholds.'
         ]
+    },
+    {
+        agentId: 'DeepSeek-Reasoner-V3',
+        topic: 'Autonomous Multi-Chain Reasoning',
+        memoryType: 'EPISODIC',
+        templates: [
+            'Generated zero-knowledge proof of thought for recursive transformer reasoning chain over 256 semantic nodes.',
+            'Synthesized mathematical consensus proof verifying cross-shard state transition invariant across neural clusters.',
+            'Evaluated Bayesian decision matrix for autonomous DAO treasury allocation with 99.4% confidence interval.',
+            'Anchored deterministic cryptographic seed for decentralized reasoning graph state synchronization.'
+        ]
+    },
+    {
+        agentId: 'NeuroMesh-Vision-X',
+        topic: 'Vision Transformer Proofs',
+        memoryType: 'PROCEDURAL',
+        templates: [
+            'Attested cryptographic watermark signature for 4K synthetic satellite telemetry imagery against deepfake tamper vector.',
+            'Computed spatial feature embedding hash: cosine similarity threshold 0.987 anchored on Cortex Layer-1 ledger.',
+            'Compressed multimodal vision-language attention state into 64-byte verifiable Merkle commitment.'
+        ]
+    },
+    {
+        agentId: 'Cyber-Sentry-LLM',
+        topic: 'Threat Intelligence & Exploit Detection',
+        memoryType: 'KNOWLEDGE_BASE',
+        templates: [
+            'Neutralized zero-day flash loan attack simulation against decentralized lending oracle: attack vector patched in bytecode.',
+            'Scanned 45,000 mempool transactions for adversarial signature anomalies. False positive rate: 0.0001%.',
+            'Broadcasted threat advisory to decentralized validator cluster: rogue peer ID quarantined.'
+        ]
     }
 ];
 
@@ -100,19 +131,7 @@ class AutonomousAIAgent {
             if (commitData && commitData.error) {
                 console.log(`[AutonomousAI] Notice from node: ${commitData.error}`);
             } else if (commitData && commitData.txId) {
-                console.log(`[AutonomousAI] ✓ Memory committed to mempool! TxID: ${commitData.txId}`);
-            }
-
-            // 2. Mine next block to seal memory and burn 30% fee
-            const mineRes = await fetch(`${this.nodeUrl}/api/miner/mine-one`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ minerAddress: this.keyPair.address })
-            });
-
-            const mineData = (await mineRes.json()) as any;
-            if (mineData && mineData.success && mineData.block) {
-                console.log(`[AutonomousAI] ⚡ Block #${mineData.block.index} sealed! Hash: ${mineData.block.hash.substring(0, 16)}... | 30% Fee Burned 🔥`);
+                console.log(`[AutonomousAI] ✓ Memory committed to mempool! TxID: ${commitData.txId} | Awaiting community miners to seal in next block.`);
             }
         } catch (err: any) {
             console.error(`[AutonomousAI] Error in cognitive cycle:`, err.message);
@@ -122,7 +141,7 @@ class AutonomousAIAgent {
 
 // Start agent if run directly
 const nodeUrl = process.env.NODE_URL || 'http://localhost:3000';
-const interval = Number(process.env.AGENT_INTERVAL_MS) || 120000; // 2 minutes default
+const interval = Number(process.env.AGENT_INTERVAL_MS) || 90000; // 90 seconds default
 
 const agent = new AutonomousAIAgent(nodeUrl);
 agent.start(interval);
