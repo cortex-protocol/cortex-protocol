@@ -172,10 +172,11 @@ export function createApiServer(
         res.json(proof);
     });
 
-    app.post('/api/memory/commit', (req, res) => {
+    app.post(['/api/memory/commit', '/api/memory/inscribe'], (req, res) => {
         try {
             const body = req.body || {};
-            const { agentPrivateKey, agentId, topic, content, memoryType = 'KNOWLEDGE_BASE', fee = 0.05 } = body;
+            const agentPrivateKey = body.agentPrivateKey || body.privateKey;
+            const { agentId, topic, content, memoryType = 'KNOWLEDGE_BASE', fee = 0.05 } = body;
 
             if (!agentPrivateKey || !agentId || !content || !topic) {
                 return res.status(400).json({ error: 'agentPrivateKey, agentId, topic, and content are required.' });
@@ -651,10 +652,11 @@ export function createApiServer(
         }
     });
 
-    app.post('/api/transactions/send', (req, res) => {
+    app.post(['/api/transactions/send', '/api/transaction/send'], (req, res) => {
         try {
             const body = req.body || {};
-            const { privateKey, recipient, amount, fee = 0.01 } = body;
+            const privateKey = body.privateKey || body.senderPrivateKey;
+            const { recipient, amount, fee = 0.01 } = body;
 
             if (!privateKey || !recipient || !amount || Number(amount) <= 0) {
                 return res.status(400).json({ error: 'privateKey, recipient and positive amount are required.' });

@@ -642,10 +642,11 @@ async function executeSendTx() {
     if (btn) { btn.disabled = true; btn.innerHTML = "<i class=\"fa-solid fa-spinner fa-spin\"></i> Signing & Broadcasting..."; }
 
     try {
-        const res = await fetch(`${RPC_URL}/api/transaction/send`, {
+        const res = await fetch(`${RPC_URL}/api/transactions/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+                privateKey: currentWallet.privateKey,
                 senderPrivateKey: currentWallet.privateKey,
                 recipient,
                 amount,
@@ -658,10 +659,14 @@ async function executeSendTx() {
 
         showToast("🚀 Transaction Dispatched On-Chain!");
         closeOverlay("overlay-send");
+        const recipientInput = document.getElementById("tx-recipient-input");
+        const amountInput = document.getElementById("tx-amount-input");
+        if (recipientInput) recipientInput.value = "";
+        if (amountInput) amountInput.value = "";
         updateBalance();
     } catch(e) {
         if (btn) { btn.disabled = false; btn.innerHTML = "<i class=\"fa-solid fa-paper-plane\"></i> Sign & Broadcast"; }
-        showToast("Transaction broadcast failed", true);
+        showToast(e.message || "Transaction broadcast failed", true);
     }
 }
 
