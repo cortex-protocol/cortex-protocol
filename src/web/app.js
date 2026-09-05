@@ -772,16 +772,17 @@ function initNeuralCanvas() {
     window.addEventListener('resize', resize);
 
     const particles = [];
-    const particleCount = Math.min(50, Math.floor(window.innerWidth / 30));
+    const particleCount = Math.min(65, Math.floor(window.innerWidth / 24));
 
     for (let i = 0; i < particleCount; i++) {
+        const color = i % 4 === 0 ? 'rgba(99, 102, 241, ' : i % 4 === 1 ? 'rgba(56, 189, 248, ' : i % 4 === 2 ? 'rgba(168, 85, 247, ' : 'rgba(52, 211, 153, ';
         particles.push({
             x: Math.random() * width,
             y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: (Math.random() - 0.5) * 0.5,
-            radius: Math.random() * 2 + 1.5,
-            color: i % 3 === 0 ? 'rgba(79, 70, 229, ' : i % 3 === 1 ? 'rgba(124, 58, 237, ' : 'rgba(2, 132, 199, '
+            vx: (Math.random() - 0.5) * 0.6,
+            vy: (Math.random() - 0.5) * 0.6,
+            radius: Math.random() * 2 + 1.2,
+            color: color
         });
     }
 
@@ -806,8 +807,11 @@ function initNeuralCanvas() {
 
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = p.color + '0.7)';
+            ctx.fillStyle = p.color + '0.85)';
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = p.color + '0.5)';
             ctx.fill();
+            ctx.shadowBlur = 0;
 
             for (let j = i + 1; j < particles.length; j++) {
                 const p2 = particles[j];
@@ -815,8 +819,8 @@ function initNeuralCanvas() {
                 const dy = p.y - p2.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
-                if (dist < 140) {
-                    const alpha = (1 - dist / 140) * 0.25;
+                if (dist < 150) {
+                    const alpha = (1 - dist / 150) * 0.30;
                     ctx.beginPath();
                     ctx.moveTo(p.x, p.y);
                     ctx.lineTo(p2.x, p2.y);
@@ -829,13 +833,13 @@ function initNeuralCanvas() {
             const mdx = p.x - mouse.x;
             const mdy = p.y - mouse.y;
             const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
-            if (mdist < 180) {
-                const alpha = (1 - mdist / 180) * 0.4;
+            if (mdist < 200) {
+                const alpha = (1 - mdist / 200) * 0.55;
                 ctx.beginPath();
                 ctx.moveTo(p.x, p.y);
                 ctx.lineTo(mouse.x, mouse.y);
-                ctx.strokeStyle = `rgba(124, 58, 237, ${alpha})`;
-                ctx.lineWidth = 1.2;
+                ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+                ctx.lineWidth = 1.4;
                 ctx.stroke();
             }
         }
