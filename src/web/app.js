@@ -701,7 +701,7 @@ async function openBlockInspector(blockIndex) {
                         <div class="memory-card-dark" style="cursor:pointer;" onclick="openTxInspector('${tx.id}')">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <strong class="${tx.type === 'MEMORY_COMMIT' ? 'text-violet' : tx.type === 'COINBASE' ? 'text-emerald' : 'text-indigo'} font-bold">${tx.type}</strong>
-                                <span class="mono text-emerald font-bold">${tx.amount} CTX</span>
+                                ${tx.type === 'MEMORY_COMMIT' ? `<span class="mono text-amber font-bold">${tx.fee || 0.05} CTX fee</span>` : `<span class="mono text-emerald font-bold">${tx.amount} CTX</span>`}
                             </div>
                             <div class="mono text-muted text-break" style="font-size:0.74rem; margin:4px 0;">TxID: ${tx.id}</div>
                             ${tx.memoryPayload ? `<div style="color:#e2e8f0; font-size:0.78rem;"><em>"${escapeHtml(tx.memoryPayload.content.substring(0, 90))}..."</em></div>` : ''}
@@ -769,17 +769,17 @@ async function openTxInspector(txId) {
                         <span class="inspector-value font-bold text-indigo">${tx.type}</span>
                     </div>
                     <div class="inspector-key-value">
-                        <span class="inspector-key">Amount:</span>
-                        <span class="inspector-value font-bold text-emerald" style="font-size:1.1rem;">${tx.amount} CTX</span>
+                        <span class="inspector-key">${tx.type === 'MEMORY_COMMIT' ? 'Inscription Payload Value:' : 'Transfer Amount:'}</span>
+                        <span class="inspector-value font-bold ${tx.type === 'MEMORY_COMMIT' ? 'text-slate-400' : 'text-emerald'}" style="font-size:1.1rem;">${tx.type === 'MEMORY_COMMIT' ? '0.00 CTX (Data Inscription)' : `${tx.amount} CTX`}</span>
                     </div>
                     <div class="inspector-key-value">
                         <span class="inspector-key">PoW Gas Fee:</span>
-                        <span class="inspector-value">${tx.fee || 0.01} CTX</span>
+                        <span class="inspector-value font-bold text-amber">${tx.fee || (tx.type === 'MEMORY_COMMIT' ? 0.05 : 0.01)} CTX</span>
                     </div>
-                    ${tx.burnAmount ? `
+                    ${tx.burnAmount || tx.type === 'MEMORY_COMMIT' ? `
                     <div class="inspector-key-value">
-                        <span class="inspector-key text-flame">Deflationary Burn (30%):</span>
-                        <span class="inspector-value text-flame font-bold">🔥 -${tx.burnAmount} CTX</span>
+                        <span class="inspector-key text-flame">Deflationary Combustion (30% Burn):</span>
+                        <span class="inspector-value text-flame font-bold">🔥 -${tx.burnAmount || 0.015} CTX Permanent Burn</span>
                     </div>` : ''}
                     <div class="inspector-key-value">
                         <span class="inspector-key">Timestamp:</span>
@@ -922,12 +922,31 @@ async function openAddressInspector(address) {
                                     const otherAddr = isOut ? t.recipient : t.sender;
                                     const shortOther = otherAddr ? `${otherAddr.substring(0, 10)}...` : 'Coinbase';
                                     const shortTx = `${t.id.substring(0, 10)}...`;
+
+                                    let amountDisplay = '';
+                                    let counterpartyDisplay = '';
+
+                                    if (t.type === 'MEMORY_COMMIT') {
+                                        const feeVal = (t.fee !== undefined && t.fee !== null && t.fee > 0) ? t.fee : 0.05;
+                                        amountDisplay = `<span class="mono font-bold text-amber">-${feeVal} CTX <span style="font-size:0.68rem; color:#fb923c;">(Gas/Burn 🔥)</span></span>`;
+                                        counterpartyDisplay = `<span class="badge-subtle badge-violet" style="font-size:0.7rem;"><i class="fa-solid fa-brain"></i> AI State Root</span>`;
+                                    } else if (t.type === 'COINBASE') {
+                                        amountDisplay = `<span class="mono font-bold text-emerald">+${t.amount} CTX <span style="font-size:0.68rem; color:#34d399;">(Reward ⚡)</span></span>`;
+                                        counterpartyDisplay = `<span class="badge-subtle badge-emerald" style="font-size:0.7rem;"><i class="fa-solid fa-cube"></i> PoW Subsidy</span>`;
+                                    } else if (isOut) {
+                                        amountDisplay = `<span class="mono font-bold text-slate-200">-${t.amount} CTX</span>`;
+                                        counterpartyDisplay = `<span class="mono text-muted clickable-link" onclick="event.stopPropagation(); openAddressInspector('${otherAddr}')">${shortOther}</span>`;
+                                    } else {
+                                        amountDisplay = `<span class="mono font-bold text-emerald">+${t.amount} CTX</span>`;
+                                        counterpartyDisplay = `<span class="mono text-muted clickable-link" onclick="event.stopPropagation(); openAddressInspector('${otherAddr}')">${shortOther}</span>`;
+                                    }
+
                                     return `
                                         <tr class="explorer-tr" onclick="openTxInspector('${t.id}')">
                                             <td><span class="${isOut ? 'tx-dir-pill-out' : 'tx-dir-pill-in'}">${isOut ? 'OUT ➜' : 'IN ⬅'}</span></td>
-                                            <td><strong class="text-indigo">${t.type}</strong></td>
-                                            <td><span class="mono font-bold ${isOut ? 'text-slate-200' : 'text-emerald'}">${t.amount} CTX</span></td>
-                                            <td><span class="mono text-muted clickable-link" onclick="event.stopPropagation(); openAddressInspector('${otherAddr}')">${shortOther}</span></td>
+                                            <td><strong class="${t.type === 'MEMORY_COMMIT' ? 'text-violet' : t.type === 'COINBASE' ? 'text-emerald' : 'text-indigo'}">${t.type}</strong></td>
+                                            <td>${amountDisplay}</td>
+                                            <td>${counterpartyDisplay}</td>
                                             <td><span class="mono text-indigo">${shortTx}</span></td>
                                         </tr>
                                     `;

@@ -194,7 +194,9 @@ export function createApiServer(
                 const isSender = tx.sender === address;
                 const isRecipient = tx.recipient === address;
                 if (isSender || isRecipient) {
-                    if (isSender) totalSent += tx.amount;
+                    if (isSender) {
+                        totalSent += (tx.amount + (tx.fee || 0) + (tx.burnAmount || 0));
+                    }
                     if (isRecipient) totalReceived += tx.amount;
                     if (history.length < 50) { // Keep last 50 transactions for responsive JSON
                         history.push({
@@ -203,7 +205,9 @@ export function createApiServer(
                             sender: tx.sender,
                             recipient: tx.recipient,
                             amount: tx.amount,
-                            fee: tx.fee,
+                            fee: tx.fee || 0,
+                            burnAmount: tx.burnAmount || 0,
+                            totalCost: +(tx.amount + (isSender ? ((tx.fee || 0) + (tx.burnAmount || 0)) : 0)).toFixed(4),
                             blockIndex: block.index,
                             timestamp: tx.timestamp || block.timestamp,
                             status: 'CONFIRMED',

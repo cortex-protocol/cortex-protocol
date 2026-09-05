@@ -3637,14 +3637,17 @@ body {
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(10, 14, 23, 0.82);
-    backdrop-filter: blur(10px);
+    background: rgba(10, 14, 23, 0.85);
+    backdrop-filter: blur(12px);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 9999;
+    padding: 20px 16px;
+    overflow-y: auto;
 }
-.modal-overlay.active {
+.modal-overlay.active,
+.modal-overlay.show {
     display: flex !important;
 }
 .signature-dialog-card {
@@ -4026,12 +4029,32 @@ body {
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(99, 102, 241, 0.2);
     width: 100%;
     max-width: 640px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     color: #f1f5f9;
+    margin: auto;
 }
 
 .explorer-modal-card.modal-large {
-    max-width: 820px;
+    max-width: 840px;
+}
+
+.explorer-modal-card .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.explorer-modal-card .modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+    max-height: calc(88vh - 75px);
 }
 
 .inspector-data-box {
