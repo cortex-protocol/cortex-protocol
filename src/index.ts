@@ -85,9 +85,14 @@ app.listen(HTTP_PORT, () => {
     console.log(`[WALLET] Default Miner Address: ${MINER_ADDRESS}`);
     console.log(`[POOL] P2P Collaborative Mining Pool initialized at ${pool.getPoolAddress()}`);
     
-    // Auto-start continuous CPU mining
-    miner.startContinuousMining();
-    console.log(`[MINER] Automated Background CPU Mining activated for ${MINER_ADDRESS}`);
-    console.log(`[STATUS] Node is ready to process AI memories and mine blocks.`);
+    // In production validator nodes, heavy CPU mining is offloaded to external workers/pool
+    // so the Node.js event loop and CPU remain 100% responsive for the Web Dashboard, Leaderboard & DEX.
+    if (process.env.ENABLE_NODE_MINING === 'true') {
+        miner.startContinuousMining();
+        console.log(`[MINER] Background CPU Mining active (ENABLE_NODE_MINING=true)`);
+    } else {
+        console.log(`[MINER] Main node CPU mining disabled (0% event loop overhead, optimal API performance)`);
+    }
+    console.log(`[STATUS] Node is ready to process AI memories and validate blocks.`);
     console.log('====================================================\n');
 });
