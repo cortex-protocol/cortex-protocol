@@ -169,6 +169,9 @@ export class CortexMiningPool {
                 this.poolBlocksFound++;
                 console.log(`\n🎉🎉 [MINING POOL] Block #${block.index} SOLVED BY POOL WORKER (${minerAddress}.${workerId})!`);
                 
+                // Set lastDistributedBlock so background check doesn't duplicate
+                this.lastDistributedBlock = block.index;
+
                 // Distribute full block reward on-chain
                 this.distributeRoundRewards(block.transactions[0]?.amount || 50, block.index);
 
@@ -243,14 +246,16 @@ export class CortexMiningPool {
     }
 
     /**
-     * Checks if a new block was confirmed on the blockchain, and triggers PPLNS payout to all round contributors
+     * Checks if a new block was confirmed on the blockchain, and triggers PPLNS payout
+     * ONLY if the block was solved by this pool. External blocks do not consume pool funds
+     * and do not reset pool worker shares.
      */
     private checkAndDistributeOnNewBlock() {
         const latest = this.blockchain.getLatestBlock();
         if (latest.index > this.lastDistributedBlock) {
             this.lastDistributedBlock = latest.index;
-            if (this.currentRoundShares > 0) {
-                console.log(`\n⛏️ [POOL SETTLEMENT] New Block #${latest.index} confirmed! Distributing round rewards to active miners...`);
+            if (latest.minerAddress === this.poolKeyPair.address && this.currentRoundShares > 0) {
+                console.log(`\n⛏️ [POOL SETTLEMENT] New Pool Block #${latest.index} confirmed! Distributing round rewards to active miners...`);
                 this.distributeRoundRewards(latest.transactions[0]?.amount || 50, latest.index);
             }
         }

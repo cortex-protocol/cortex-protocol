@@ -18,22 +18,49 @@ export class StorageEngine {
         }
     }
 
+    private isSaving: boolean = false;
+    private pendingSave: boolean = false;
+    private lastSaveChainRef: Block[] | null = null;
+
     public saveChain(chain: Block[]): void {
+        this.lastSaveChainRef = chain;
+        if (this.isSaving) {
+            this.pendingSave = true;
+            return;
+        }
+
+        this.executeAsyncSave();
+    }
+
+    private async executeAsyncSave(): Promise<void> {
+        this.isSaving = true;
+        this.pendingSave = false;
+
         try {
+            const chainToSave = this.lastSaveChainRef;
+            if (!chainToSave) {
+                this.isSaving = false;
+                return;
+            }
+
             const data = JSON.stringify({
                 version: '1.0.0',
                 network: 'cortex-mainnet',
                 lastUpdated: new Date().toISOString(),
-                blockCount: chain.length,
-                chain: chain
-            }, null, 2);
-            
-            // Atomic write using temporary file
+                blockCount: chainToSave.length,
+                chain: chainToSave
+            });
+
             const tempPath = `${this.chainFilePath}.tmp`;
-            fs.writeFileSync(tempPath, data, 'utf8');
-            fs.renameSync(tempPath, this.chainFilePath);
+            await fs.promises.writeFile(tempPath, data, 'utf8');
+            await fs.promises.rename(tempPath, this.chainFilePath);
         } catch (err) {
             console.error('[StorageEngine] Error saving blockchain ledger to disk:', err);
+        } finally {
+            this.isSaving = false;
+            if (this.pendingSave) {
+                setImmediate(() => this.executeAsyncSave());
+            }
         }
     }
 

@@ -28,6 +28,15 @@ export class Blockchain {
     public config: BlockchainConfig;
     public storage: StorageEngine;
 
+    // High-performance O(1) state indexes
+    private balanceIndex: Map<string, number> = new Map();
+    private nonceIndex: Map<string, number> = new Map();
+    private memoriesIndex: Array<{ blockIndex: number; timestamp: number; memory: AIMemoryPayload; txId: string; blockHash: string }> = [];
+    private totalTransactionsCount: number = 0;
+    private totalMemoriesCount: number = 0;
+    private totalSupplyAccumulated: number = 0;
+    private totalBurnedAccumulated: number = 0;
+
     constructor(config: Partial<BlockchainConfig> = {}, customDataDir?: string) {
         this.config = { ...DEFAULT_CONFIG, ...config };
         this.mempool = new Mempool();
@@ -52,6 +61,69 @@ export class Blockchain {
             this.initGenesisBlock();
             this.storage.saveChain(this.chain);
             console.log(`[Blockchain] Genesis block created and saved to disk.`);
+        }
+
+        // Initialize state indexes
+        this.rebuildIndexes();
+    }
+
+    /**
+     * Rebuild entire account balances, nonces, and statistics in a single O(N) pass
+     */
+    public rebuildIndexes(): void {
+        this.balanceIndex.clear();
+        this.nonceIndex.clear();
+        this.memoriesIndex = [];
+        this.totalTransactionsCount = 0;
+        this.totalMemoriesCount = 0;
+        this.totalSupplyAccumulated = 0;
+        this.totalBurnedAccumulated = 0;
+
+        for (const block of this.chain) {
+            this.applyBlockToIndexes(block);
+        }
+    }
+
+    /**
+     * Incrementally apply a single block's transactions to the state indexes in O(1)
+     */
+    private applyBlockToIndexes(block: Block): void {
+        for (const tx of block.transactions) {
+            this.totalTransactionsCount++;
+            if (tx.type === 'COINBASE') {
+                this.totalSupplyAccumulated += tx.amount;
+            }
+            if (tx.burnAmount) {
+                this.totalBurnedAccumulated += tx.burnAmount;
+            }
+            if (tx.type === 'MEMORY_COMMIT' && tx.memoryPayload) {
+                this.totalMemoriesCount++;
+                this.memoriesIndex.push({
+                    blockIndex: block.index,
+                    timestamp: tx.timestamp,
+                    memory: tx.memoryPayload,
+                    txId: tx.id,
+                    blockHash: block.hash
+                });
+            }
+
+            // Credit recipient
+            if (tx.recipient && tx.recipient !== CORTEX_BURN_ADDRESS) {
+                const cur = this.balanceIndex.get(tx.recipient) || 0;
+                this.balanceIndex.set(tx.recipient, +(cur + tx.amount).toFixed(6));
+            }
+
+            // Debit sender & update nonce
+            if (tx.sender && tx.type !== 'COINBASE') {
+                const cur = this.balanceIndex.get(tx.sender) || 0;
+                const debit = tx.amount + tx.fee + (tx.burnAmount || 0);
+                this.balanceIndex.set(tx.sender, +(cur - debit).toFixed(6));
+
+                const lastNonce = this.nonceIndex.get(tx.sender) ?? -1;
+                if (tx.nonce > lastNonce) {
+                    this.nonceIndex.set(tx.sender, tx.nonce);
+                }
+            }
         }
     }
 
@@ -133,37 +205,18 @@ export class Blockchain {
     }
 
     /**
-     * Calculate current balance of an address by scanning full confirmed ledger
+     * Calculate current balance of an address (O(1) lookup from state index)
      */
     public getBalance(address: string): number {
-        let balance = 0;
-
-        for (const block of this.chain) {
-            for (const tx of block.transactions) {
-                if (tx.recipient === address) {
-                    balance += tx.amount;
-                }
-                if (tx.sender === address) {
-                    balance -= (tx.amount + tx.fee + tx.burnAmount);
-                }
-            }
-        }
-
-        return +balance.toFixed(6);
+        const bal = this.balanceIndex.get(address) || 0;
+        return +bal.toFixed(6);
     }
 
     /**
-     * Get the next expected nonce for an address
+     * Get the next expected nonce for an address (O(1) state lookup + mempool check)
      */
     public getNextNonce(address: string): number {
-        let maxNonce = -1;
-        for (const block of this.chain) {
-            for (const tx of block.transactions) {
-                if (tx.sender === address && tx.nonce > maxNonce) {
-                    maxNonce = tx.nonce;
-                }
-            }
-        }
+        let maxNonce = this.nonceIndex.get(address) ?? -1;
         for (const tx of this.mempool.getAll()) {
             if (tx.sender === address && tx.nonce > maxNonce) {
                 maxNonce = tx.nonce;
@@ -206,8 +259,9 @@ export class Blockchain {
             }
         }
 
-        // Block is valid: append and clear confirmed transactions from mempool
+        // Block is valid: append, update state indexes in O(1), and clear confirmed transactions from mempool
         this.chain.push(block);
+        this.applyBlockToIndexes(block);
         this.mempool.removeTransactions(block.transactions);
 
         // Persist updated ledger to disk
@@ -240,6 +294,7 @@ export class Blockchain {
     public replaceChain(newChain: Block[]): boolean {
         if (newChain.length > this.chain.length && this.isValidChain(newChain)) {
             this.chain = newChain;
+            this.rebuildIndexes();
             this.storage.saveChain(this.chain);
             return true;
         }
@@ -247,26 +302,10 @@ export class Blockchain {
     }
 
     /**
-     * Query all AI memories stored across the blockchain
+     * Query all AI memories stored across the blockchain (O(1) memory index)
      */
     public getAllMemories(): Array<{ blockIndex: number; timestamp: number; memory: AIMemoryPayload; txId: string; blockHash: string }> {
-        const memories: Array<{ blockIndex: number; timestamp: number; memory: AIMemoryPayload; txId: string; blockHash: string }> = [];
-
-        for (const block of this.chain) {
-            for (const tx of block.transactions) {
-                if (tx.type === 'MEMORY_COMMIT' && tx.memoryPayload) {
-                    memories.push({
-                        blockIndex: block.index,
-                        timestamp: tx.timestamp,
-                        memory: tx.memoryPayload,
-                        txId: tx.id,
-                        blockHash: block.hash
-                    });
-                }
-            }
-        }
-
-        return memories;
+        return this.memoriesIndex;
     }
 
     /**
@@ -397,38 +436,20 @@ export class Blockchain {
     }
 
     /**
-     * Get global network statistics
+     * Get global network statistics (O(1) from incremental cache)
      */
     public getStats() {
-        let totalSupply = 0;
-        let totalBurned = 0;
-        let totalTransactions = 0;
-        let totalMemories = 0;
-
-        for (const block of this.chain) {
-            for (const tx of block.transactions) {
-                totalTransactions++;
-                if (tx.type === 'COINBASE') {
-                    totalSupply += tx.amount;
-                }
-                totalBurned += tx.burnAmount;
-                if (tx.type === 'MEMORY_COMMIT') {
-                    totalMemories++;
-                }
-            }
-        }
-
         return {
             height: this.chain.length - 1,
             totalBlocks: this.chain.length,
             difficulty: this.getDifficulty(),
             networkHashrate: this.getNetworkHashrate(),
             currentReward: this.getCurrentBlockReward(),
-            totalSupply: +totalSupply.toFixed(6),
-            circulatingSupply: +(totalSupply - totalBurned).toFixed(6),
-            totalBurned: +totalBurned.toFixed(6),
-            totalTransactions,
-            totalMemories,
+            totalSupply: +this.totalSupplyAccumulated.toFixed(6),
+            circulatingSupply: +(this.totalSupplyAccumulated - this.totalBurnedAccumulated).toFixed(6),
+            totalBurned: +this.totalBurnedAccumulated.toFixed(6),
+            totalTransactions: this.totalTransactionsCount,
+            totalMemories: this.totalMemoriesCount,
             mempoolSize: this.mempool.size()
         };
     }

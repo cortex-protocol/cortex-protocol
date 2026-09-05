@@ -278,8 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
     drawSparklineChart();
     fetchPoolStats();
 
-    // Live polling loop every 1.2s
+    // Live polling loop (3.5s interval with tab-visibility awareness)
     pollingTimer = setInterval(() => {
+        if (document.hidden) return; // Save server resources if tab is minimized/backgrounded
         fetchStats();
         fetchBlocks();
         fetchMemories();
@@ -289,7 +290,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentWallet) {
             updateWalletBalance();
         }
-    }, 1200);
+    }, 3500);
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            fetchStats();
+            fetchBlocks();
+            fetchPoolStats();
+        }
+    });
 });
 
 // ========================================================
