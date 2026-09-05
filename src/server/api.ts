@@ -300,6 +300,7 @@ export function createApiServer(
                 stateCommits: number;
                 transfers: number;
                 balance: number;
+                totalEarned: number;
                 type: 'MINER' | 'TESTER' | 'HYBRID';
             }>();
 
@@ -313,6 +314,7 @@ export function createApiServer(
                         stateCommits: 0,
                         transfers: 0,
                         balance: 0,
+                        totalEarned: 0,
                         type: 'TESTER'
                     });
                 }
@@ -324,6 +326,7 @@ export function createApiServer(
                 if (block.minerAddress && !block.minerAddress.includes('genesis')) {
                     const s = getOrCreate(block.minerAddress);
                     s.blocksMined += 1;
+                    s.totalEarned += 50;
                 }
 
                 for (const tx of block.transactions) {
@@ -339,6 +342,7 @@ export function createApiServer(
                     if (tx.recipient && tx.recipient.startsWith('ctx1') && !tx.recipient.includes('0000000000000') && !tx.recipient.includes('genesis')) {
                         const r = getOrCreate(tx.recipient);
                         r.balance += tx.amount;
+                        r.totalEarned += tx.amount;
                         r.transfers += 1;
                     }
                 }
@@ -370,39 +374,34 @@ export function createApiServer(
                 !excludedAddresses.has(u.address)
             );
 
-            const totalScoreMiners = entries.reduce((sum, e) => sum + (e.blocksMined * 10 + e.sharesSubmitted), 0);
-            const totalScoreTesters = entries.reduce((sum, e) => sum + (e.stateCommits * 5 + e.transfers), 0);
 
             const ranked = entries.map(e => {
-                const minerRatio = totalScoreMiners > 0 ? (e.blocksMined * 10 + e.sharesSubmitted) / totalScoreMiners : 0;
-                const testerRatio = totalScoreTesters > 0 ? (e.stateCommits * 5 + e.transfers) / totalScoreTesters : 0;
-
-                let rawReward = (minerRatio * MINER_POOL) + (testerRatio * TESTER_POOL);
-                if (rawReward <= 0 && (e.balance > 0 || e.transfers > 0)) {
-                    rawReward = 15.0; // participation boost
-                }
-
-                const cappedReward = Math.min(rawReward, MAX_CAP_PER_USER);
-                const day1Liquid = +(cappedReward * 0.20).toFixed(2);
-                const vestedStream = +(cappedReward * 0.80).toFixed(2);
-
                 const isMiner = e.blocksMined > 0 || e.sharesSubmitted > 0;
                 const isTester = e.stateCommits > 0 || e.transfers > 0;
                 const type: 'MINER' | 'TESTER' | 'HYBRID' = isMiner && isTester ? 'HYBRID' : isMiner ? 'MINER' : 'TESTER';
+
+                // Exact 1,000 $tCTX = 1.00 $CTX Mainnet conversion peg
+                // Uses effective accumulated testnet tokens so users testing transfers/gas aren't penalized
+                const effectiveTctx = Math.max(e.balance, e.totalEarned, e.blocksMined * 50);
+                const rawReward = effectiveTctx / 1000;
+                const cappedReward = Math.min(rawReward, MAX_CAP_PER_USER);
+                const estimatedReward = +(cappedReward >= 1 ? cappedReward.toFixed(2) : cappedReward.toFixed(3));
+                const day1Liquid = +(estimatedReward * 0.20).toFixed(2);
+                const vestedStream = +(estimatedReward * 0.80).toFixed(2);
 
                 return {
                     ...e,
                     balance: Math.max(0, +e.balance.toFixed(4)),
                     type,
-                    estimatedReward: +cappedReward.toFixed(2),
+                    estimatedReward,
                     day1Liquid,
                     vestedStream,
-                    sharePercent: +(cappedReward / TOTAL_INCENTIVE_POOL * 100).toFixed(3)
+                    sharePercent: +(estimatedReward / TOTAL_INCENTIVE_POOL * 100).toFixed(4)
                 };
             });
 
-            // Sort by estimated reward descending
-            ranked.sort((a, b) => b.estimatedReward - a.estimatedReward || b.blocksMined - a.blocksMined);
+            // Sort by highest testnet CTX balance/earnings descending
+            ranked.sort((a, b) => b.balance - a.balance || b.estimatedReward - a.estimatedReward || b.sharesSubmitted - a.sharesSubmitted);
 
             const leaderboard = ranked.map((item, idx) => ({
                 rank: idx + 1,
