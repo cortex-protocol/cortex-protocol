@@ -2335,6 +2335,7 @@ async function fetchAndRenderLeaderboard() {
         if (tabMin) tabMin.innerText = minerCount;
         if (tabTst) tabTst.innerText = testerCount;
 
+        renderUserPositionCard();
         renderLeaderboardPodium();
         renderLeaderboardTable();
     } catch (e) {
@@ -2344,6 +2345,77 @@ async function fetchAndRenderLeaderboard() {
             setTimeout(() => refreshIcon.classList.remove('fa-spin'), 600);
         }
     }
+}
+
+function renderUserPositionCard() {
+    const container = document.getElementById('user-leaderboard-card-container');
+    if (!container) return;
+
+    const userAddr = (currentWallet && currentWallet.address) ? currentWallet.address.toLowerCase() : null;
+    if (!userAddr) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const myEntry = cachedLeaderboardData.find(u => u.address.toLowerCase() === userAddr);
+    if (!myEntry) {
+        container.innerHTML = `
+            <div class="user-position-banner">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="user-pos-icon"><i class="fa-solid fa-satellite-dish text-indigo"></i></div>
+                        <div>
+                            <div class="text-sm font-bold text-white">Your Connected Wallet: <span class="mono text-indigo">${userAddr.substring(0, 10)}...${userAddr.substring(userAddr.length - 6)}</span></div>
+                            <div class="text-xs text-slate-400 mt-0.5">Not yet ranked on Testnet 2.0. Mine blocks or test swaps to qualify for the 210k $CTX airdrop!</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-primary" onclick="navigateTo('landing', 'faucet')"><i class="fa-solid fa-faucet-drip"></i> Claim Faucet</button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const shortAddr = `${myEntry.address.substring(0, 10)}...${myEntry.address.substring(myEntry.address.length - 6)}`;
+    container.innerHTML = `
+        <div class="user-position-banner">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="user-pos-rank-badge">
+                        <span class="text-slate-400 font-bold" style="font-size:0.65rem; letter-spacing:0.5px;">YOUR RANK</span>
+                        <span class="text-xl font-extrabold text-amber mono">#${myEntry.rank}</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="mono font-bold text-white text-sm">${shortAddr}</span>
+                            <span class="badge-you">YOU</span>
+                            <span class="badge-subtle badge-indigo text-xs font-mono font-bold">${myEntry.type}</span>
+                        </div>
+                        <div class="text-xs text-slate-300 mt-1 font-mono">
+                            <span>Balance: <strong class="text-white">${myEntry.balance.toLocaleString()} $tCTX</strong></span> • 
+                            <span>Mined: <strong class="text-amber">${myEntry.blocksMined || 0} blks</strong></span> • 
+                            <span>Transfers: <strong class="text-emerald">${myEntry.transfers || 0} txs</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 flex-wrap">
+                    <div class="user-pos-metric-box">
+                        <span class="text-xs text-slate-400 font-bold block" style="font-size:0.7rem;">Mainnet Airdrop</span>
+                        <div class="text-lg font-bold text-emerald mono">${myEntry.estimatedReward.toLocaleString()} <span class="text-xs text-indigo">CTX</span></div>
+                    </div>
+                    <div class="user-pos-metric-box">
+                        <span class="text-xs text-slate-400 font-bold block" style="font-size:0.7rem;">Day 1 Liquid (20%)</span>
+                        <div class="text-sm font-bold text-cyan-400 mono">${myEntry.day1Liquid} CTX</div>
+                    </div>
+                    <div class="user-pos-metric-box">
+                        <span class="text-xs text-slate-400 font-bold block" style="font-size:0.7rem;">90d Stream (80%)</span>
+                        <div class="text-sm font-bold text-indigo mono">${myEntry.vestedStream} CTX</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function renderLeaderboardPodium() {
@@ -2358,8 +2430,8 @@ function renderLeaderboardPodium() {
     const top3 = cachedLeaderboardData.slice(0, 3);
     const podiumStyles = [
         { class: 'podium-gold-dark', rankText: '🥇 #1 CHAMPION', badgeColor: '#fbbf24', crown: '👑' },
-        { class: 'podium-silver-dark', rankText: '🥈 #2 RUNNER UP', badgeColor: '#cbd5e1', crown: '⭐' },
-        { class: 'podium-bronze-dark', rankText: '🥉 #3 THIRD PLACE', badgeColor: '#f59e0b', crown: '🎖️' }
+        { class: 'podium-silver-dark', rankText: '🥈 #2 RUNNER UP', badgeColor: '#38bdf8', crown: '⭐' },
+        { class: 'podium-bronze-dark', rankText: '🥉 #3 THIRD PLACE', badgeColor: '#f97316', crown: '🎖️' }
     ];
 
     container.innerHTML = top3.map((item, idx) => {
@@ -2371,7 +2443,8 @@ function renderLeaderboardPodium() {
         if (item.type === 'MINER') typeBadge = `<span class="pill-badge pill-green-light font-mono text-xs">MINER ⛏️</span>`;
         if (item.type === 'HYBRID') typeBadge = `<span class="pill-badge pill-indigo-light font-mono text-xs">HYBRID ⚡</span>`;
 
-        const capPercent = Math.min(100, (item.estimatedReward / 6300) * 100).toFixed(1);
+        const isMe = currentWallet && currentWallet.address && currentWallet.address.toLowerCase() === item.address.toLowerCase();
+        const youTag = isMe ? '<span class="badge-you ml-1">YOU</span>' : '';
 
         return `
             <div class="podium-card-dark ${p.class}">
@@ -2389,32 +2462,33 @@ function renderLeaderboardPodium() {
                         <div style="overflow:hidden;">
                             <div class="mono font-bold text-white text-sm flex items-center gap-1" title="${item.address}">
                                 <span>${shortAddr}</span>
+                                ${youTag}
                                 <button class="btn btn-ghost btn-xs p-1" onclick="navigator.clipboard.writeText('${item.address}'); showToast('Address copied!')">
                                     <i class="fa-regular fa-copy text-slate-400"></i>
                                 </button>
                             </div>
-                            <div class="text-xs text-slate-400 font-mono">${tctxBal} $tCTX</div>
+                            <div class="text-xs text-slate-300 font-mono font-bold mt-0.5">${tctxBal} $tCTX</div>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-12 mb-3" style="background: rgba(11,15,25,0.7); border: 1px solid rgba(255,255,255,0.06);">
+                    <div class="p-3 rounded-12 mb-3" style="background: rgba(11,15,25,0.75); border: 1px solid rgba(255,255,255,0.08);">
                         <div class="flex items-center justify-between text-xs text-slate-300 mb-1">
-                            <span>Mainnet Reward:</span>
-                            <span class="font-bold text-white mono text-sm">${item.estimatedReward.toLocaleString()} <span class="text-xs text-indigo">CTX</span></span>
+                            <span class="font-semibold">Mainnet Allocation:</span>
+                            <span class="font-extrabold text-white mono text-base">${item.estimatedReward.toLocaleString()} <span class="text-xs text-indigo">CTX</span></span>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-slate-400 font-mono" style="font-size:0.75rem;">
-                            <span>Day 1 (20%): <strong class="text-emerald">${item.day1Liquid} CTX</strong></span>
-                            <span>Stream (80%): <strong class="text-cyan-400">${item.vestedStream} CTX</strong></span>
+                        <div class="flex items-center justify-between text-xs text-slate-400 font-mono mb-2" style="font-size:0.75rem;">
+                            <span>Day 1 (20%): <strong class="text-emerald font-bold">${item.day1Liquid} CTX</strong></span>
+                            <span>Stream (80%): <strong class="text-cyan-400 font-bold">${item.vestedStream} CTX</strong></span>
                         </div>
-                        <div class="cap-progress-dark">
-                            <div class="cap-progress-dark-fill" style="width: ${capPercent}%;"></div>
+                        <div class="peg-ratio-indicator" style="width: 100%; justify-content: center;">
+                            <i class="fa-solid fa-scale-balanced text-amber"></i> 1,000 $tCTX = 1.00 $CTX Mainnet
                         </div>
                     </div>
                 </div>
 
                 <div class="flex items-center justify-between text-xs text-slate-400 pt-2 font-mono" style="border-top: 1px solid rgba(255,255,255,0.08);">
-                    <span>⛏️ ${item.blocksMined || 0} blocks</span>
-                    <span>⚡ ${item.stateCommits || 0} states</span>
+                    <span>⛏️ ${item.blocksMined || 0} blks</span>
+                    <span>⚡ ${item.stateCommits || 0} st</span>
                     <span>🔄 ${item.transfers || 0} txs</span>
                 </div>
             </div>
@@ -2497,10 +2571,10 @@ function renderLeaderboardTable() {
 
     tbody.innerHTML = list.map((item, idx) => {
         const rank = item.rank || (idx + 1);
-        let rankBadge = `<span class="mono font-bold text-slate-300">#${rank}</span>`;
-        if (rank === 1) rankBadge = `<span style="font-size:1.3rem;">🥇</span>`;
-        else if (rank === 2) rankBadge = `<span style="font-size:1.3rem;">🥈</span>`;
-        else if (rank === 3) rankBadge = `<span style="font-size:1.3rem;">🥉</span>`;
+        let rankBadge = `<span class="mono font-bold text-slate-300" style="background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 8px;">#${rank}</span>`;
+        if (rank === 1) rankBadge = `<span style="font-size:1.35rem; filter:drop-shadow(0 0 8px rgba(251,191,36,0.5));">🥇</span>`;
+        else if (rank === 2) rankBadge = `<span style="font-size:1.35rem; filter:drop-shadow(0 0 8px rgba(56,189,248,0.5));">🥈</span>`;
+        else if (rank === 3) rankBadge = `<span style="font-size:1.35rem; filter:drop-shadow(0 0 8px rgba(249,115,22,0.5));">🥉</span>`;
 
         let typeBadge = `<span class="pill-badge pill-violet-light font-mono text-xs">TESTER 🧪</span>`;
         if (item.type === 'MINER') {
@@ -2509,37 +2583,42 @@ function renderLeaderboardTable() {
             typeBadge = `<span class="pill-badge pill-indigo-light font-mono text-xs">HYBRID ⚡</span>`;
         }
 
+        const isMe = currentWallet && currentWallet.address && currentWallet.address.toLowerCase() === item.address.toLowerCase();
+        const rowClass = isMe ? 'user-highlight-row' : '';
+        const youTag = isMe ? '<span class="badge-you ml-1">YOU</span>' : '';
+
         const shortAddr = `${item.address.substring(0, 8)}...${item.address.substring(item.address.length - 6)}`;
         const tctxBal = (item.balance || (item.blocksMined * 50)).toLocaleString();
 
         return `
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.15s ease;">
-                <td style="padding: 12px 10px; font-weight:700;">${rankBadge}</td>
-                <td style="padding: 12px 10px;">
+            <tr class="${rowClass}" style="border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.15s ease;">
+                <td style="padding: 13px 10px; font-weight:700;">${rankBadge}</td>
+                <td style="padding: 13px 10px;">
                     <div class="flex items-center gap-2">
                         <span class="user-identicon-dot" style="background: #${item.address.substring(4, 10)};"></span>
-                        <span class="mono text-indigo font-semibold" style="color:#818cf8;" title="${item.address}">${shortAddr}</span>
+                        <span class="mono font-semibold" style="color:#818cf8;" title="${item.address}">${shortAddr}</span>
+                        ${youTag}
                         <button class="btn btn-ghost btn-xs p-1" onclick="navigator.clipboard.writeText('${item.address}'); showToast('Address copied!')" title="Copy Address">
                             <i class="fa-regular fa-copy text-slate-400"></i>
                         </button>
                     </div>
                 </td>
-                <td style="padding: 12px 10px;">${typeBadge}</td>
-                <td style="padding: 12px 10px;">
+                <td style="padding: 13px 10px;">${typeBadge}</td>
+                <td style="padding: 13px 10px;">
                     <div class="flex items-center gap-3 text-xs text-slate-400">
                         <span><strong class="text-amber mono">${item.blocksMined || 0}</strong> blks</span>
                         <span><strong class="text-indigo mono">${item.stateCommits || 0}</strong> st</span>
                         <span><strong class="text-emerald mono">${item.transfers || 0}</strong> txs</span>
                     </div>
                 </td>
-                <td style="padding: 12px 10px; text-align: right;">
-                    <span class="mono font-semibold text-white">${tctxBal}</span> <span class="text-xs text-slate-400">$tCTX</span>
+                <td style="padding: 13px 10px; text-align: right;">
+                    <span class="mono font-bold text-white">${tctxBal}</span> <span class="text-xs text-slate-400 font-mono">$tCTX</span>
                 </td>
-                <td style="padding: 12px 10px; text-align: right;">
-                    <div class="text-sm font-bold text-white mono">${item.estimatedReward.toLocaleString()} <span class="text-xs text-indigo">CTX</span></div>
-                    <span class="text-xs text-emerald mono">${item.sharePercent || 0}% of pool</span>
+                <td style="padding: 13px 10px; text-align: right;">
+                    <div class="text-sm font-extrabold text-white mono">${item.estimatedReward.toLocaleString()} <span class="text-xs text-indigo">CTX</span></div>
+                    <span class="text-xs text-slate-400 mono block" style="font-size:0.72rem;">1,000 : 1 peg</span>
                 </td>
-                <td style="padding: 12px 10px; text-align: right;">
+                <td style="padding: 13px 10px; text-align: right;">
                     <div class="text-xs mono">
                         <span class="text-emerald font-bold">20% (${item.day1Liquid} CTX) Day 1</span>
                     </div>
