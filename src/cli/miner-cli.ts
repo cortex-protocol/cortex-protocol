@@ -2,8 +2,58 @@ import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
+import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
 import { CortexCrypto } from '../core/crypto';
 import { CortexRandomX } from '../core/randomx';
+
+if (!isMainThread) {
+    let currentJob: any = null;
+    let isRunning = true;
+
+    parentPort?.on('message', (msg) => {
+        if (msg.type === 'job') {
+            currentJob = msg.job;
+        } else if (msg.type === 'stop') {
+            isRunning = false;
+            process.exit(0);
+        }
+    });
+
+    const threadId = Number(workerData?.threadId) || 0;
+    const totalThreads = Number(workerData?.totalThreads) || 1;
+
+    function runWorkerBatch() {
+        if (!isRunning) return;
+        if (!currentJob) {
+            setTimeout(runWorkerBatch, 25);
+            return;
+        }
+
+        const { headerPrefix, headerSuffix, targetPrefix, seed, templateIndex } = currentJob;
+        let nonce = Math.floor(Math.random() * 50000000) * totalThreads + threadId;
+        const BATCH = 1500;
+
+        for (let i = 0; i < BATCH; i++) {
+            const header = `${headerPrefix}${nonce}${headerSuffix}`;
+            const hash = CortexRandomX.hash(header, seed);
+
+            if (hash.startsWith(targetPrefix)) {
+                parentPort?.postMessage({
+                    type: 'found',
+                    nonce,
+                    hash,
+                    templateIndex
+                });
+            }
+            nonce += totalThreads;
+        }
+
+        parentPort?.postMessage({ type: 'hashes', count: BATCH });
+        setImmediate(runWorkerBatch);
+    }
+
+    runWorkerBatch();
+} else {
 
 let NODE_URL = process.env.NODE_URL || 'https://cortex-protocol.xyz';
 let minerAddress = process.env.MINER_ADDRESS || '';
@@ -242,6 +292,58 @@ let currentTemplate: any = null;
 const SPINNERS = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 const activityLog: string[] = [];
 
+const activeWorkers: Worker[] = [];
+
+async function handleFoundShare(nonce: number, hash: string, templateIndex: number) {
+    if (!currentTemplate || currentTemplate.index !== templateIndex) return;
+
+    const submitPayload = {
+        minerAddress: minerAddress,
+        workerId: workerId,
+        hashrate: localHashrate,
+        index: currentTemplate.index,
+        previousHash: currentTemplate.previousHash,
+        timestamp: currentTemplate.timestamp,
+        transactions: currentTemplate.transactions,
+        difficulty: currentTemplate.difficulty,
+        nonce: nonce,
+        hash: hash
+    };
+
+    try {
+        const submitEndpoint = miningMode === 'pool' ? '/api/pool/submit-share' : '/api/miner/submit-block';
+        const submitRes = await fetchJson(submitEndpoint, {
+            method: 'POST',
+            body: submitPayload
+        });
+
+        const timeStr = new Date().toLocaleTimeString();
+
+        if (miningMode === 'pool') {
+            if (submitRes.validShare) {
+                poolSharesSubmitted++;
+                if (submitRes.blockFound) {
+                    localBlocksFound++;
+                    activityLog.unshift(`\x1b[1;35m🎉🎉 [${timeStr}] JACKPOT! Block #${templateIndex} found for the pool! Rewards distributed!\x1b[0m`);
+                } else {
+                    activityLog.unshift(`\x1b[1;32m✓ [${timeStr}] Share Accepted (Diff ${currentTemplate.shareDifficulty})! Total: ${poolSharesSubmitted}\x1b[0m`);
+                }
+                if (activityLog.length > 4) activityLog.pop();
+            }
+        } else {
+            if (submitRes.success) {
+                localBlocksFound++;
+                const reward = submitRes.reward || 50;
+                sessionEarned += reward;
+                activityLog.unshift(`\x1b[1;32m💎 [${timeStr}] BLOCK #${templateIndex} SOLVED SOLO! +${reward} CTX REWARD CREDITED!\x1b[0m`);
+                if (activityLog.length > 4) activityLog.pop();
+            }
+        }
+    } catch (submitErr) {
+        // Stale share / block
+    }
+}
+
 async function startLocalMiningEngine() {
     let lastTime = Date.now();
     let lastHashes = 0;
@@ -257,86 +359,54 @@ async function startLocalMiningEngine() {
         }
     }, 800);
 
+    // Spawn native OS worker threads for every allocated CPU core
+    for (let t = 0; t < allocatedThreads; t++) {
+        const w = new Worker(__filename, {
+            workerData: { threadId: t, totalThreads: allocatedThreads }
+        });
+        w.on('message', (msg) => {
+            if (msg.type === 'hashes') {
+                localTotalHashes += msg.count;
+            } else if (msg.type === 'found') {
+                handleFoundShare(msg.nonce, msg.hash, msg.templateIndex);
+            }
+        });
+        w.on('error', (err) => console.error(`[WORKER ${t}] Error:`, err));
+        activeWorkers.push(w);
+    }
+
     while (isMiningRunning) {
         try {
             const templateEndpoint = miningMode === 'pool' 
                 ? `/api/pool/template?address=${encodeURIComponent(minerAddress)}&worker=${encodeURIComponent(workerId)}&hashrate=${localHashrate}`
                 : `/api/miner/template?address=${encodeURIComponent(minerAddress)}`;
 
-            currentTemplate = await fetchJson(templateEndpoint);
-            if (!currentTemplate || !currentTemplate.headerPrefix) {
-                await new Promise(r => setTimeout(r, 1000));
-                continue;
-            }
+            const newTemplate = await fetchJson(templateEndpoint);
+            if (newTemplate && newTemplate.headerPrefix) {
+                const isNew = !currentTemplate || currentTemplate.index !== newTemplate.index || currentTemplate.previousHash !== newTemplate.previousHash;
+                currentTemplate = newTemplate;
 
-            const headerPrefix = currentTemplate.headerPrefix;
-            const headerSuffix = currentTemplate.headerSuffix;
-            const targetPrefix = miningMode === 'pool' ? currentTemplate.targetSharePrefix : currentTemplate.targetPrefix;
-            let nonce = Math.floor(Math.random() * 100000000);
-            const blockIndex = currentTemplate.index;
-            const seed = CortexRandomX.getSeedForBlock(blockIndex);
+                if (isNew) {
+                    const seed = CortexRandomX.getSeedForBlock(currentTemplate.index);
+                    const targetPrefix = miningMode === 'pool' ? currentTemplate.targetSharePrefix : currentTemplate.targetPrefix;
 
-            const CHUNK = 4000 * Math.max(1, allocatedThreads);
-
-            for (let i = 0; i < CHUNK; i++) {
-                const header = `${headerPrefix}${nonce}${headerSuffix}`;
-                const hash = CortexRandomX.hash(header, seed);
-                localTotalHashes++;
-
-                if (hash.startsWith(targetPrefix)) {
-                    const submitPayload = {
-                        minerAddress: minerAddress,
-                        workerId: workerId,
-                        hashrate: localHashrate,
-                        index: currentTemplate.index,
-                        previousHash: currentTemplate.previousHash,
-                        timestamp: currentTemplate.timestamp,
-                        transactions: currentTemplate.transactions,
-                        difficulty: currentTemplate.difficulty,
-                        nonce: nonce,
-                        hash: hash
+                    const job = {
+                        headerPrefix: currentTemplate.headerPrefix,
+                        headerSuffix: currentTemplate.headerSuffix,
+                        targetPrefix,
+                        seed,
+                        templateIndex: currentTemplate.index
                     };
 
-                    try {
-                        const submitEndpoint = miningMode === 'pool' ? '/api/pool/submit-share' : '/api/miner/submit-block';
-                        const submitRes = await fetchJson(submitEndpoint, {
-                            method: 'POST',
-                            body: submitPayload
-                        });
-
-                        const timeStr = new Date().toLocaleTimeString();
-
-                        if (miningMode === 'pool') {
-                            if (submitRes.validShare) {
-                                poolSharesSubmitted++;
-                                if (submitRes.blockFound) {
-                                    localBlocksFound++;
-                                    activityLog.unshift(`\x1b[1;35m🎉🎉 [${timeStr}] JACKPOT! Block #${blockIndex} found for the pool! Rewards distributed!\x1b[0m`);
-                                } else {
-                                    activityLog.unshift(`\x1b[1;32m✓ [${timeStr}] Share Accepted (Diff ${currentTemplate.shareDifficulty})! Total: ${poolSharesSubmitted}\x1b[0m`);
-                                }
-                                if (activityLog.length > 4) activityLog.pop();
-                            }
-                        } else {
-                            if (submitRes.success) {
-                                localBlocksFound++;
-                                const reward = submitRes.reward || 50;
-                                sessionEarned += reward;
-                                activityLog.unshift(`\x1b[1;32m💎 [${timeStr}] BLOCK #${blockIndex} SOLVED SOLO! +${reward} CTX REWARD CREDITED!\x1b[0m`);
-                                if (activityLog.length > 4) activityLog.pop();
-                            }
-                        }
-                    } catch (submitErr) {
-                        // Stale share / block
+                    for (const w of activeWorkers) {
+                        w.postMessage({ type: 'job', job });
                     }
-                    break;
                 }
-                nonce++;
             }
 
-            await new Promise(r => setImmediate(r));
+            await new Promise(r => setTimeout(r, 1000));
         } catch (e) {
-            await new Promise(r => setTimeout(r, 1500));
+            await new Promise(r => setTimeout(r, 2000));
         }
     }
 }
@@ -459,3 +529,4 @@ async function main() {
 }
 
 main();
+}
