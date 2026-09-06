@@ -1,4 +1,4 @@
-﻿import urllib.request
+import urllib.request
 import urllib.parse
 import urllib.error
 import json
@@ -45,12 +45,14 @@ class CortexClient:
         """Fetch real-time network statistics."""
         return self._request("/api/stats")
 
-    def get_balance(self, address: Optional[str] = None) -> float:
+    def get_balance(self, address: Optional[str] = None, confirmed_only: bool = False) -> float:
         """Fetch $CTX balance for an address or current wallet."""
         addr = address or (self.wallet.address if self.wallet else "")
         if not addr:
             raise ValueError("Address or wallet required.")
         res = self._request(f"/api/balance/{addr}")
+        if confirmed_only:
+            return float(res.get("confirmedBalance", 0.0))
         return float(res.get("balance", 0.0))
 
     def claim_faucet(self, address: Optional[str] = None) -> Dict[str, Any]:

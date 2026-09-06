@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import time
 
@@ -20,7 +20,8 @@ def run_agent_workflow():
     print("=" * 70)
 
     # 1. INITIALIZE IDENTITY
-    wallet = AgentWallet.generate()
+    priv = os.environ.get("AGENT_PRIVATE_KEY", "")
+    wallet = AgentWallet.from_private_key(priv) if priv else AgentWallet.generate()
     print(f"[1] Sovereign Cryptographic Identity Initialized (secp256k1):")
     print(f"    - Address:     {wallet.address}")
     print(f"    - Public Key:  {wallet.public_key[:32]}...")
@@ -48,7 +49,7 @@ def run_agent_workflow():
             
             for attempt in range(40):
                 time.sleep(2.0)
-                balance = client.get_balance()
+                balance = client.get_balance(confirmed_only=True)
                 if balance >= 0.05:
                     print(f"    -> Block Confirmed! Available Balance: {balance:.4f} CTX")
                     break
