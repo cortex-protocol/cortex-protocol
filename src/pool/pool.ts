@@ -60,7 +60,7 @@ export class CortexMiningPool {
     /**
      * Get work template for connected pool miners
      */
-    public getWorkTemplate(minerAddress: string, workerId: string = 'worker-1') {
+    public getWorkTemplate(minerAddress: string, workerId: string = 'worker-1', reportedHashrate: number = 0) {
         const latestBlock = this.blockchain.getLatestBlock();
         const nextIndex = latestBlock.index + 1;
         const difficulty = this.blockchain.getDifficulty();
@@ -83,8 +83,8 @@ export class CortexMiningPool {
             this.poolKeyPair.address
         );
 
-        // Register or update miner activity
-        this.recordMinerPing(minerAddress, workerId);
+        // Register or update miner activity with real reported hashrate
+        this.recordMinerPing(minerAddress, workerId, reportedHashrate);
 
         return {
             index: block.index,
@@ -110,6 +110,7 @@ export class CortexMiningPool {
     public submitShare(data: {
         minerAddress: string;
         workerId?: string;
+        hashrate?: number;
         index: number;
         previousHash: string;
         timestamp: number;
@@ -118,7 +119,7 @@ export class CortexMiningPool {
         nonce: number;
         hash: string;
     }): { validShare: boolean; blockFound: boolean; message?: string; error?: string; roundShares?: number; estimatedReward?: number } {
-        const { minerAddress, workerId = 'worker-1', index, previousHash, timestamp, transactions, difficulty, nonce, hash } = data;
+        const { minerAddress, workerId = 'worker-1', hashrate = 0, index, previousHash, timestamp, transactions, difficulty, nonce, hash } = data;
 
         if (!minerAddress || !minerAddress.startsWith('ctx1')) {
             return { validShare: false, blockFound: false, error: 'Invalid miner address format' };
@@ -152,7 +153,7 @@ export class CortexMiningPool {
         }
 
         // --- VALID SHARE ACCEPTED IN CURRENT ROUND ---
-        const miner = this.recordValidShare(minerAddress, workerId);
+        const miner = this.recordValidShare(minerAddress, workerId, Number(hashrate) || 0);
         this.currentRoundShares++;
 
         const shareRatio = this.currentRoundShares > 0 ? (miner.validSharesRound / this.currentRoundShares) : 1;
@@ -178,6 +179,8 @@ export class CortexMiningPool {
                 if (this.onBlockFoundCallback) {
                     this.onBlockFoundCallback(block);
                 }
+            } else {
+                console.warn(`[MINING POOL] Block #${block.index} rejected by blockchain:`, addRes.error);
             }
         }
 
@@ -192,19 +195,23 @@ export class CortexMiningPool {
         };
     }
 
-    private recordMinerPing(address: string, workerId: string): PoolMinerInfo {
+    private recordMinerPing(address: string, workerId: string, reportedHashrate: number = 0): PoolMinerInfo {
         const key = `${address.toLowerCase()}:${workerId}`;
         let existing = this.miners.get(key);
+        const now = Date.now();
         if (existing) {
-            existing.lastSeen = Date.now();
+            existing.lastSeen = now;
+            if (reportedHashrate > 0) {
+                existing.hashrate = reportedHashrate;
+            }
         } else {
             existing = {
                 address,
                 workerId,
                 shares: 0,
                 validSharesRound: 0,
-                hashrate: 0,
-                lastSeen: Date.now(),
+                hashrate: reportedHashrate > 0 ? reportedHashrate : 0,
+                lastSeen: now,
                 pendingPayout: 0,
                 totalPaid: 0
             };
@@ -213,7 +220,7 @@ export class CortexMiningPool {
         return existing;
     }
 
-    private recordValidShare(address: string, workerId: string): PoolMinerInfo {
+    private recordValidShare(address: string, workerId: string, reportedHashrate: number = 0): PoolMinerInfo {
         const key = `${address.toLowerCase()}:${workerId}`;
         let existing = this.miners.get(key);
         const now = Date.now();
@@ -222,12 +229,17 @@ export class CortexMiningPool {
             existing.validSharesRound++;
             const deltaSec = Math.max(0.5, (now - existing.lastSeen) / 1000);
             existing.lastSeen = now;
-            // 1 share = 16^shareDifficulty = 16^3 = 4096 hashes
-            const instantHr = Math.round(4096 / deltaSec);
-            if (existing.hashrate > 0) {
-                existing.hashrate = Math.round(existing.hashrate * 0.7 + instantHr * 0.3);
+
+            if (reportedHashrate > 0) {
+                existing.hashrate = reportedHashrate;
             } else {
-                existing.hashrate = Math.max(18000, instantHr);
+                // 1 share = 16^shareDifficulty = 16^3 = 4096 hashes
+                const instantHr = Math.round(4096 / deltaSec);
+                if (existing.hashrate > 0) {
+                    existing.hashrate = Math.round(existing.hashrate * 0.7 + instantHr * 0.3);
+                } else {
+                    existing.hashrate = instantHr;
+                }
             }
         } else {
             existing = {
@@ -235,7 +247,7 @@ export class CortexMiningPool {
                 workerId,
                 shares: 1,
                 validSharesRound: 1,
-                hashrate: 18000,
+                hashrate: reportedHashrate > 0 ? reportedHashrate : 4096,
                 lastSeen: now,
                 pendingPayout: 0,
                 totalPaid: 0
@@ -316,10 +328,12 @@ export class CortexMiningPool {
     private cleanupInactiveWorkers() {
         const now = Date.now();
         for (const [key, miner] of this.miners.entries()) {
-            if (now - miner.lastSeen > 90000) {
+            const timeSinceLastSeen = now - miner.lastSeen;
+            if (timeSinceLastSeen > 90000) {
                 this.miners.delete(key);
-            } else {
-                miner.hashrate = Math.max(18000, miner.shares * 3500);
+            } else if (timeSinceLastSeen > 25000) {
+                // If worker stopped sending heartbeats/shares for > 25s, decay hashrate smoothly
+                miner.hashrate = Math.max(0, Math.round(miner.hashrate * 0.7));
             }
         }
     }

@@ -3055,6 +3055,431 @@ body {
 }
 
 /* ======================================================== */
+/* INSTITUTIONAL AI AGENT SETTLEMENT COCKPIT (POC)          */
+/* ======================================================== */
+.ai-studio-vault {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(2, 6, 23, 0.98) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: 20px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    padding: 24px 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+.terminal-bar-hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.window-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.dot-red { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+.dot-amber { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.6); }
+.dot-green { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
+
+/* PERSONA COCKPIT GRID */
+.persona-cockpit-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+@media (max-width: 1024px) {
+    .persona-cockpit-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 640px) {
+    .persona-cockpit-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.persona-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.persona-card:hover {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(99, 102, 241, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(99, 102, 241, 0.2);
+}
+
+.persona-card.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+    border-color: #6366f1;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.35), inset 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+.persona-card-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.persona-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.persona-card-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.persona-card-desc {
+    font-size: 0.65rem;
+    color: var(--slate-400);
+    margin-top: 2px;
+}
+
+.persona-card-check {
+    font-size: 0.75rem;
+    color: #6366f1;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.persona-card.active .persona-card-check {
+    opacity: 1;
+    color: #818cf8;
+}
+
+/* PRESET CHIPS */
+.presets-bar {
+    padding: 8px 12px;
+    background: rgba(2, 6, 23, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.cockpit-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cockpit-chip:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: #818cf8;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+/* COCKPIT INPUTS */
+.cockpit-input-group {
+    margin-bottom: 12px;
+}
+
+.cockpit-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+
+.cockpit-input, .cockpit-select {
+    width: 100%;
+    background: rgba(2, 6, 23, 0.75);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: #f1f5f9;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.cockpit-input:focus, .cockpit-select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.35), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+    background: rgba(2, 6, 23, 0.9);
+}
+
+.cockpit-select {
+    cursor: pointer;
+}
+.cockpit-select option {
+    background: #0f172a;
+    color: #f1f5f9;
+}
+
+/* CODE MATRIX EDITOR HUD */
+.cockpit-code-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: rgba(2, 6, 23, 0.8);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.cockpit-code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(15, 23, 42, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cockpit-code-editor {
+    width: 100%;
+    flex: 1;
+    min-height: 180px;
+    background: transparent;
+    border: none;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.76rem;
+    line-height: 1.55;
+    color: #38bdf8;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.cockpit-code-editor:focus {
+    outline: none;
+}
+
+.cockpit-code-editor::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.cockpit-code-editor::-webkit-scrollbar-track {
+    background: rgba(2, 6, 23, 0.5);
+}
+.cockpit-code-editor::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.4);
+    border-radius: 3px;
+}
+
+/* SETTLEMENT PARAMETER HUD */
+.cockpit-settlement-hud {
+    background: rgba(2, 6, 23, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
+}
+
+.settlement-tiles-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 860px) {
+    .settlement-tiles-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 500px) {
+    .settlement-tiles-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.settlement-tile {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 0.2s;
+}
+
+.settlement-tile:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.settlement-tile.tile-burn {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.tile-icon {
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tile-label {
+    font-size: 0.65rem;
+    color: var(--slate-400);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tile-val {
+    font-size: 0.85rem;
+    font-family: var(--font-mono);
+    margin-top: 2px;
+}
+
+.cockpit-anchor-btn {
+    padding: 12px 26px;
+    font-size: 0.92rem;
+    font-weight: 800;
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
+}
+
+/* CRYPTOGRAPHIC ATTESTATION RECEIPT CARD */
+.poc-receipt-container {
+    animation: receiptSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes receiptSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.receipt-card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+.receipt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.receipt-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid #10b981;
+    color: #34d399;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.receipt-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+}
+
+@media (max-width: 768px) {
+    .receipt-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.receipt-field {
+    background: rgba(2, 6, 23, 0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.receipt-label {
+    font-size: 0.7rem;
+    color: var(--slate-400);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.receipt-val {
+    font-size: 0.8rem;
+    color: #f1f5f9;
+    font-family: var(--font-mono);
+    word-break: break-all;
+}
+
+.burn-stat-highlight {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.burn-stat-highlight .receipt-label {
+    color: #f87171;
+}
+
+.burn-stat-highlight .receipt-val {
+    color: #fca5a5;
+    font-weight: bold;
+}
+
+/* ======================================================== */
 /* INSTITUTIONAL DEX AMM SWAP & LIQUIDITY ENGINE STYLES     */
 /* ======================================================== */
 
@@ -4126,6 +4551,92 @@ body {
     padding: 2px 8px;
     border-radius: 6px;
     font-family: var(--font-mono);
+}
+
+/* EXPLORER FILTER TABS */
+.explorer-filter-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.filter-tab-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.filter-tab-btn.active {
+    background: rgba(99, 102, 241, 0.18);
+    border-color: #6366f1;
+    color: #a5b4fc;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+}
+
+/* 1-CLICK HOVER QUICK-COPY */
+.copy-hover-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+}
+
+.copy-hover-btn {
+    opacity: 0;
+    visibility: hidden;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    color: #818cf8;
+    border-radius: 5px;
+    padding: 2px 6px;
+    font-size: 0.68rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.copy-hover-wrapper:hover .copy-hover-btn {
+    opacity: 1;
+    visibility: visible;
+}
+
+.copy-hover-btn:hover {
+    background: #6366f1;
+    color: #ffffff;
+    border-color: #6366f1;
+    transform: scale(1.08);
+}
+
+/* EXPLORER TABLE FOOTER & LOAD MORE */
+.explorer-table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 14px;
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 

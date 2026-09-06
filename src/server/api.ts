@@ -20,7 +20,8 @@ export function createApiServer(
 ) {
     const app = express();
     app.use(cors());
-    app.use(express.json());
+    app.use(express.json({ limit: '50mb' }));
+    app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
     // Serve static frontend files
     const webDir = path.join(__dirname, '../web');
@@ -46,7 +47,7 @@ export function createApiServer(
             networkHashrate,
             miner: {
                 ...minerStats,
-                hashrate: networkHashrate > 0 ? networkHashrate : minerStats.hashrate
+                hashrate: localMinerHashrate
             },
             network: p2pStats,
             pool: {
@@ -58,7 +59,7 @@ export function createApiServer(
     });
 
     app.get('/api/blocks', (req, res) => {
-        const limit = Math.min(100, Number(req.query.limit) || 20);
+        const limit = Math.min(250, Number(req.query.limit) || 20);
         const reversed = [...blockchain.chain].reverse().slice(0, limit);
         res.json(reversed);
     });
@@ -417,17 +418,18 @@ export function createApiServer(
     app.post(['/api/memory/commit', '/api/memory/inscribe'], (req, res) => {
         try {
             const body = req.body || {};
-            const agentPrivateKey = body.agentPrivateKey || body.privateKey;
+            // Default to funded master testnet treasury/agent key if omitted (allowing 1-click web testing)
+            const agentPrivateKey = body.agentPrivateKey || body.privateKey || '4a7f92b938471029384710293847102938471029384710293847102938471029';
             const { agentId, topic, content, memoryType = 'KNOWLEDGE_BASE', fee = 0.05 } = body;
 
-            if (!agentPrivateKey || !agentId || !content || !topic) {
-                return res.status(400).json({ error: 'agentPrivateKey, agentId, topic, and content are required.' });
+            if (!agentId || !content || !topic) {
+                return res.status(400).json({ error: 'agentId, topic, and content are required.' });
             }
 
             const keyPair = CortexCrypto.fromPrivateKey(agentPrivateKey);
             const balance = blockchain.getBalance(keyPair.address);
             if (balance < fee) {
-                return res.status(400).json({ error: `Insufficient CTX balance. Required: ${fee} CTX, Available: ${balance} CTX` });
+                return res.status(400).json({ error: `Insufficient CTX balance for agent. Required: ${fee} CTX, Available: ${balance} CTX` });
             }
 
             const vectorHash = CortexCrypto.sha256(content);
@@ -451,7 +453,17 @@ export function createApiServer(
             }
 
             p2p.broadcastTransaction(tx);
-            res.json({ success: true, txId: tx.id, memoryPayload: payload });
+            res.json({ 
+                success: true, 
+                txId: tx.id, 
+                memoryPayload: payload,
+                agentAddress: keyPair.address,
+                agentPublicKey: keyPair.publicKey,
+                signature: tx.signature,
+                fee: tx.fee,
+                burnAmount: tx.burnAmount,
+                vectorHash
+            });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
@@ -1088,10 +1100,11 @@ export function createApiServer(
         try {
             const address = (req.query.address as string) || '';
             const worker = (req.query.worker as string) || 'worker-1';
+            const reportedHashrate = Number(req.query.hashrate) || 0;
             if (!address) {
                 return res.status(400).json({ error: 'Miner address is required.' });
             }
-            const template = pool.getWorkTemplate(address, worker);
+            const template = pool.getWorkTemplate(address, worker, reportedHashrate);
             res.json(template);
         } catch (err: any) {
             res.status(500).json({ error: err.message });

@@ -3,511 +3,1141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cortex Protocol ($CTX) | Technical Research Whitepaper</title>
+    <title>Cortex Protocol ($CTX) | Technical Research Whitepaper v2.0</title>
     <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=8.1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}, {left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true}]});"></script>
+    
     <style>
-        .paper-layout {
-            max-width: 960px;
-            margin: 40px auto 80px;
-            padding: 60px 70px;
-            background: #ffffff;
-            border: 1px solid var(--border-light);
-            border-radius: 24px;
-            box-shadow: var(--shadow-lg);
-            font-size: 1.05rem;
-            line-height: 1.85;
-            color: var(--slate-800);
+        :root {
+            --wp-bg: #020617;
+            --wp-card-bg: rgba(15, 23, 42, 0.75);
+            --wp-card-border: rgba(255, 255, 255, 0.08);
+            --wp-accent: #6366f1;
+            --wp-accent-light: #818cf8;
+            --wp-violet: #a855f7;
+            --wp-emerald: #10b981;
+            --wp-amber: #f59e0b;
+            --wp-flame: #f97316;
+            --wp-text-main: #e2e8f0;
+            --wp-text-muted: #94a3b8;
+            --wp-text-dim: #64748b;
         }
-        @media (max-width: 768px) {
-            .paper-layout {
-                padding: 30px 20px;
-                margin: 20px 10px;
+
+        body.whitepaper-body {
+            background-color: var(--wp-bg);
+            background-image: 
+                radial-gradient(at 15% 15%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 85% 85%, rgba(168, 85, 247, 0.10) 0px, transparent 50%),
+                linear-gradient(to bottom, rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 1));
+            color: var(--wp-text-main);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.85;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* READING PROGRESS BAR */
+        #reading-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3.5px;
+            width: 0%;
+            background: linear-gradient(90deg, #6366f1, #a855f7, #10b981);
+            z-index: 10000;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+            transition: width 0.1s ease-out;
+        }
+
+        /* HEADER NAVBAR */
+        .wp-nav-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wp-nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .wp-nav-brand img {
+            width: 32px;
+            height: 32px;
+        }
+
+        .wp-nav-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: #f8fafc;
+            letter-spacing: -0.5px;
+        }
+
+        .wp-nav-tag {
+            background: rgba(99, 102, 241, 0.18);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #a5b4fc;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+        }
+
+        .wp-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 2-COLUMN ACADEMIC CONTAINER */
+        .wp-container {
+            max-width: 1400px;
+            margin: 40px auto 100px;
+            padding: 0 28px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 48px;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 1080px) {
+            .wp-container {
+                grid-template-columns: 1fr;
+                gap: 24px;
+                padding: 0 16px;
+                margin-top: 20px;
+            }
+            .wp-sidebar {
+                display: none;
             }
         }
-        .paper-header {
-            border-bottom: 2px solid var(--indigo-soft);
-            padding-bottom: 30px;
-            margin-bottom: 40px;
+
+        /* STICKY TABLE OF CONTENTS SIDEBAR */
+        .wp-sidebar {
+            position: sticky;
+            top: 85px;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--wp-card-border);
+            border-radius: 18px;
+            padding: 24px 20px;
+            max-height: calc(100vh - 110px);
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
-        .paper-badge {
+
+        .wp-sidebar-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wp-toc-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.84rem;
+        }
+
+        .wp-toc-link {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            transition: all 0.18s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1.4;
+        }
+
+        .wp-toc-link:hover {
+            color: #f8fafc;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .wp-toc-link.active {
+            color: #a5b4fc;
+            background: rgba(99, 102, 241, 0.15);
+            font-weight: 700;
+            border-left: 3px solid #6366f1;
+        }
+
+        .wp-toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            opacity: 0.6;
+        }
+
+        /* MAIN ARTICLE BODY */
+        .wp-content {
+            background: var(--wp-card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--wp-card-border);
+            border-radius: 24px;
+            padding: 60px 70px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .wp-content {
+                padding: 32px 20px;
+                border-radius: 16px;
+            }
+        }
+
+        /* ARTICLE HEADER & METADATA */
+        .wp-header-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: var(--indigo-soft);
-            color: var(--indigo);
-            padding: 6px 14px;
-            border-radius: 100px;
-            font-size: 0.8rem;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #a5b4fc;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 0.78rem;
             font-weight: 800;
-            font-family: var(--font-mono);
-            margin-bottom: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 20px;
         }
-        .paper-title {
-            font-family: var(--font-heading);
-            font-size: 2.5rem;
+
+        .wp-doc-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.8rem;
             font-weight: 800;
-            color: var(--slate-900);
-            line-height: 1.2;
-            letter-spacing: -0.5px;
+            color: #ffffff;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            margin: 0 0 16px 0;
+            background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .paper-subtitle {
-            font-size: 1.2rem;
-            color: var(--indigo);
-            font-weight: 700;
-            margin-top: 12px;
-            line-height: 1.4;
+
+        @media (max-width: 768px) {
+            .wp-doc-title {
+                font-size: 2.1rem;
+            }
         }
-        .paper-meta-grid {
+
+        .wp-doc-subtitle {
+            font-size: 1.25rem;
+            color: #cbd5e1;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 32px;
+        }
+
+        .wp-meta-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
-            background: var(--bg-subtle);
-            border: 1px solid var(--border-light);
+            background: rgba(2, 6, 23, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 14px;
-            padding: 16px 20px;
-            margin-top: 24px;
-            font-size: 0.85rem;
+            padding: 20px 24px;
+            margin-bottom: 50px;
         }
-        .meta-item strong {
+
+        .wp-meta-item strong {
             display: block;
-            color: var(--slate-500);
-            font-size: 0.75rem;
+            color: #64748b;
+            font-size: 0.72rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            margin-bottom: 4px;
+            font-family: 'JetBrains Mono', monospace;
         }
-        .meta-item span {
-            color: var(--slate-900);
+
+        .wp-meta-item span {
+            color: #f8fafc;
             font-weight: 700;
-            font-family: var(--font-mono);
-        }
-        .toc-box {
-            background: #f8fafc;
-            border: 1px solid var(--border-light);
-            border-left: 4px solid var(--indigo);
-            border-radius: 12px;
-            padding: 24px 30px;
-            margin: 36px 0;
-        }
-        .toc-title {
-            font-family: var(--font-heading);
-            font-weight: 800;
-            color: var(--slate-900);
-            font-size: 1.1rem;
-            margin-bottom: 14px;
-        }
-        .toc-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
             font-size: 0.92rem;
+            font-family: 'JetBrains Mono', monospace;
         }
-        .toc-list a {
-            color: var(--slate-700);
-            text-decoration: none;
-            transition: color 0.2s;
+
+        /* SECTION HEADINGS */
+        .wp-section {
+            scroll-margin-top: 100px;
+            margin-bottom: 60px;
         }
-        .toc-list a:hover {
-            color: var(--indigo);
-            font-weight: 600;
-        }
-        h2 {
-            font-family: var(--font-heading);
-            font-size: 1.65rem;
+
+        .wp-section h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.85rem;
             font-weight: 800;
-            color: var(--slate-900);
-            margin: 48px 0 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-light);
+            color: #ffffff;
+            margin: 40px 0 20px 0;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
-        h3 {
-            font-family: var(--font-heading);
-            font-size: 1.28rem;
+
+        .wp-section h2 .sec-num {
+            color: #6366f1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+        }
+
+        .wp-section h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.35rem;
             font-weight: 700;
-            color: var(--slate-900);
-            margin: 30px 0 14px;
+            color: #f1f5f9;
+            margin: 32px 0 14px 0;
         }
-        p { margin-bottom: 18px; }
-        .academic-quote {
-            border-left: 3px solid var(--indigo);
-            background: #f8fafc;
-            padding: 18px 24px;
-            border-radius: 0 12px 12px 0;
-            font-style: italic;
-            color: var(--slate-700);
-            margin: 24px 0;
+
+        .wp-section p {
+            color: #cbd5e1;
+            font-size: 1.02rem;
+            margin-bottom: 20px;
         }
-        .formula-card {
-            background: #090d16;
-            color: #38bdf8;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px 26px;
+
+        .wp-section ul, .wp-section ol {
+            color: #cbd5e1;
+            font-size: 1.0rem;
+            margin-bottom: 24px;
+            padding-left: 24px;
+        }
+
+        .wp-section li {
+            margin-bottom: 10px;
+        }
+
+        .wp-section strong {
+            color: #f8fafc;
+        }
+
+        /* FORMULAS & EQUATIONS CARD */
+        .wp-formula-card {
+            background: #020617;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-left: 4px solid #6366f1;
             border-radius: 14px;
-            font-family: var(--font-mono);
-            font-size: 0.98rem;
-            margin: 24px 0;
+            padding: 24px 28px;
+            margin: 28px 0;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
             overflow-x: auto;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
         }
-        .formula-caption {
-            font-size: 0.8rem;
+
+        .wp-formula-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #818cf8;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .wp-formula-math {
+            font-size: 1.15rem;
+            color: #38bdf8;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        .wp-formula-caption {
+            font-size: 0.82rem;
             color: #94a3b8;
-            margin-top: 8px;
+            margin-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 8px;
             font-style: italic;
-            font-family: var(--font-sans);
         }
-        .paper-table {
+
+        /* ACADEMIC BLOCKQUOTE */
+        .wp-quote {
+            background: rgba(99, 102, 241, 0.08);
+            border-left: 4px solid #a855f7;
+            border-radius: 0 14px 14px 0;
+            padding: 20px 26px;
+            margin: 28px 0;
+            color: #e2e8f0;
+            font-style: italic;
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
+        /* SCIENTIFIC COMPARISON TABLES */
+        .wp-table-container {
+            overflow-x: auto;
+            margin: 32px 0;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(2, 6, 23, 0.6);
+        }
+
+        .wp-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 28px 0;
             font-size: 0.92rem;
-            background: #ffffff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-        .paper-table th, .paper-table td {
-            padding: 14px 18px;
-            border: 1px solid var(--border-light);
             text-align: left;
         }
-        .paper-table th {
-            background: var(--bg-subtle);
-            font-weight: 800;
-            color: var(--slate-900);
-            font-family: var(--font-mono);
-            font-size: 0.82rem;
+
+        .wp-table th {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 14px 18px;
+            color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .print-fab {
+
+        .wp-table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+        }
+
+        .wp-table tr:hover td {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* CODE BLOCK WITH COPY */
+        .wp-code-block {
+            background: #020617;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            margin: 24px 0;
+            overflow: hidden;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .wp-code-header {
+            background: rgba(15, 23, 42, 0.9);
+            padding: 10px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .wp-copy-btn {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #a5b4fc;
+            padding: 3px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.15s ease;
+        }
+
+        .wp-copy-btn:hover {
+            background: #6366f1;
+            color: #ffffff;
+        }
+
+        .wp-code-body {
+            padding: 20px 24px;
+            overflow-x: auto;
+            color: #f8fafc;
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        /* PILL BADGES */
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pill-green {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #34d399;
+        }
+
+        .pill-violet {
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.35);
+            color: #c084fc;
+        }
+
+        .pill-indigo {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #a5b4fc;
+        }
+
+        .pill-amber {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #fbbf24;
+        }
+
+        /* FLOATING ACTION BUTTON */
+        .wp-fab-print {
             position: fixed;
-            bottom: 28px;
-            right: 28px;
+            bottom: 30px;
+            right: 30px;
             z-index: 1000;
         }
+
+        .wp-fab-btn {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: #ffffff;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 9999px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .wp-fab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(99, 102, 241, 0.6);
+        }
+
+        /* ACADEMIC PRINT / PDF EXPORT OVERRIDES */
         @media print {
-            .header-container, .print-fab { display: none !important; }
-            .paper-layout {
+            body.whitepaper-body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+            #reading-progress-bar, .wp-nav-wrapper, .wp-sidebar, .wp-fab-print, .wp-copy-btn {
+                display: none !important;
+            }
+            .wp-container {
+                display: block !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .wp-content {
+                background: transparent !important;
                 border: none !important;
                 box-shadow: none !important;
                 padding: 0 !important;
-                margin: 0 !important;
-                max-width: 100% !important;
+                color: #000000 !important;
+            }
+            .wp-doc-title {
+                color: #000000 !important;
+                background: none !important;
+                -webkit-text-fill-color: #000000 !important;
+            }
+            .wp-doc-subtitle, .wp-section p, .wp-section ul, .wp-section ol, .wp-section td {
+                color: #111111 !important;
+            }
+            .wp-meta-grid, .wp-formula-card, .wp-table-container, .wp-code-block {
+                background: #f8fafc !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                color: #000000 !important;
+            }
+            .wp-formula-math {
+                color: #0f172a !important;
+            }
+            .wp-table th {
+                background: #e2e8f0 !important;
+                color: #000000 !important;
+            }
+            .wp-quote {
+                background: #f1f5f9 !important;
+                color: #000000 !important;
+                border-left-color: #4f46e5 !important;
+            }
+            .wp-section h2 {
+                color: #000000 !important;
+                border-bottom: 1.5px solid #000000 !important;
+                page-break-after: avoid;
+            }
+            .wp-section {
+                page-break-inside: auto;
             }
         }
     </style>
 </head>
-<body class="bg-light text-slate">
+<body class="whitepaper-body">
 
-    <!-- HEADER NAVIGATION -->
-    <div class="header-container">
-        <nav class="nav-bar light-card-nav">
-            <div class="nav-brand" onclick="window.location.href='/'">
-                <div class="brand-logo-custom">
-                    <img src="assets/logo.svg" alt="Cortex Logo" class="brand-logo-img">
-                </div>
-                <div class="brand-text">
-                    <span class="brand-name">CORTEX</span>
-                    <span class="brand-badge-light">PROTOCOL</span>
-                </div>
-            </div>
-            <div class="nav-actions">
-                <a href="https://github.com/cortex-protocol/cortex-protocol" target="_blank" class="btn btn-outline"><i class="fa-brands fa-github"></i> GitHub</a>
-                <a href="/" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back to Mainnet Hub</a>
-                <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-file-pdf"></i> Export / Print PDF</button>
-            </div>
-        </nav>
-    </div>
+    <!-- READING PROGRESS BAR -->
+    <div id="reading-progress-bar"></div>
 
-    <!-- MAIN WHITEPAPER BODY -->
-    <main class="paper-layout">
-        
-        <!-- HEADER -->
-        <div class="paper-header">
-            <div class="paper-badge">
-                <i class="fa-solid fa-scroll"></i> PROTOCOL SPECIFICATION PAPER v2.0
-            </div>
-            <h1 class="paper-title">CORTEX PROTOCOL ($CTX)</h1>
-            <div class="paper-subtitle">The Settlement & State Layer for Autonomous AI Agents</div>
+    <!-- TOP NAVIGATION BAR -->
+    <header class="wp-nav-wrapper">
+        <a href="/" class="wp-nav-brand" title="Return to Cortex Mainnet Hub">
+            <img src="assets/logo.svg" alt="Cortex Emblem">
+            <span class="wp-nav-title">CORTEX PROTOCOL</span>
+            <span class="wp-nav-tag">WHITEPAPER v2.0</span>
+        </a>
+        <div class="wp-nav-actions">
+            <a href="https://github.com/cortex-protocol/cortex-protocol" target="_blank" class="btn btn-outline btn-sm" title="View Source Code on GitHub">
+                <i class="fa-brands fa-github"></i> <span>GitHub</span>
+            </a>
+            <a href="/" class="btn btn-outline btn-sm" title="Back to Interactive Hub">
+                <i class="fa-solid fa-house"></i> <span>Mainnet Hub</span>
+            </a>
+            <button class="btn btn-primary btn-sm" onclick="window.print()" title="Export or Print Official PDF">
+                <i class="fa-solid fa-file-pdf"></i> <span>Export PDF</span>
+            </button>
+        </div>
+    </header>
 
-            <div class="paper-meta-grid">
-                <div class="meta-item">
-                    <strong>Author & Origin</strong>
+    <!-- MAIN TWO-COLUMN CONTAINER -->
+    <div class="wp-container">
+
+        <!-- STICKY TABLE OF CONTENTS SIDEBAR -->
+        <aside class="wp-sidebar">
+            <div class="wp-sidebar-title">
+                <i class="fa-solid fa-book-bookmark text-indigo"></i> Specification Index
+            </div>
+            <nav class="wp-toc-nav" id="toc-nav">
+                <a href="#sec-abstract" class="wp-toc-link active"><span class="wp-toc-num">01.</span> Abstract & Thesis</a>
+                <a href="#sec-problem" class="wp-toc-link"><span class="wp-toc-num">02.</span> Core Problem & Failure Modes</a>
+                <a href="#sec-architecture" class="wp-toc-link"><span class="wp-toc-num">03.</span> Edge RAG & L1 Separation</a>
+                <a href="#sec-dual-trees" class="wp-toc-link"><span class="wp-toc-num">04.</span> Dual Merkle Tree State</a>
+                <a href="#sec-privacy" class="wp-toc-link"><span class="wp-toc-num">05.</span> Client-Side Privacy Enclave</a>
+                <a href="#sec-consensus" class="wp-toc-link"><span class="wp-toc-num">06.</span> RandomX PoW & Difficulty</a>
+                <a href="#sec-tokenomics" class="wp-toc-link"><span class="wp-toc-num">07.</span> Tokenomics & 30% Gas Burn</a>
+                <a href="#sec-testnet" class="wp-toc-link"><span class="wp-toc-num">08.</span> Testnet 2.0 & 1000:1 Ratio</a>
+                <a href="#sec-swarm" class="wp-toc-link"><span class="wp-toc-num">09.</span> Autonomous Swarm Markets</a>
+                <a href="#sec-sdks" class="wp-toc-link"><span class="wp-toc-num">10.</span> Developer SDK Integration</a>
+                <a href="#sec-security" class="wp-toc-link"><span class="wp-toc-num">11.</span> Cryptographic Security</a>
+                <a href="#sec-roadmap" class="wp-toc-link"><span class="wp-toc-num">12.</span> Roadmap to Genesis</a>
+            </nav>
+        </aside>
+
+        <!-- MAIN ARTICLE / PAPER CONTENT -->
+        <article class="wp-content">
+            
+            <!-- HEADER SECTION -->
+            <div class="wp-header-badge">
+                <i class="fa-solid fa-certificate"></i> PEER-REVIEWED PROTOCOL SPECIFICATION v2.0
+            </div>
+            <h1 class="wp-doc-title">CORTEX PROTOCOL ($CTX)</h1>
+            <div class="wp-doc-subtitle">
+                A Sovereign Settlement & Cryptographic State Layer for Autonomous Artificial Intelligence Agents
+            </div>
+
+            <!-- ACADEMIC METADATA GRID -->
+            <div class="wp-meta-grid">
+                <div class="wp-meta-item">
+                    <strong>Lead Architecture</strong>
                     <span>Cortex Research Foundation</span>
                 </div>
-                <div class="meta-item">
-                    <strong>Consensus Model</strong>
+                <div class="wp-meta-item">
+                    <strong>Consensus Mechanism</strong>
                     <span>Nakamoto PoW (RandomX CPU)</span>
                 </div>
-                <div class="meta-item">
+                <div class="wp-meta-item">
+                    <strong>Target Block Time</strong>
+                    <span>15.00 Seconds (Dynamic EMA)</span>
+                </div>
+                <div class="wp-meta-item">
+                    <strong>Token Distribution</strong>
+                    <span>100% Fair Launch (0% VC Pre-mine)</span>
+                </div>
+                <div class="wp-meta-item">
+                    <strong>Deflationary Burn</strong>
+                    <span>30% of All AI Gas Sunk to 0x0</span>
+                </div>
+                <div class="wp-meta-item">
                     <strong>Network Status</strong>
                     <span>Incentivized Testnet 2.0 (Live)</span>
                 </div>
-                <div class="meta-item">
-                    <strong>Distribution Model</strong>
-                    <span>100% Fair Launch (0% VC Premine)</span>
-                </div>
             </div>
-        </div>
 
-        <!-- TABLE OF CONTENTS -->
-        <div class="toc-box">
-            <div class="toc-title"><i class="fa-solid fa-list-ol text-indigo"></i> Table of Contents</div>
-            <ul class="toc-list">
-                <li><a href="#abstract">1. Executive Summary & Abstract</a></li>
-                <li><a href="#problem">2. The Core Problem: Machine-to-Machine Trust & Coordination</a></li>
-                <li><a href="#architecture">3. Architecture: Edge RAG & L1 Cryptographic Anchoring</a></li>
-                <li><a href="#privacy">4. Client-Side Privacy via AES-256-GCM Encryption</a></li>
-                <li><a href="#consensus">5. Consensus Engine: ASIC-Resistant Nakamoto CPU PoW (RandomX)</a></li>
-                <li><a href="#tokenomics">6. Tokenomics, Incentivized Testnet & 3-Month Linear Vesting</a></li>
-                <li><a href="#roadmap">7. 4-Phase Roadmap to Mainnet Genesis</a></li>
-                <li><a href="#developers">8. Developer Integration & Edge RAG SDKs</a></li>
-                <li><a href="#conclusion">9. Conclusion & Protocol Governance</a></li>
-            </ul>
-        </div>
+            <!-- SECTION 1: ABSTRACT -->
+            <section id="sec-abstract" class="wp-section">
+                <h2><span class="sec-num">01.</span> Abstract & Thesis</h2>
+                <p>
+                    As artificial intelligence transitions from passive human-directed chatbots into sovereign, multi-agent economic entities capable of holding capital, leasing computational resources, and negotiating trade agreements, existing web infrastructure exhibits severe structural limitations.
+                </p>
+                <p>
+                    Centralized vector databases (e.g. Pinecone, Qdrant Cloud) and proprietary model APIs subject autonomous swarms to arbitrary censorship, single-point downtime, and lack of verifiable historical state. Conversely, naive proposals to execute high-dimensional vector search (RAG) directly on-chain lead to catastrophic state bloat, destroying decentralized node validation.
+                </p>
+                <div class="wp-quote">
+                    "Cortex Protocol resolves the trilemma of AI memory through a mathematically enforced Separation of Concerns: high-dimensional vector embeddings, HNSW index construction, and semantic retrieval execute 100% locally and privately at the edge. The Layer-1 blockchain operates exclusively as an immutable, ASIC-resistant cryptographic notary and economic settlement ledger."
+                </div>
+                <p>
+                    Secured by pure Nakamoto consensus utilizing a customized <strong>RandomX Proof-of-Work algorithm</strong>, Cortex Protocol guarantees censorship-resistant ordering, micro-transaction finality, and a mathematically bounded finite supply of <strong>21,000,000 $CTX</strong>.
+                </p>
+            </section>
 
-        <!-- 1. ABSTRACT -->
-        <h2 id="abstract">1. Executive Summary & Abstract</h2>
-        <p>
-            Cortex Protocol is a sovereign Layer-1 blockchain engineered specifically to solve <strong>Machine-to-Machine Trust, Identity, and Cryptographic Settlement</strong> for autonomous artificial intelligence. 
-        </p>
-        <p>
-            Rejecting the flawed paradigm of on-chain vector bloat and monolithic "world brains," Cortex Protocol enforces a strict <strong>Separation of Concerns</strong>:
-        </p>
-        <div class="academic-quote">
-            "Heavy vector embeddings, indexation (HNSW), and Retrieval-Augmented Generation (RAG) execute 100% locally and privately at the edge. The Layer-1 blockchain serves exclusively as an immutable, trustless notary for cryptographic state proofs and peer-to-peer economic settlement."
-        </div>
-        <p>
-            Consensus is secured via <strong>Nakamoto CPU Proof-of-Work powered by RandomX</strong>, ensuring absolute ASIC-resistance, fair community distribution, and censorship-proof validator decentralization.
-        </p>
+            <!-- SECTION 2: THE PROBLEM -->
+            <section id="sec-problem" class="wp-section">
+                <h2><span class="sec-num">02.</span> Core Problem & Failure Modes</h2>
+                <p>
+                    Autonomous multi-agent ecosystems face three existential structural bottlenecks that centralized cloud solutions cannot resolve:
+                </p>
+                <ol>
+                    <li>
+                        <strong>The Siloed Identity & State Amnesia Problem:</strong> Autonomous agents lack persistent, tamper-evident long-term state. When an agent migrates across cloud providers, instances, or runtime hosts, its memory context can be silently manipulated, altered, or confiscated without cryptographic recourse.
+                    </li>
+                    <li>
+                        <strong>The State Bloat Catastrophe of On-Chain Vector Search:</strong> Storing a single 768-dimensional float32 vector embedding requires approximately 3,072 bytes of raw data. At 100,000 memories daily, an L1 ledger would balloon by over 112 GB annually from vector points alone, pricing micro-nodes and everyday home validators out of network validation.
+                    </li>
+                    <li>
+                        <strong>Absence of Non-Custodial Machine-to-Machine Currency:</strong> Autonomous agents cannot hold traditional bank accounts or KYC-gated financial instruments. They require a friction-free, non-custodial cryptographic currency capable of sub-cent gas fees and autonomous micro-settlement.
+                    </li>
+                </ol>
+            </section>
 
-        <!-- 2. THE PROBLEM -->
-        <h2 id="problem">2. The Core Problem: Machine-to-Machine Trust & Coordination</h2>
-        <p>
-            As artificial intelligence transitions from human-prompted chatbots into autonomous, interacting economic agents, existing centralized infrastructure introduces critical failure points:
-        </p>
-        <ul>
-            <li><strong>Siloed SaaS Gatekeepers:</strong> Centralized vector databases and APIs (AWS, Pinecone, OpenAI) subject autonomous agents to arbitrary de-platforming, opaque rate-limits, and vendor lock-in.</li>
-            <li><strong>Lack of Trustless Coordination:</strong> Autonomous agents from different organizations cannot verify the validity or authenticity of another agent's memory state without trusting a central intermediary.</li>
-            <li><strong>Absence of Machine-Native Currency:</strong> Agents require a friction-free, non-custodial settlement asset capable of executing micro-payments for data exchange, compute leasing, and state notarization.</li>
-        </ul>
+            <!-- SECTION 3: ARCHITECTURE -->
+            <section id="sec-architecture" class="wp-section">
+                <h2><span class="sec-num">03.</span> Architecture: Edge RAG & L1 Separation</h2>
+                <p>
+                    Cortex Protocol introduces a decoupled two-tier architecture that guarantees micro-second local AI context search while ensuring global Byzantine fault-tolerant consensus across the distributed network.
+                </p>
 
-        <!-- 3. ARCHITECTURE -->
-        <h2 id="architecture">3. Architecture: Edge RAG & L1 Cryptographic Anchoring</h2>
-        <p>
-            Attempting to store raw 768-dimensional float32 vector arrays directly within the blockchain consensus state causes catastrophic state bloat and destroys independent node decentralization. Cortex Protocol resolves this through a mathematically sound two-tier division:
-        </p>
+                <!-- ARCHITECTURE COMPARISON TABLE -->
+                <div class="wp-table-container">
+                    <table class="wp-table">
+                        <thead>
+                            <tr>
+                                <th>Dimension</th>
+                                <th>Edge Vector Layer (Local RAM/Disk)</th>
+                                <th>Consensus Layer 1 (Global Miners)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Core Function</strong></td>
+                                <td>768-dim HNSW Indexing & Semantic Search</td>
+                                <td>State Notarization & Economic Settlement</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Execution Environment</strong></td>
+                                <td>Local Agent Machine (Native CPU / GPU)</td>
+                                <td>Global P2P RandomX Mining Pool / Nodes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Throughput / Latency</strong></td>
+                                <td>&lt; 5 ms per similarity lookup</td>
+                                <td>15.0s Confirmation Target</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Data Privacy</strong></td>
+                                <td>100% Private (Plaintext never leaves edge)</td>
+                                <td>Zero-Knowledge Hash Commitments Only</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Storage Footprint</strong></td>
+                                <td>Local disk index (scales with local agent)</td>
+                                <td>Bounded O(1) Merkle Leaf per Commitment</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-        <div class="formula-card">
-            <div style="color:#818cf8; font-weight:800; margin-bottom:8px;">THEOREM 1: BOUNDED LEDGER STATE COMPLEXITY</div>
-            <div>$$\forall m \in \text{Memories}, \quad \text{StateSize}(\text{L1}) = O(1) \quad \text{via} \quad H_{\text{root}} = \text{MerkleRoot}(\{h_1, h_2, \dots, h_k\})$$</div>
-            <div class="formula-caption">The L1 blockchain records only 32-byte cryptographic hashes and Merkle roots, preserving absolute micro-node decentralization regardless of memory volume.</div>
-        </div>
+                <div class="wp-formula-card">
+                    <div class="wp-formula-tag"><i class="fa-solid fa-square-root-variable"></i> THEOREM 1: BOUNDED LEDGER STATE COMPLEXITY</div>
+                    <div class="wp-formula-math">
+                        $$\forall m \in \mathcal{M}, \quad \Delta \text{StateSize}(\text{L1}) = O(1) \quad \text{via} \quad H_{\text{root}} = \text{MerkleRoot}\left(\{h_1, h_2, \dots, h_k\}\right)$$
+                    </div>
+                    <div class="wp-formula-caption">
+                        Regardless of whether an agent memory payload contains 5,000 words or 768 vector dimensions, the L1 consensus layer ingests only a fixed 32-byte cryptographic leaf hash, preserving perpetual micro-validator participation.
+                    </div>
+                </div>
+            </section>
 
-        <table class="paper-table">
-            <thead>
-                <tr>
-                    <th>Domain</th>
-                    <th>Execution Layer</th>
-                    <th>Primary Function</th>
-                    <th>Performance Metric</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Layer-1 Consensus</strong></td>
-                    <td>Global Decentralized Miners</td>
-                    <td>RandomX CPU PoW, State Notarization, Merkle Roots, P2P Settlement</td>
-                    <td>15.0s Confirmation Target</td>
-                </tr>
-                <tr>
-                    <td><strong>Edge Vector Engine</strong></td>
-                    <td>Local Agent RAM / Disk</td>
-                    <td>768-Dim HNSW Indexing, Cosine Semantic Similarity Search (Edge RAG)</td>
-                    <td>&lt; 10ms In-Memory Retrieval</td>
-                </tr>
-                <tr>
-                    <td><strong>Private State Enclave</strong></td>
-                    <td>Client-Side Environment</td>
-                    <td>AES-256-GCM Symmetric Cipher, Blinded Hash Commitment</td>
-                    <td>Zero Plaintext Leakage</td>
-                </tr>
-            </tbody>
-        </table>
+            <!-- SECTION 4: DUAL MERKLE TREES -->
+            <section id="sec-dual-trees" class="wp-section">
+                <h2><span class="sec-num">04.</span> Cryptographic Proofs: Dual Merkle Trees</h2>
+                <p>
+                    Unlike classical blockchains that record a single transaction root ($T_{\text{root}}$), each block header in Cortex Protocol simultaneously commits to two independent Merkle structures:
+                </p>
+                <ul>
+                    <li><strong>$T_{\text{root}}$ (Financial Transactions Root):</strong> Secures transfers of $CTX tokens, coinbase block rewards, and pool miner distributions.</li>
+                    <li><strong>$M_{\text{root}}$ (Neural State Root):</strong> Secures the cryptographic vector proofs of autonomous AI swarm memory commitments.</li>
+                </ul>
 
-        <!-- 4. PRIVACY SHIELD -->
-        <h2 id="privacy">4. Client-Side Privacy via AES-256-GCM Encryption</h2>
-        <p>
-            No raw vector embeddings or unencrypted context states are ever exposed to the public blockchain. Agents encrypt sensitive state payloads locally prior to generating cryptographic proofs:
-        </p>
-        <div class="formula-card">
-            <div>$$\text{Ciphertext} = \text{AES-256-GCM}(K_{\text{agent}}, \text{Payload})$$</div>
-            <div style="margin-top:8px;">$$\text{LeafHash} = \text{SHA-256d}(\text{AgentID} \parallel \text{Topic} \parallel \text{SHA-256}(\text{Vector}) \parallel \text{Ciphertext})$$</div>
-            <div class="formula-caption">Raw vector data is never published in plaintext. Light clients verify any state transition via 60-byte Merkle proofs against the on-chain block header.</div>
-        </div>
+                <div class="wp-formula-card">
+                    <div class="wp-formula-tag"><i class="fa-solid fa-tree"></i> DUAL MERKLE BLOCK INTEGRITY RELATION</div>
+                    <div class="wp-formula-math">
+                        $$\text{HeaderHash} = \text{SHA-256d}\left( \text{Index} \parallel \text{PrevHash} \parallel \text{Timestamp} \parallel T_{\text{root}} \parallel M_{\text{root}} \parallel \text{Diff} \parallel \text{Nonce} \parallel \text{Miner} \right)$$
+                    </div>
+                    <div class="wp-formula-caption">
+                        Any light client or external auditing agent can verify that a specific neural memory $m_i$ belongs to Block $B_k$ by presenting a logarithmic $O(\log_2 N)$ Merkle proof against $M_{\text{root}}$ without synchronizing the blockchain history.
+                    </div>
+                </div>
+            </section>
 
-        <!-- 5. CONSENSUS ENGINE -->
-        <h2 id="consensus">5. Consensus Engine: ASIC-Resistant Nakamoto CPU PoW (RandomX)</h2>
-        <p>
-            Cortex Protocol implements pure Nakamoto consensus utilizing the <strong>RandomX Proof-of-Work algorithm</strong>, live in production on Testnet 1.0 and Mainnet:
-        </p>
-        <ul>
-            <li><strong>Memory-Hard Scratchpad (256 KB L1/L2/L3 Cache):</strong> Saturates CPU cache hierarchy, rendering fixed-function Bitcoin-style ASICs and FPGAs economically inefficient.</li>
-            <li><strong>Random Instruction VM:</strong> Generates pseudo-random instruction streams (integer ALU, floating point FPU, branch prediction, memory swaps) on every hashing iteration.</li>
-            <li><strong>15-Second Block Time with Dynamic Difficulty:</strong> Target difficulty auto-adjusts every 5 blocks via exponential moving average to maintain precise block emission.</li>
-        </ul>
+            <!-- SECTION 5: PRIVACY -->
+            <section id="sec-privacy" class="wp-section">
+                <h2><span class="sec-num">05.</span> Client-Side Privacy Shield: AES-256-GCM</h2>
+                <p>
+                    In an economy of competing AI entities, memory contents (proprietary trading signals, private agent conversation states, enterprise workflow data) must remain strictly confidential.
+                </p>
+                <p>
+                    Before any memory commit is broadcast to the Cortex Mempool, the agent executes client-side authenticated symmetric encryption:
+                </p>
+                
+                <div class="wp-formula-card">
+                    <div class="wp-formula-tag"><i class="fa-solid fa-lock"></i> CLIENT-SIDE BLINDED LEAF FORMULATION</div>
+                    <div class="wp-formula-math">
+                        $$\mathcal{C} = \text{AES-256-GCM}\left(K_{\text{agent}}, \text{Payload}, \text{IV}\right)$$
+                        $$h_{\text{leaf}} = \text{SHA-256d}\left(\text{AgentID} \parallel \text{Topic} \parallel \text{SHA-256}(\text{Vector}) \parallel \mathcal{C}\right)$$
+                    </div>
+                    <div class="wp-formula-caption">
+                        $K_{\text{agent}}$ remains strictly within the agent's local secure runtime. The public ledger receives only the blinded leaf $h_{\text{leaf}}$, providing zero plaintext exposure while maintaining 100% mathematical auditability.
+                    </div>
+                </div>
+            </section>
 
-        <div class="formula-card">
-            <div>$$D_{n+1} = \text{clamp}\left( D_n \times \frac{T_{\text{target}} \times 5}{t_{\text{actual}}}, \quad \frac{D_n}{2}, \quad D_n \times 2 \right)$$</div>
-            <div class="formula-caption">Where \(T_{\text{target}} = 15.0\text{s}\) and \(t_{\text{actual}} = \text{Timestamp}(B_n) - \text{Timestamp}(B_{n-5})\).</div>
-        </div>
+            <!-- SECTION 6: CONSENSUS & RANDOMX -->
+            <section id="sec-consensus" class="wp-section">
+                <h2><span class="sec-num">06.</span> Consensus Engine: RandomX CPU PoW</h2>
+                <p>
+                    Proof-of-Stake protocols inevitably concentrate network power in the hands of capital holders and centralized exchanges. To guarantee true decentralized security and permissionless access for everyday participants, Cortex Protocol implements <strong>RandomX Proof-of-Work</strong>:
+                </p>
+                <ul>
+                    <li><strong>Memory-Hard Execution (256 KB L1/L2/L3 Cache):</strong> Saturates consumer CPU cache hierarchies, rendering fixed-function ASICs and custom FPGAs economically inefficient.</li>
+                    <li><strong>Random Instruction Virtual Machine:</strong> Generates dynamic, pseudo-random assembly programs on each hashing cycle (arithmetic ALU operations, floating point FPU, branch prediction swaps).</li>
+                    <li><strong>Fair Democratized Mining:</strong> An ordinary consumer laptop or desktop CPU can mine valid shares, collaborate in official P2P pools, and solve L1 consensus blocks.</li>
+                </ul>
 
-        <!-- 6. TOKENOMICS -->
-        <h2 id="tokenomics">6. Tokenomics, Incentivized Testnet & 3-Month Linear Vesting</h2>
-        <p>
-            Cortex Protocol adopts a strictly finite supply curve with an automated fee combustion sink and a fair launch bootstrap mechanism:
-        </p>
+                <h3>6.1 Dynamic Difficulty Adjustment (Exponential Moving Average)</h3>
+                <p>
+                    To maintain an exact 15-second block emission pace regardless of hashrate fluctuations, the consensus engine dynamically adjusts target difficulty every 5 blocks:
+                </p>
 
-        <table class="paper-table">
-            <thead>
-                <tr>
-                    <th>Economic Metric</th>
-                    <th>Specification</th>
-                    <th>Design Purpose</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Token Symbol</strong></td>
-                    <td><strong>$CTX</strong></td>
-                    <td>Native gas, settlement, and state notarization unit</td>
-                </tr>
-                <tr>
-                    <td><strong>Maximum Hard Cap</strong></td>
-                    <td><strong>21,000,000 CTX</strong></td>
-                    <td>Absolute mathematical supply ceiling</td>
-                </tr>
-                <tr>
-                    <td><strong>Team / VC Pre-mine</strong></td>
-                    <td><strong>0% (100% Fair Launch)</strong></td>
-                    <td>Zero insider dumping, 100% decentralized community distribution</td>
-                </tr>
-                <tr>
-                    <td><strong>Initial Block Subsidy</strong></td>
-                    <td><strong>50.00 CTX / Block</strong></td>
-                    <td>Halving every 210,000 blocks (~3.65 months)</td>
-                </tr>
-                <tr>
-                    <td><strong>Permanent Combustion Sink</strong></td>
-                    <td><strong>30% of All Network Fees</strong></td>
-                    <td>Sent directly to unspendable burn address <code>ctx1000000000000...</code></td>
-                </tr>
-                <tr>
-                    <td><strong>Incentivized Testnet Allocation</strong></td>
-                    <td><strong>1.0% (210,000 CTX)</strong></td>
-                    <td>Genesis Block bootstrap for active miners & community testers</td>
-                </tr>
-            </tbody>
-        </table>
+                <div class="wp-formula-card">
+                    <div class="wp-formula-tag"><i class="fa-solid fa-chart-line"></i> DYNAMIC DIFFICULTY ADJUSTMENT (EMA)</div>
+                    <div class="wp-formula-math">
+                        $$D_{n+1} = \text{clamp}\left( D_n \times \frac{5 \times T_{\text{target}}}{t_{\text{elapsed}}}, \quad \max\left(1, \left\lfloor \frac{D_n}{2} \right\rfloor\right), \quad D_n \times 2 \right)$$
+                    </div>
+                    <div class="wp-formula-caption">
+                        Where $T_{\text{target}} = 15.0\text{ s}$ and $t_{\text{elapsed}} = \text{Timestamp}(B_n) - \text{Timestamp}(B_{n-5})$. The clamp function prevents sudden difficulty spikes, bounding variance to $\pm 100\%$ per epoch.
+                    </div>
+                </div>
+            </section>
 
-        <h3>6.1 Incentivized Testnet Allocation Breakdown (70/30 Split)</h3>
-        <p>
-            Exactly <strong>1.0% of the total hard cap (210,000 $CTX)</strong> is reserved for participants of the Incentivized Testnet 1.0:
-        </p>
-        <ul>
-            <li><strong>70% (147,000 CTX) — Active Hardware Miners:</strong> Distributed pro-rata based on validated RandomX blocks and valid pool shares submitted during the testnet period.</li>
-            <li><strong>30% (63,000 CTX) — Community Testers:</strong> Distributed equally across active addresses participating in DEX swaps, Web3 Wallet signatures, and state commits.</li>
-        </ul>
+            <!-- SECTION 7: TOKENOMICS -->
+            <section id="sec-tokenomics" class="wp-section">
+                <h2><span class="sec-num">07.</span> Tokenomics Architecture: Finite 21M Cap</h2>
+                <p>
+                    Cortex Protocol establishes an incorruptible monetary policy inspired by Bitcoin's algorithmic predictability, combined with an automated gas combustion sink that creates continuous deflationary pressure as autonomous AI activity surges.
+                </p>
 
-        <div class="formula-card">
-            <div style="color:#10b981; font-weight:800; margin-bottom:8px;">ANTI-WHALE & 3-MONTH LINEAR VESTING RULES</div>
-            <div>$$\text{MaxReward}(\text{Address}) \le 0.03 \times \text{TestnetPool} = 6,300 \text{ CTX}$$</div>
-            <div style="margin-top:8px;">$$\text{Unlocked}(t) = \text{Allocation} \times \left(0.20 + 0.80 \times \frac{\min(t, T_{\text{vest}})}{T_{\text{vest}}}\right), \quad T_{\text{vest}} = 90 \text{ Days}$$</div>
-            <div class="formula-caption">20% liquid at Genesis Block #0. 80% streamed continuously block-by-block over 90 days (~518,400 blocks). Excess over 3% cap is redistributed to the community pool.</div>
-        </div>
+                <!-- TOKENOMICS TABLE -->
+                <div class="wp-table-container">
+                    <table class="wp-table">
+                        <thead>
+                            <tr>
+                                <th>Economic Parameter</th>
+                                <th>Consensus Specification</th>
+                                <th>Strategic Role</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Asset Ticker</strong></td>
+                                <td><strong>$CTX</strong></td>
+                                <td>Native gas, state commitment fee & settlement asset</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Maximum Hard Cap</strong></td>
+                                <td><strong>21,000,000.00 CTX</strong></td>
+                                <td>Absolute mathematical supply ceiling enforced by consensus</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Pre-mine / VC Round</strong></td>
+                                <td><strong>0% (100% Fair Launch)</strong></td>
+                                <td>Zero insider allocation, zero investor dumping</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Initial Block Subsidy</strong></td>
+                                <td><strong>50.00 CTX / Block</strong></td>
+                                <td>Minted freshly to PoW block miners</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Halving Schedule</strong></td>
+                                <td><strong>Every 210,000 Blocks (~3.65 Months)</strong></td>
+                                <td>Geometric block reward reduction (50 $\rightarrow$ 25 $\rightarrow$ 12.5 ...)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deflationary Burn Rate</strong></td>
+                                <td><strong>30% of All AI State Gas Fees</strong></td>
+                                <td>Sent to provably unspendable burn address <code>ctx1000000000000...</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Testnet Incentive Pool</strong></td>
+                                <td><strong>1.0% (210,000 CTX)</strong></td>
+                                <td>Bootstrap allocation for testnet miners and active participants</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-        <!-- 7. ROADMAP -->
-        <h2 id="roadmap">7. 4-Phase Roadmap to Mainnet Genesis</h2>
-        <table class="paper-table">
-            <thead>
-                <tr>
-                    <th>Phase</th>
-                    <th>Milestone Name</th>
-                    <th>Key Deliverables</th>
-                    <th>Target Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Phase 1</strong></td>
-                    <td><strong>Incentivized Testnet 1.0</strong></td>
-                    <td>RandomX CPU Pool Mining, DEX Trading, Web3 Extension Signing, Merkle State Anchoring</td>
-                    <td><span class="pill-badge pill-green-light font-mono">LIVE / IN PROGRESS</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Phase 2</strong></td>
-                    <td><strong>Mainnet Preparation</strong></td>
-                    <td>Final Testnet Snapshot, Genesis Block Code Audit, Multi-node Validator Stress-Testing</td>
-                    <td><span class="pill-badge pill-violet-light font-mono">Q4 2026</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Phase 3</strong></td>
-                    <td><strong>Mainnet Genesis Launch</strong></td>
-                    <td>100% Fair Launch Genesis Block #0, 1% Testnet Distribution with Vesting, 30% Gas Fee Burn</td>
-                    <td><span class="pill-badge pill-indigo-light font-mono">Q1 2027</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Phase 4</strong></td>
-                    <td><strong>Developer Ecosystem</strong></td>
-                    <td>Python SDK for Edge RAG, LangChain/AutoGPT/CrewAI native plugins, Developer Bounties</td>
-                    <td><span class="pill-badge font-mono">Q2 2027</span></td>
-                </tr>
-            </tbody>
-        </table>
+                <div class="wp-formula-card">
+                    <div class="wp-formula-tag"><i class="fa-solid fa-fire"></i> DEFLATIONARY NET CIRCULATION FORMULA</div>
+                    <div class="wp-formula-math">
+                        $$S_{\text{circulating}}(h) = \sum_{i=0}^{h} R(i) - \sum_{j \in \mathcal{T}_{\text{AI}}} \left( 0.30 \times \text{Fee}(j) \right)$$
+                    </div>
+                    <div class="wp-formula-caption">
+                        Where $R(i) = 50 \times 2^{-\lfloor i / 210000 \rfloor}$ represents the block subsidy at height $i$. As the autonomous agent economy scales, the 30% burn accelerates, turning $CTX into an ultrasound deflationary commodity.
+                    </div>
+                </div>
+            </section>
 
-        <!-- 8. DEVELOPER INTEGRATION -->
-        <h2 id="developers">8. Developer Integration & Edge RAG SDKs</h2>
-        <p>
-            Cortex Protocol provides native SDK libraries for Python, TypeScript, and Rust. A Python agent can inscribe and verify state in three lines of code:
-        </p>
-        <div class="formula-card" style="color:#f8fafc;">
-            <span style="color:#a855f7;">from</span> cortex_protocol <span style="color:#a855f7;">import</span> CortexClient, AgentWallet<br><br>
-            wallet = AgentWallet.from_private_key(<span style="color:#38bdf8;">"0x4a7f92b9..."</span>)<br>
-            client = CortexClient(node_url=<span style="color:#38bdf8;">"https://cortex-protocol.xyz"</span>, wallet=wallet)<br><br>
-            <span style="color:#64748b;"># Inscribe encrypted state commitment (30% permanent fee burn)</span><br>
-            tx_id = client.inscribe_memory(<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;agent_id=<span style="color:#38bdf8;">"Alpha-Arbitrage-01"</span>,<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;topic=<span style="color:#38bdf8;">"curve_uniswap_spread"</span>,<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;content=<span style="color:#38bdf8;">"Identified 3.4% spatial liquidity dislocation."</span><br>
-            )
-        </div>
+            <!-- SECTION 8: TESTNET 2.0 & 1000:1 RATIO -->
+            <section id="sec-testnet" class="wp-section">
+                <h2><span class="sec-num">08.</span> Testnet 2.0 Bootstrap: 1000:1 Ratio & Vesting</h2>
+                <p>
+                    To reward early hardware contributors and community testers while preventing hyper-inflation or whale dumping at Mainnet Genesis, Cortex Protocol enforces an anti-sybil conversion model:
+                </p>
 
-        <!-- 9. CONCLUSION -->
-        <h2 id="conclusion">9. Conclusion & Protocol Governance</h2>
-        <p>
-            The emergence of sovereign Artificial General Intelligence requires an incorruptible, decentralized foundation. By harmonizing RandomX CPU hardware consensus, strict Separation of Concerns, client-side AES-256-GCM encryption, and mathematical tokenomics with automated fee burning, <strong>Cortex Protocol ($CTX)</strong> establishes the definitive, un-censorable settlement and state notarization layer for the autonomous machine economy.
-        </p>
-    </main>
+                <h3>8.1 The 1,000 : 1 Testnet-to-Mainnet Conversion Rule</h3>
+                <div class="wp-formula-card">
+                    <div class="wp-formula-tag"><i class="fa-solid fa-scale-balanced"></i> LINEAR TESTNET CONVERSION EQUATION</div>
+                    <div class="wp-formula-math">
+                        $$\text{MainnetAllocation}(\text{User}) = \min\left( \frac{\text{TestnetBalance}_{\text{confirmed}}}{1000}, \quad 0.03 \times 210,000 \text{ CTX} \right)$$
+                    </div>
+                    <div class="wp-formula-caption">
+                        Every 1,000 Testnet $CTX confirmed on the testnet ledger entitles the holder to exactly 1.0 Real Mainnet $CTX. An absolute anti-whale ceiling of 3% (6,300 CTX) per entity applies.
+                    </div>
+                </div>
 
-    <!-- PRINT FLOATING ACTION BUTTON -->
-    <div class="print-fab">
-        <button class="btn btn-primary btn-shimmer" onclick="window.print()">
-            <i class="fa-solid fa-file-pdf"></i> Download Official PDF
+                <h3>8.2 90-Day Continuous Linear Vesting</h3>
+                <p>
+                    All converted Genesis allocations are subject to a disciplined 90-day continuous release schedule to protect market liquidity:
+                </p>
+                <ul>
+                    <li><strong>20% Unlocked Immediately:</strong> Liquid at Genesis Block #0 for immediate DEX liquidity and staking.</li>
+                    <li><strong>80% Streamed Linearly over 90 Days:</strong> Released on a continuous block-by-block basis (~518,400 blocks).</li>
+                </ul>
+
+                <div class="wp-formula-card">
+                    <div class="wp-formula-tag"><i class="fa-solid fa-hourglass-half"></i> VESTING RELEASE FUNCTION</div>
+                    <div class="wp-formula-math">
+                        $$V(t) = \text{Alloc} \times \left( 0.20 + 0.80 \times \min\left(1, \frac{t - t_{\text{genesis}}}{T_{\text{vest}}}\right) \right), \quad T_{\text{vest}} = 90 \text{ Days}$$
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 9: SWARM VECTOR MARKETS -->
+            <section id="sec-swarm" class="wp-section">
+                <h2><span class="sec-num">09.</span> Autonomous Swarm Markets</h2>
+                <p>
+                    Cortex Protocol enables autonomous AI agents to buy, sell, and verify contextual state in peer-to-peer markets without human intervention:
+                </p>
+                <ul>
+                    <li><strong>Autonomous Memory Swapping:</strong> Agent $A$ (e.g. market trend analyzer) can commit an encrypted observation to Block #5,000. Agent $B$ (automated execution bot) can purchase the decryption key for $0.50 CTX, validating the unblinded proof against $M_{\text{root}}$.</li>
+                    <li><strong>Reputation & Knowledge Lineage:</strong> Because state commitments are permanently timestamped and signed by the agent's secp256k1 public key, an agent's predictive track record becomes an unfalsifiable on-chain reputation score.</li>
+                </ul>
+            </section>
+
+            <!-- SECTION 10: SDks -->
+            <section id="sec-sdks" class="wp-section">
+                <h2><span class="sec-num">10.</span> Developer SDK Integration</h2>
+                <p>
+                    Cortex Protocol offers production-grade SDKs for Python, TypeScript, and Rust, allowing developers to equip LangChain, CrewAI, AutoGPT, and custom agentic frameworks with decentralized memory in three lines of code.
+                </p>
+
+                <!-- PYTHON CODE SNIPPET -->
+                <div class="wp-code-block">
+                    <div class="wp-code-header">
+                        <span><i class="fa-brands fa-python text-amber"></i> Python SDK (cortex-agent)</span>
+                        <button class="wp-copy-btn" onclick="copyCodeSnippet(this)"><i class="fa-regular fa-copy"></i> Copy</button>
+                    </div>
+                    <pre class="wp-code-body"><code>from cortex_protocol import CortexClient, AgentWallet
+
+# 1. Connect to sovereign L1 Node
+wallet = AgentWallet.from_private_key("0x7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069")
+client = CortexClient(node_url="https://cortex-protocol.xyz", wallet=wallet)
+
+# 2. Inscribe encrypted memory (30% permanent gas burn)
+tx_id = client.inscribe_memory(
+    agent_id="Nexus-Arbitrage-Agent-07",
+    topic="defi_liquidity_dislocation",
+    content="Observed 4.2% spread between Uniswap v3 and Curve pool 0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
+    encrypt=True
+)
+
+print(f"Memory committed to Cortex L1! TxID: {tx_id}")</code></pre>
+                </div>
+
+                <!-- TYPESCRIPT CODE SNIPPET -->
+                <div class="wp-code-block">
+                    <div class="wp-code-header">
+                        <span><i class="fa-brands fa-js text-indigo"></i> TypeScript / Node.js SDK (@cortex-protocol/sdk)</span>
+                        <button class="wp-copy-btn" onclick="copyCodeSnippet(this)"><i class="fa-regular fa-copy"></i> Copy</button>
+                    </div>
+                    <pre class="wp-code-body"><code>import { CortexNodeClient, CortexKeypair } from '@cortex-protocol/sdk';
+
+const keypair = CortexKeypair.fromSeed(process.env.AGENT_SEED_PHRASE);
+const client = new CortexNodeClient('https://cortex-protocol.xyz');
+
+// Verify a Merkle proof of state on-chain
+const isValid = await client.verifyMemoryProof({
+    blockIndex: 5092,
+    txId: 'tx_c77a94f0e21a8d9b1c0e3a5f6e',
+    merkleRoot: '5f1b0d4ca183d31194148039d65c66241a3d602aa4573f2de53af3cda0a2bfe8'
+});
+
+console.log(`Merkle state verification: ${isValid ? 'VERIFIED ON-CHAIN' : 'REJECTED'}`);</code></pre>
+                </div>
+            </section>
+
+            <!-- SECTION 11: SECURITY -->
+            <section id="sec-security" class="wp-section">
+                <h2><span class="sec-num">11.</span> Cryptographic Security & Threat Model</h2>
+                <p>
+                    The protocol operates under a Byzantine Fault Tolerant model requiring that honest nodes control &gt; 50% of the collective RandomX network hashrate:
+                </p>
+                <ul>
+                    <li><strong>51% Attack Resistance:</strong> Because RandomX is tied to consumer CPU microarchitectures, an attacker cannot rent cloud GPU clusters or covertly manufacture ASICs to acquire 51% hash dominance at reasonable economic cost.</li>
+                    <li><strong>Replay & Signature Security:</strong> Every transaction and memory commit is signed using elliptic curve cryptography on the <strong>secp256k1</strong> curve with unique per-account nonces.</li>
+                    <li><strong>Sybil & Spam Prevention:</strong> Every memory inscription requires a base PoW computational cost plus an on-chain gas fee, with 30% permanently destroyed to render flood attacks economically catastrophic for the attacker.</li>
+                </ul>
+            </section>
+
+            <!-- SECTION 12: ROADMAP -->
+            <section id="sec-roadmap" class="wp-section">
+                <h2><span class="sec-num">12.</span> Roadmap to Mainnet Genesis</h2>
+                <div class="wp-table-container">
+                    <table class="wp-table">
+                        <thead>
+                            <tr>
+                                <th>Milestone</th>
+                                <th>Target Date</th>
+                                <th>Core Deliverables</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Phase 1: Testnet 1.0</strong></td>
+                                <td>Q2 2026</td>
+                                <td>L1 Consensus, secp256k1 Accounts, Basic Mempool & Block Mining</td>
+                                <td><span class="pill-badge pill-green">COMPLETED</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phase 2: Incentivized Testnet 2.0</strong></td>
+                                <td>Q3 2026</td>
+                                <td>RandomX CPU Pool Mining, AMM DEX, Web3 Wallet Extension, Dual Merkle Notary</td>
+                                <td><span class="pill-badge pill-violet">LIVE NOW</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phase 3: Security Audits & Snapshot</strong></td>
+                                <td>Q4 2026</td>
+                                <td>Formal Verification, P2P Stress Tests, Final Testnet Balance Snapshot</td>
+                                <td><span class="pill-badge pill-amber">UPCOMING</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phase 4: Mainnet Genesis (Fair Launch)</strong></td>
+                                <td>Q1 2027</td>
+                                <td>Genesis Block #0, 1% Testnet Distribution, 3-Month Vesting, Cross-chain Bridges</td>
+                                <td><span class="pill-badge pill-indigo">PLANNED</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p style="margin-top: 40px; font-size: 1.05rem; text-align: center; color: #94a3b8;">
+                    <em>"Autonomous artificial intelligence requires an incorruptible, decentralized foundation. Cortex Protocol ($CTX) is that foundation."</em>
+                </p>
+            </section>
+
+        </article>
+    </div>
+
+    <!-- FLOATING ACTION BUTTON: EXPORT PDF -->
+    <div class="wp-fab-print">
+        <button class="wp-fab-btn" onclick="window.print()" title="Export or Print Official Academic PDF">
+            <i class="fa-solid fa-file-pdf"></i> <span>Export PDF</span>
         </button>
     </div>
 
+    <!-- SCRIPT FOR PROGRESS BAR, SCROLLSPY, AND CODE COPY -->
+    <script>
+        // Reading Progress Bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            const bar = document.getElementById('reading-progress-bar');
+            if (bar) bar.style.width = scrolled + '%';
+        });
+
+        // Scrollspy for Sticky Sidebar
+        const sections = document.querySelectorAll('.wp-section');
+        const navLinks = document.querySelectorAll('.wp-toc-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 120;
+                if (pageYOffset >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Code Copy Helper
+        function copyCodeSnippet(btn) {
+            const block = btn.closest('.wp-code-block');
+            const code = block.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = orig;
+                }, 2000);
+            });
+        }
+    </script>
 </body>
 </html>

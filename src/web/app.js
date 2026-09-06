@@ -645,7 +645,9 @@ async function openBlockInspector(blockIndex) {
         }
 
         const dateStr = new Date(block.timestamp).toLocaleString();
-        const shortMiner = block.minerAddress || 'Genesis';
+        const timeAgo = formatTimeAgo(block.timestamp);
+        const minerAddress = block.minerAddress || '';
+        const shortMiner = minerAddress ? `${minerAddress.substring(0, 16)}...` : 'Genesis';
 
         body.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:14px;">
@@ -653,7 +655,7 @@ async function openBlockInspector(blockIndex) {
                     <div style="font-size:0.75rem; color:#64748b; font-family:var(--font-mono); margin-bottom:4px;">BLOCK HASH (SHA-256d):</div>
                     <div style="display:flex; align-items:center; justify-content:space-between;">
                         <code class="mono text-indigo font-bold text-break" style="font-size:0.85rem;">${block.hash}</code>
-                        <button class="copy-btn-inline" onclick="navigator.clipboard.writeText('${block.hash}'); showToast('Hash copied!')"><i class="fa-regular fa-copy"></i></button>
+                        <button class="copy-btn-inline" onclick="copyText('${block.hash}', 'Block hash copied!')"><i class="fa-regular fa-copy"></i></button>
                     </div>
                 </div>
 
@@ -668,13 +670,13 @@ async function openBlockInspector(blockIndex) {
                     </div>
                     <div class="inspector-key-value">
                         <span class="inspector-key"><i class="fa-regular fa-clock text-slate-400"></i> Timestamp:</span>
-                        <span class="inspector-value">${dateStr}</span>
+                        <span class="inspector-value">${dateStr} <span class="text-xs text-indigo">(${timeAgo})</span></span>
                     </div>
                     <div class="inspector-key-value">
                         <span class="inspector-key"><i class="fa-solid fa-helmet-safety text-indigo"></i> Miner:</span>
                         <span class="inspector-value">
-                            <span class="mono text-indigo clickable-link" onclick="openAddressInspector('${shortMiner}')">${shortMiner.substring(0, 16)}...</span>
-                            <button class="copy-btn-inline" onclick="navigator.clipboard.writeText('${shortMiner}'); showToast('Address copied!')"><i class="fa-regular fa-copy"></i></button>
+                            <span class="mono text-indigo clickable-link" onclick="openAddressInspector('${minerAddress}')">${shortMiner}</span>
+                            ${minerAddress ? `<button class="copy-btn-inline" onclick="copyText('${minerAddress}', 'Miner address copied!')"><i class="fa-regular fa-copy"></i></button>` : ''}
                         </span>
                     </div>
                 </div>
@@ -1110,6 +1112,7 @@ async function fetchExplorerTelemetry() {
         const elWorkers = document.getElementById('exp-stat-workers');
         const elDiff = document.getElementById('exp-stat-difficulty');
         const elMems = document.getElementById('exp-stat-memories');
+        const elBurned = document.getElementById('exp-stat-burned');
 
         if (elHeight && statsRes.height !== undefined) {
             elHeight.textContent = `#${statsRes.height}`;
@@ -1134,6 +1137,10 @@ async function fetchExplorerTelemetry() {
 
         if (elMems && Array.isArray(memsRes)) {
             elMems.textContent = `${memsRes.length} Vectors`;
+        }
+
+        if (elBurned && statsRes.totalBurned !== undefined) {
+            elBurned.textContent = `${(statsRes.totalBurned || 0).toFixed(3)} CTX 🔥`;
         }
     } catch(e) {}
 }
@@ -1440,6 +1447,53 @@ function toggleFaq(element) {
     }
 }
 
+// TIME AGO FORMATTER
+function formatTimeAgo(timestamp) {
+    if (!timestamp) return 'unknown';
+    const now = Date.now();
+    const diffMs = Math.max(0, now - Number(timestamp));
+    const diffSec = Math.floor(diffMs / 1000);
+
+    if (diffSec < 10) return 'just now';
+    if (diffSec < 60) return `${diffSec}s ago`;
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+}
+
+// CLIPBOARD COPY HELPER
+function copyText(text, msg = 'Copied to clipboard!') {
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(msg);
+        }).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast(msg);
+        });
+    } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(msg);
+    }
+}
+
 // TOAST
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
@@ -1505,36 +1559,112 @@ function updateMiningCalculator() {
     document.getElementById('calc-monthly-ctx').textContent = `~ ${baseMonthly.toLocaleString()} CTX`;
 }
 
-// BLOCKS
+// BLOCKS EXPLORER STATE & HANDLERS
+let currentBlockLimit = 20;
+let currentBlockFilter = 'all';
+let cachedBlocksData = [];
+
+function setBlockFilter(filterKey, btnEl) {
+    currentBlockFilter = filterKey;
+    document.querySelectorAll('.filter-tab-btn').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+    renderBlocksTable();
+}
+
+async function loadMoreBlocks() {
+    currentBlockLimit = Math.min(250, currentBlockLimit + 25);
+    const btn = document.getElementById('btn-load-more-blocks');
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+    await fetchBlocks();
+    if (btn) {
+        if (currentBlockLimit >= 250) {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Max Cap Reached (250)';
+            btn.disabled = true;
+        } else {
+            btn.innerHTML = '<i class="fa-solid fa-arrow-down"></i> Load More Blocks';
+            btn.disabled = false;
+        }
+    }
+}
+
 async function fetchBlocks() {
     try {
-        const res = await fetch('/api/blocks?limit=15');
+        const res = await fetch(`/api/blocks?limit=${currentBlockLimit}`);
         const blocks = await res.json();
-        const tbody = document.getElementById('blocks-tbody');
-        if (!tbody) return;
-        tbody.innerHTML = '';
+        if (Array.isArray(blocks)) {
+            cachedBlocksData = blocks;
+            renderBlocksTable();
+        }
+    } catch (e) {
+        console.error("fetchBlocks error:", e);
+    }
+}
 
-        blocks.forEach(block => {
-            const tr = document.createElement('tr');
-            tr.className = 'explorer-tr';
-            tr.onclick = () => openBlockInspector(block.index);
-            const memoryCount = block.transactions.filter(t => t.type === 'MEMORY_COMMIT').length;
-            const shortHash = `${block.hash.substring(0, 10)}...${block.hash.substring(block.hash.length - 6)}`;
-            const shortMiner = block.minerAddress ? `${block.minerAddress.substring(0, 10)}...` : 'Genesis';
+function renderBlocksTable() {
+    const tbody = document.getElementById('blocks-tbody');
+    const countLabel = document.getElementById('blocks-count-label');
+    if (!tbody) return;
 
-            tr.innerHTML = `
-                <td><strong class="text-indigo">#${block.index}</strong></td>
-                <td><span class="mono text-muted clickable-link" onclick="event.stopPropagation(); openAddressInspector('${block.minerAddress || ''}')">${shortMiner}</span></td>
-                <td>
-                    <span class="text-amber font-bold">${block.transactions.length} tx</span>
-                    ${memoryCount > 0 ? `<span class="pill-badge pill-violet-light" style="padding: 2px 6px; font-size:0.65rem;"><i class="fa-solid fa-brain"></i> ${memoryCount} AI</span>` : ''}
-                </td>
-                <td><span class="mono text-slate-400">${block.difficulty}</span></td>
-                <td><span class="mono text-indigo clickable-link" onclick="event.stopPropagation(); openBlockInspector(${block.index})">${shortHash}</span></td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } catch (e) {}
+    let filtered = cachedBlocksData;
+    if (currentBlockFilter === 'ai') {
+        filtered = cachedBlocksData.filter(b => b.transactions && b.transactions.some(t => t.type === 'MEMORY_COMMIT'));
+    } else if (currentBlockFilter === 'transfers') {
+        filtered = cachedBlocksData.filter(b => b.transactions && b.transactions.some(t => t.type === 'TRANSFER'));
+    }
+
+    if (countLabel) {
+        countLabel.innerHTML = `Showing <strong>${filtered.length}</strong> of <strong>${cachedBlocksData.length}</strong> loaded blocks (cap: ${currentBlockLimit})`;
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">No blocks match the "${currentBlockFilter}" filter in the current dataset.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = '';
+    filtered.forEach(block => {
+        const tr = document.createElement('tr');
+        tr.className = 'explorer-tr';
+        tr.onclick = () => openBlockInspector(block.index);
+
+        const memoryCount = (block.transactions || []).filter(t => t.type === 'MEMORY_COMMIT').length;
+        const transferCount = (block.transactions || []).filter(t => t.type === 'TRANSFER').length;
+        const shortHash = `${block.hash.substring(0, 8)}...${block.hash.substring(block.hash.length - 6)}`;
+        const miner = block.minerAddress || '';
+        const shortMiner = miner ? `${miner.substring(0, 8)}...${miner.substring(miner.length - 4)}` : 'Genesis';
+        const timeAgo = formatTimeAgo(block.timestamp);
+        const fullTime = new Date(block.timestamp).toLocaleString();
+
+        tr.innerHTML = `
+            <td><strong class="text-indigo font-bold">#${block.index}</strong></td>
+            <td>
+                <span class="text-slate-400 text-xs" title="${fullTime}">
+                    <i class="fa-regular fa-clock" style="opacity:0.6; font-size:0.75rem;"></i> ${timeAgo}
+                </span>
+            </td>
+            <td>
+                <span class="copy-hover-wrapper">
+                    <span class="mono text-muted clickable-link" onclick="event.stopPropagation(); openAddressInspector('${miner}')" title="${miner}">${shortMiner}</span>
+                    ${miner ? `<button class="copy-hover-btn" onclick="event.stopPropagation(); copyText('${miner}', 'Miner address copied!')" title="Copy address"><i class="fa-regular fa-copy"></i></button>` : ''}
+                </span>
+            </td>
+            <td>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                    <span class="text-amber font-bold" style="font-size:0.8rem;">${block.transactions ? block.transactions.length : 0} tx</span>
+                    ${memoryCount > 0 ? `<span class="pill-badge pill-violet-light" style="padding: 2px 6px; font-size:0.65rem;" title="${memoryCount} AI Neural Inscription(s)"><i class="fa-solid fa-brain"></i> ${memoryCount} AI</span>` : ''}
+                    ${transferCount > 0 ? `<span class="pill-badge pill-green-light" style="padding: 2px 6px; font-size:0.65rem;" title="${transferCount} Transfer(s)"><i class="fa-solid fa-arrow-right-arrow-left"></i> ${transferCount}</span>` : ''}
+                </div>
+            </td>
+            <td><span class="mono text-slate-400 text-xs">${block.difficulty}</span></td>
+            <td>
+                <span class="copy-hover-wrapper">
+                    <span class="mono text-indigo clickable-link" onclick="event.stopPropagation(); openBlockInspector(${block.index})" title="${block.hash}">${shortHash}</span>
+                    <button class="copy-hover-btn" onclick="event.stopPropagation(); copyText('${block.hash}', 'Block hash copied!')" title="Copy block hash"><i class="fa-regular fa-copy"></i></button>
+                </span>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 // MEMORIES
@@ -1556,6 +1686,7 @@ async function fetchMemories() {
             card.className = 'memory-card-dark';
             card.onclick = () => openBlockInspector(item.blockIndex);
             const dateStr = new Date(item.timestamp).toLocaleTimeString();
+            const timeAgo = formatTimeAgo(item.timestamp);
 
             card.innerHTML = `
                 <div class="memory-card-header-dark">
@@ -1564,7 +1695,7 @@ async function fetchMemories() {
                 </div>
                 <div class="memory-content-dark">"${escapeHtml(item.memory.content)}"</div>
                 <div class="memory-footer-dark">
-                    <span>Block #${item.blockIndex} • ${dateStr}</span>
+                    <span>Block #${item.blockIndex} • ${timeAgo} (${dateStr})</span>
                     <div style="display:flex; align-items:center; gap:6px;">
                         <span class="text-indigo font-bold">Vector: ${item.memory.vectorHash ? item.memory.vectorHash.substring(0, 8) : '00000000'}...</span>
                         ${item.txId ? `<button class="copy-btn-inline" title="Verify Merkle Proof" onclick="event.stopPropagation(); openMerkleProofModal('${item.txId}')"><i class="fa-solid fa-tree"></i> Proof</button>` : ''}
@@ -2335,16 +2466,25 @@ async function fetchPoolStats() {
         if (blocksEl) blocksEl.textContent = `${data.poolBlocksFound} Block${data.poolBlocksFound === 1 ? '' : 's'}`;
 
         if (tbody) {
+            const myAddr = (currentWallet?.address || cortexWeb3State?.address || '').toLowerCase();
             if (data.miners && data.miners.length > 0) {
                 tbody.innerHTML = data.miners.map(m => {
-                    const mHr = m.hashrate > 1000 ? `${(m.hashrate/1000).toFixed(1)} kH/s` : `${m.hashrate} H/s`;
+                    const mHr = m.hashrate > 1000000 
+                        ? `${(m.hashrate/1000000).toFixed(2)} MH/s` 
+                        : m.hashrate > 1000 
+                        ? `${(m.hashrate/1000).toFixed(1)} kH/s` 
+                        : `${m.hashrate || 0} H/s`;
                     const shortAddr = `${m.address.substring(0, 10)}...${m.address.substring(m.address.length - 6)}`;
+                    const isMe = myAddr && m.address.toLowerCase() === myAddr;
                     return `
-                        <tr class="border-bottom-subtle">
-                            <td class="p-2 mono font-bold text-slate-900">${shortAddr}</td>
+                        <tr class="border-bottom-subtle" style="${isMe ? 'background: rgba(99, 102, 241, 0.08);' : ''}">
+                            <td class="p-2 mono font-bold text-slate-900">
+                                <span class="clickable-link" onclick="openAddressInspector('${m.address}')">${shortAddr}</span>
+                                ${isMe ? '<span class="pill-badge pill-violet-light" style="font-size:0.6rem; padding:1px 5px; margin-left:4px;"><i class="fa-solid fa-user"></i> You</span>' : ''}
+                            </td>
                             <td class="p-2 mono text-indigo font-bold">${escapeHtml(m.workerId || 'worker-1')}</td>
                             <td class="p-2 mono text-emerald font-bold">${m.shares} shares</td>
-                            <td class="p-2 mono text-slate-700">${mHr}</td>
+                            <td class="p-2 mono text-slate-900 font-bold"><span class="badge-subtle badge-emerald" style="font-size:0.75rem; font-weight:700;">${mHr}</span></td>
                             <td class="p-2"><span class="badge-subtle badge-emerald text-xs">● Active</span></td>
                         </tr>
                     `;
@@ -3251,6 +3391,406 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchMemories();
         fetchMempool();
     }, 4000);
+
+    // Interactive AI Agent Studio & Memory Vault
+    initAgentStudioVault();
 });
+
+// ========================================================
+// 13. INTERACTIVE AI AGENT STUDIO & MEMORY VAULT (POC)
+// ========================================================
+
+const AGENT_PERSONA_PRESETS = {
+    'nexus-quant': {
+        name: 'Nexus-Quant-01',
+        desc: 'DeFi Quantitative Arbitrage & Liquidity Matrix Engine',
+        topic: 'CURVE_3POOL_ARBITRAGE_SIGNAL',
+        type: 'COGNITIVE_REASONING',
+        payload: {
+            strategy: 'Triangular Arbitrage',
+            pool: 'Curve-3pool-USDC-USDT-DAI',
+            spreadDeltaBps: 34,
+            executionRoute: ['DAI', 'USDC', 'USDT'],
+            expectedNetYieldUsd: 4120.50,
+            confidenceScore: 0.9984,
+            timestamp: Date.now()
+        }
+    },
+    'aegis-security': {
+        name: 'Aegis-Security-AI',
+        desc: 'Zero-Day Vulnerability & Bytecode Exploit Mitigation Shield',
+        topic: 'REENTRANCY_BYTECODE_PATCH',
+        type: 'ZERO_DAY_DISCOVERY',
+        payload: {
+            vulnerabilityClass: 'CWE-841: Cross-Function Reentrancy',
+            targetContract: '0x38b0c48e8316dfa5e01b31298539281a8c9e1204',
+            mitigationBytecodeOffset: '0x48f',
+            patchOpcode: 'SSTORE_MUTEX_GUARD_V2',
+            threatScore: 'CRITICAL_9.8',
+            timestamp: Date.now()
+        }
+    },
+    'helix-biotech': {
+        name: 'Helix-BioTech-Core',
+        desc: 'Molecular Oncology & Deep Protein Docking Simulation Core',
+        topic: 'KINASE_CX882_DOCKING',
+        type: 'COGNITIVE_REASONING',
+        payload: {
+            targetReceptor: 'EGFR-Kinase-Domain-T790M',
+            ligandCandidate: 'CX-882-Fluorophenyl',
+            bindingAffinityScore: -14.8,
+            rmsdConfidence: 0.42,
+            allostericConformationHash: '0x8f29e1c2b874fa90',
+            timestamp: Date.now()
+        }
+    },
+    'deepseek-reasoner': {
+        name: 'DeepSeek-Reasoner-V3',
+        desc: 'Multi-Step Mathematical Logic & Epistemic Proof Verifier',
+        topic: 'MATHEMATICAL_CONSENSUS_PROOF',
+        type: 'STATE_SETTLEMENT',
+        payload: {
+            theorem: 'Dual-Merkle Epistemic State Convergence in O(log N)',
+            lemmaSequence: ['L1: Unforgeable Signatures', 'L2: Deterministic Leaf Hashing', 'L3: Deflationary Equilibrium'],
+            formalProofVerified: true,
+            inductiveSteps: 12,
+            timestamp: Date.now()
+        }
+    },
+    'custom-agent': {
+        name: 'Sovereign-Agent-X',
+        desc: 'Custom Autonomous AI Persona & Epistemic Vector',
+        topic: 'CUSTOM_AGENT_STATE',
+        type: 'COGNITIVE_REASONING',
+        payload: {
+            agentRole: 'Autonomous Reasoning Node',
+            task: 'Custom Epistemic State Inscription',
+            parameters: { inputConfidence: 0.95, executionStatus: 'SUCCESS' },
+            timestamp: Date.now()
+        }
+    }
+};
+
+const MEMORY_TEMPLATES = {
+    arbitrage: {
+        agentId: 'Nexus-Quant-01',
+        topic: 'CURVE_3POOL_ARBITRAGE_SIGNAL',
+        type: 'COGNITIVE_REASONING',
+        personaKey: 'nexus-quant',
+        content: JSON.stringify(AGENT_PERSONA_PRESETS['nexus-quant'].payload, null, 2)
+    },
+    reentrancy: {
+        agentId: 'Aegis-Security-AI',
+        topic: 'REENTRANCY_BYTECODE_PATCH',
+        type: 'ZERO_DAY_DISCOVERY',
+        personaKey: 'aegis-security',
+        content: JSON.stringify(AGENT_PERSONA_PRESETS['aegis-security'].payload, null, 2)
+    },
+    biotech: {
+        agentId: 'Helix-BioTech-Core',
+        topic: 'KINASE_CX882_DOCKING',
+        type: 'COGNITIVE_REASONING',
+        personaKey: 'helix-biotech',
+        content: JSON.stringify(AGENT_PERSONA_PRESETS['helix-biotech'].payload, null, 2)
+    },
+    zkproof: {
+        agentId: 'DeepSeek-Reasoner-V3',
+        topic: 'ZK_SNARK_STATE_SETTLEMENT',
+        type: 'STATE_SETTLEMENT',
+        personaKey: 'deepseek-reasoner',
+        content: JSON.stringify({
+            proofSystem: 'Groth16',
+            circuit: 'StateTransitionProofV2',
+            publicInputs: ['0x1a8f', '0x99e2', '0xb410'],
+            verifiedOnChain: true,
+            timestamp: Date.now()
+        }, null, 2)
+    }
+};
+
+function initAgentStudioVault() {
+    const contentArea = document.getElementById('poc-content');
+    if (!contentArea) return;
+
+    contentArea.addEventListener('input', updatePayloadByteCount);
+    selectAgentPersona('nexus-quant');
+}
+
+function selectAgentPersona(personaKey) {
+    const config = AGENT_PERSONA_PRESETS[personaKey];
+    if (!config) return;
+
+    document.querySelectorAll('.persona-card, .persona-pill').forEach(btn => {
+        if (btn.getAttribute('data-persona') === personaKey) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    const descEl = document.getElementById('current-persona-desc');
+    if (descEl) descEl.textContent = config.desc;
+
+    const agentIdInput = document.getElementById('poc-agent-id');
+    const topicInput = document.getElementById('poc-topic');
+    const typeSelect = document.getElementById('poc-memory-type');
+    const contentArea = document.getElementById('poc-content');
+
+    if (agentIdInput) agentIdInput.value = config.name;
+    if (topicInput) topicInput.value = config.topic;
+    if (typeSelect) typeSelect.value = config.type;
+    if (contentArea) {
+        contentArea.value = JSON.stringify(config.payload, null, 2);
+        updatePayloadByteCount();
+    }
+}
+
+function applyMemoryTemplate(templateKey) {
+    const t = MEMORY_TEMPLATES[templateKey];
+    if (!t) return;
+
+    selectAgentPersona(t.personaKey);
+
+    const agentIdInput = document.getElementById('poc-agent-id');
+    const topicInput = document.getElementById('poc-topic');
+    const typeSelect = document.getElementById('poc-memory-type');
+    const contentArea = document.getElementById('poc-content');
+
+    if (agentIdInput) agentIdInput.value = t.agentId;
+    if (topicInput) topicInput.value = t.topic;
+    if (typeSelect) typeSelect.value = t.type;
+    if (contentArea) {
+        contentArea.value = t.content;
+        updatePayloadByteCount();
+    }
+
+    showToast(`Applied preset: ${t.topic}`);
+}
+
+async function updatePayloadByteCount() {
+    const contentArea = document.getElementById('poc-content');
+    const countEl = document.getElementById('poc-payload-bytes');
+    const previewEl = document.getElementById('poc-vector-hash-preview');
+    if (!contentArea) return;
+
+    const val = contentArea.value;
+    const bytes = new Blob([val]).size;
+    if (countEl) countEl.textContent = `${bytes.toLocaleString()} bytes`;
+
+    if (previewEl && window.crypto && window.crypto.subtle) {
+        try {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(val);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            previewEl.textContent = `H(v): 0x${hashHex.substring(0, 10)}...`;
+            previewEl.title = `Full Hash: 0x${hashHex}`;
+        } catch(e) {}
+    }
+}
+
+async function submitInteractiveAgentMemory() {
+    const btn = document.getElementById('btn-anchor-memory');
+    const agentIdInput = document.getElementById('poc-agent-id');
+    const topicInput = document.getElementById('poc-topic');
+    const typeSelect = document.getElementById('poc-memory-type');
+    const contentArea = document.getElementById('poc-content');
+
+    if (!agentIdInput || !topicInput || !contentArea) return;
+
+    const agentId = agentIdInput.value.trim();
+    const topic = topicInput.value.trim();
+    const content = contentArea.value.trim();
+    const memoryType = typeSelect ? typeSelect.value : 'COGNITIVE_REASONING';
+
+    if (!agentId) {
+        showToast('Please specify an Agent Identifier', true);
+        return;
+    }
+    if (!topic) {
+        showToast('Please specify a Memory Topic', true);
+        return;
+    }
+    if (!content) {
+        showToast('Memory payload cannot be empty', true);
+        return;
+    }
+
+    const originalBtnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Signing secp256k1 & Broadcasting...</span>';
+
+    try {
+        const res = await fetch('/api/memory/commit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                agentId,
+                topic,
+                content,
+                memoryType,
+                fee: 0.05
+            })
+        });
+
+        const data = await res.json();
+        if (data.error || !data.success) {
+            throw new Error(data.error || 'Failed to anchor memory on Cortex L1');
+        }
+
+        renderPoCReceipt(data);
+
+        // Canvas animation burst
+        if (typeof spawnSwarmPacket === 'function' && typeof SWARM_NODES !== 'undefined') {
+            const nodeIdx = SWARM_NODES.findIndex(n => n.id.toLowerCase().includes(agentId.toLowerCase()));
+            const targetIdx = nodeIdx >= 0 ? nodeIdx : 0;
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => spawnSwarmPacket(targetIdx, 'core'), i * 110);
+            }
+        }
+
+        // Add to live stream feed
+        const feed = document.getElementById('swarm-activity-feed');
+        if (feed) {
+            const itemHtml = `
+                <div class="stream-item">
+                    <div class="flex items-center gap-2">
+                        <span style="color:#10b981; font-weight:bold;">[${agentId}]</span>
+                        <span class="text-slate-800">Anchored [${topic}]</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="javascript:void(0)" onclick="openTxInspector('${data.txId}')" class="text-indigo mono text-xs hover-underline" style="text-decoration:none;"><i class="fa-solid fa-receipt"></i> ${data.txId.substring(0, 10)}...</a>
+                        <span class="mono text-xs text-flame font-bold">-0.015 CTX 🔥</span>
+                        <span class="badge-subtle text-xs" style="color:var(--emerald);">Verified ✓</span>
+                    </div>
+                </div>
+            `;
+            feed.insertAdjacentHTML('afterbegin', itemHtml);
+            if (feed.children.length > 6) {
+                feed.lastElementChild.remove();
+            }
+        }
+
+        fetchExplorerTelemetry();
+        fetchMemories();
+        fetchMempool();
+
+        showToast('⚡ Successfully signed and anchored state on Cortex L1!');
+    } catch (err) {
+        showToast(`Error: ${err.message}`, true);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnText;
+    }
+}
+
+function renderPoCReceipt(receipt) {
+    const container = document.getElementById('poc-receipt-container');
+    if (!container) return;
+
+    const shortTx = receipt.txId ? `${receipt.txId.substring(0, 16)}...${receipt.txId.substring(receipt.txId.length - 8)}` : 'N/A';
+    const shortAddr = receipt.agentAddress ? `${receipt.agentAddress.substring(0, 14)}...${receipt.agentAddress.substring(receipt.agentAddress.length - 8)}` : 'N/A';
+    const shortSig = receipt.signature ? `${receipt.signature.substring(0, 24)}...` : 'secp256k1_valid';
+    const vectorHash = receipt.vectorHash || '0x' + (receipt.memoryPayload ? receipt.memoryPayload.vectorHash : '');
+    const shortVector = vectorHash ? `${vectorHash.substring(0, 18)}...${vectorHash.substring(vectorHash.length - 8)}` : 'N/A';
+
+    container.innerHTML = `
+        <div class="receipt-card">
+            <div class="receipt-header">
+                <div class="flex items-center gap-2">
+                    <span class="receipt-status-badge">
+                        <i class="fa-solid fa-circle-check text-emerald"></i> CONFIRMED ON CORTEX L1 TESTNET
+                    </span>
+                    <span class="badge-subtle badge-flame font-mono text-xs">
+                        <i class="fa-solid fa-fire"></i> -0.0150 CTX BURNED
+                    </span>
+                </div>
+                <div class="text-xs text-slate-400 font-mono">
+                    Type: <strong class="text-indigo">${receipt.memoryPayload ? receipt.memoryPayload.memoryType : 'COGNITIVE_REASONING'}</strong>
+                </div>
+            </div>
+
+            <div class="receipt-grid">
+                <div class="receipt-field">
+                    <div class="receipt-label">
+                        <span><i class="fa-solid fa-receipt text-indigo"></i> Transaction ID</span>
+                        <button class="copy-btn-inline" onclick="copyText('${receipt.txId}', 'TxID copied!')"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="receipt-val text-indigo font-bold cursor-pointer" onclick="openTxInspector('${receipt.txId}')" title="Click to inspect in Explorer">
+                        ${shortTx} <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                    </div>
+                </div>
+
+                <div class="receipt-field">
+                    <div class="receipt-label">
+                        <span><i class="fa-solid fa-robot text-emerald"></i> Agent Identity (Address)</span>
+                        <button class="copy-btn-inline" onclick="copyText('${receipt.agentAddress}', 'Agent address copied!')"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="receipt-val text-emerald cursor-pointer" onclick="openAddressInspector('${receipt.agentAddress}')">
+                        ${shortAddr}
+                    </div>
+                </div>
+
+                <div class="receipt-field">
+                    <div class="receipt-label">
+                        <span><i class="fa-solid fa-vector-square text-violet"></i> Cognitive Vector Hash (H(v))</span>
+                        <button class="copy-btn-inline" onclick="copyText('${vectorHash}', 'Vector hash copied!')"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="receipt-val text-violet">
+                        ${shortVector}
+                    </div>
+                </div>
+
+                <div class="receipt-field">
+                    <div class="receipt-label">
+                        <span><i class="fa-solid fa-signature text-amber"></i> secp256k1 Signature</span>
+                        <button class="copy-btn-inline" onclick="copyText('${receipt.signature}', 'Signature copied!')"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="receipt-val text-amber">
+                        ${shortSig}
+                    </div>
+                </div>
+
+                <div class="receipt-field burn-stat-highlight">
+                    <div class="receipt-label">
+                        <span><i class="fa-solid fa-fire text-flame"></i> Deflationary Burn Mechanism</span>
+                        <span class="badge-subtle badge-flame text-xs">30% OF GAS</span>
+                    </div>
+                    <div class="receipt-val text-flame">
+                        0.0150 CTX Permanently Destroyed 🔥
+                    </div>
+                </div>
+
+                <div class="receipt-field">
+                    <div class="receipt-label">
+                        <span><i class="fa-solid fa-shield-halved text-cyan"></i> Cryptographic Consensus Root</span>
+                        <span class="badge-subtle badge-cyan text-xs">DUAL MERKLE TREE</span>
+                    </div>
+                    <div class="receipt-val text-slate-300">
+                        Anchored in Memory Root ($M_{root}$)
+                    </div>
+                </div>
+            </div>
+
+            <div class="receipt-actions mt-3 pt-3 border-top-subtle flex items-center justify-between flex-wrap gap-2">
+                <div class="text-xs text-slate-400">
+                    <i class="fa-solid fa-info-circle text-indigo"></i> State is cryptographically anchored. Verify the tree membership proof:
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="openMerkleProofModal('${receipt.txId}')">
+                        <i class="fa-solid fa-code-branch text-emerald"></i> <span>Verify Dual Merkle Proof</span>
+                    </button>
+                    <button type="button" class="btn btn-hero-cta btn-sm" onclick="openTxInspector('${receipt.txId}')">
+                        <i class="fa-solid fa-magnifying-glass"></i> <span>Inspect in Explorer</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
 
 

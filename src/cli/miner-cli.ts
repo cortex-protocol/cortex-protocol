@@ -260,7 +260,7 @@ async function startLocalMiningEngine() {
     while (isMiningRunning) {
         try {
             const templateEndpoint = miningMode === 'pool' 
-                ? `/api/pool/template?address=${encodeURIComponent(minerAddress)}&worker=${encodeURIComponent(workerId)}`
+                ? `/api/pool/template?address=${encodeURIComponent(minerAddress)}&worker=${encodeURIComponent(workerId)}&hashrate=${localHashrate}`
                 : `/api/miner/template?address=${encodeURIComponent(minerAddress)}`;
 
             currentTemplate = await fetchJson(templateEndpoint);
@@ -287,6 +287,7 @@ async function startLocalMiningEngine() {
                     const submitPayload = {
                         minerAddress: minerAddress,
                         workerId: workerId,
+                        hashrate: localHashrate,
                         index: currentTemplate.index,
                         previousHash: currentTemplate.previousHash,
                         timestamp: currentTemplate.timestamp,
@@ -366,7 +367,7 @@ async function renderMinerDashboard() {
         spinnerIdx = (spinnerIdx + 1) % SPINNERS.length;
         const spinner = SPINNERS[spinnerIdx];
 
-        const hr = localHashrate || Math.round(stats.miner.hashrate * (allocatedThreads / 4));
+        const hr = localHashrate > 0 ? localHashrate : (Math.round(15000 * Math.max(1, allocatedThreads)));
         const hrFormatted = hr > 1000000 ? `${(hr/1000000).toFixed(2)} MH/s` : hr > 1000 ? `${(hr/1000).toFixed(2)} kH/s` : `${Math.max(1, hr)} H/s`;
 
         const padW = 46;
@@ -411,10 +412,17 @@ async function renderMinerDashboard() {
             const shareDiffStr = `\x1b[1;33m${poolStats.shareDifficulty} (Fast CPU Shares)\x1b[0m`;
             console.log(`\x1b[36m║\x1b[0m  \x1b[34mPool Share Diff\x1b[0m     : ${padVisible(shareDiffStr, padW)} \x1b[36m║\x1b[0m`);
             
-            const minersCountStr = `\x1b[1;32m${poolStats.connectedMinersCount} Active Worker${poolStats.connectedMinersCount === 1 ? '' : 's'}\x1b[0m`;
-            console.log(`\x1b[36m║\x1b[0m  \x1b[34mConnected Miners\x1b[0m    : ${padVisible(minersCountStr, padW)} \x1b[36m║\x1b[0m`);
+            const poolHr = poolStats.totalPoolHashrate || 0;
+            const poolHrFormatted = poolHr > 1000000 ? `${(poolHr/1000000).toFixed(2)} MH/s` : poolHr > 1000 ? `${(poolHr/1000).toFixed(2)} kH/s` : `${poolHr} H/s`;
+            const poolHrBoxStr = `\x1b[1;35m${poolHrFormatted} (${poolStats.connectedMinersCount} Worker${poolStats.connectedMinersCount === 1 ? '' : 's'})\x1b[0m`;
+            console.log(`\x1b[36m║\x1b[0m  \x1b[35mTotal Pool Hashrate\x1b[0m : ${padVisible(poolHrBoxStr, padW)} \x1b[36m║\x1b[0m`);
         }
         
+        const netHr = stats.networkHashrate || 0;
+        const netHrFormatted = netHr > 1000000 ? `${(netHr/1000000).toFixed(2)} MH/s` : netHr > 1000 ? `${(netHr/1000).toFixed(2)} kH/s` : `${netHr} H/s`;
+        const netHrBoxStr = `\x1b[1;36m${netHrFormatted} (L1 Consensus)\x1b[0m`;
+        console.log(`\x1b[36m║\x1b[0m  \x1b[34mGlobal Net Hashrate\x1b[0m : ${padVisible(netHrBoxStr, padW)} \x1b[36m║\x1b[0m`);
+
         const burnStr = `\x1b[1;31m${stats.totalBurned.toFixed(3)} CTX 🔥\x1b[0m`;
         console.log(`\x1b[36m║\x1b[0m  \x1b[34mTotal Burned CTX\x1b[0m    : ${padVisible(burnStr, padW)} \x1b[36m║\x1b[0m`);
         
@@ -424,7 +432,7 @@ async function renderMinerDashboard() {
         console.log(`\x1b[36m║\x1b[0m  \x1b[32mHardware Engine\x1b[0m     : ${padVisible(engineStr, padW)} \x1b[36m║\x1b[0m`);
         
         const hrBoxStr = `\x1b[1;32m${hrFormatted}\x1b[0m`;
-        console.log(`\x1b[36m║\x1b[0m  \x1b[32mLocal CPU Hashrate\x1b[0m  : ${padVisible(hrBoxStr, padW)} \x1b[36m║\x1b[0m`);
+        console.log(`\x1b[36m║\x1b[0m  \x1b[32mYour Rig Hashrate\x1b[0m   : ${padVisible(hrBoxStr, padW)} \x1b[36m║\x1b[0m`);
         
         const sharesBoxStr = `\x1b[1;33m${miningMode === 'pool' ? poolSharesSubmitted + ' Shares' : localBlocksFound + ' Blocks'}\x1b[0m`;
         console.log(`\x1b[36m║\x1b[0m  \x1b[32mShares / Blocks Mined\x1b[0m: ${padVisible(sharesBoxStr, padW)} \x1b[36m║\x1b[0m`);

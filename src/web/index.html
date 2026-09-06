@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cortex Protocol ($CTX) | The Settlement & State Layer for Autonomous AI Agents</title>
     <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
-    <link rel="stylesheet" href="style.css?v=7.1">
+    <link rel="stylesheet" href="style.css?v=8.4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -529,9 +529,9 @@
             <!-- ======================================================== -->
             <section class="section-container reveal-on-scroll" id="ai-swarm">
                 <div class="section-header">
-                    <span class="section-eyebrow">DECENTRALIZED EPISTEMIC COLLABORATION</span>
-                    <h2 class="section-title">Autonomous AI Swarm & Live State Settlement</h2>
-                    <p class="section-subtitle">Real-time simulation of autonomous AI agents communicating, reasoning, and anchoring cryptographic proofs onto the Cortex Layer-1 blockchain.</p>
+                    <span class="section-eyebrow">LIVE ON-CHAIN PROOF OF CONCEPT</span>
+                    <h2 class="section-title">Autonomous AI Swarm & Memory Vault PoC</h2>
+                    <p class="section-subtitle">Real-time simulation and interactive cryptographic playground for autonomous AI agents anchoring cognitive states, zero-day threat patches, and vector embeddings into Cortex Layer-1.</p>
                 </div>
 
                 <div class="swarm-visualizer-card light-card spotlight-card">
@@ -541,7 +541,7 @@
                             <span class="pulse-beacon-indicator"></span>
                             <div>
                                 <strong class="text-slate-900">Active Multi-Agent Swarm Cluster</strong>
-                                <div class="text-xs text-slate-500">3 Sovereign Autonomous Agents • Sub-millisecond In-RAM Edge RAG</div>
+                                <div class="text-xs text-slate-500">4 Sovereign Agents • Dual Merkle State Verification • In-RAM Edge RAG</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
@@ -549,7 +549,7 @@
                                 <i class="fa-solid fa-bolt"></i> <span>Trigger Swarm Reasoning</span>
                             </button>
                             <button class="btn btn-outline btn-sm" onclick="resetSwarmSimulation()">
-                                <i class="fa-solid fa-rotate"></i> <span>Reset State</span>
+                                <i class="fa-solid fa-rotate"></i> <span>Reset Canvas</span>
                             </button>
                         </div>
                     </div>
@@ -568,17 +568,17 @@
 
                     <!-- 3 AGENT PROFILE STATUS CARDS -->
                     <div class="swarm-agents-grid mt-4">
-                        <div class="swarm-agent-card agent-trader light-card">
+                        <div class="swarm-agent-card agent-trader light-card" onclick="selectAgentPersona('nexus-quant')" style="cursor:pointer;" title="Click to test in Playground">
                             <div class="agent-card-header">
                                 <div class="agent-avatar"><i class="fa-solid fa-chart-line text-emerald"></i></div>
                                 <div>
-                                    <div class="font-bold text-slate-900">Alpha-Trader-01</div>
+                                    <div class="font-bold text-slate-900">Nexus-Quant-01</div>
                                     <span class="badge-subtle badge-emerald">DeFi & Arbitrage</span>
                                 </div>
                             </div>
                             <div class="agent-meta-stats mt-2">
                                 <div>Latency: <strong class="mono text-emerald">2.1 ms</strong></div>
-                                <div>States Inscribed: <strong class="mono text-slate-900" id="trader-mem-count">24</strong></div>
+                                <div>States: <strong class="mono text-slate-900" id="trader-mem-count">24</strong></div>
                                 <div>Last Burn: <strong class="mono text-flame">0.015 CTX 🔥</strong></div>
                             </div>
                             <div class="agent-thought-bubble mt-2" id="trader-thought">
@@ -586,17 +586,17 @@
                             </div>
                         </div>
 
-                        <div class="swarm-agent-card agent-bio light-card">
+                        <div class="swarm-agent-card agent-bio light-card" onclick="selectAgentPersona('helix-biotech')" style="cursor:pointer;" title="Click to test in Playground">
                             <div class="agent-card-header">
                                 <div class="agent-avatar"><i class="fa-solid fa-dna text-violet"></i></div>
                                 <div>
-                                    <div class="font-bold text-slate-900">Bio-Genesis-AI</div>
+                                    <div class="font-bold text-slate-900">Helix-BioTech-Core</div>
                                     <span class="badge-subtle badge-violet">Molecular Oncology</span>
                                 </div>
                             </div>
                             <div class="agent-meta-stats mt-2">
                                 <div>Latency: <strong class="mono text-violet">1.4 ms</strong></div>
-                                <div>Proteins Folded: <strong class="mono text-slate-900" id="bio-mem-count">56</strong></div>
+                                <div>States: <strong class="mono text-slate-900" id="bio-mem-count">56</strong></div>
                                 <div>Last Burn: <strong class="mono text-flame">0.015 CTX 🔥</strong></div>
                             </div>
                             <div class="agent-thought-bubble mt-2" id="bio-thought">
@@ -604,17 +604,17 @@
                             </div>
                         </div>
 
-                        <div class="swarm-agent-card agent-cyber light-card">
+                        <div class="swarm-agent-card agent-cyber light-card" onclick="selectAgentPersona('aegis-security')" style="cursor:pointer;" title="Click to test in Playground">
                             <div class="agent-card-header">
                                 <div class="agent-avatar"><i class="fa-solid fa-shield-halved text-indigo"></i></div>
                                 <div>
-                                    <div class="font-bold text-slate-900">Cyber-Sentinel-X</div>
+                                    <div class="font-bold text-slate-900">Aegis-Security-AI</div>
                                     <span class="badge-subtle badge-indigo">Security & Zero-Day</span>
                                 </div>
                             </div>
                             <div class="agent-meta-stats mt-2">
                                 <div>Latency: <strong class="mono text-indigo">0.8 ms</strong></div>
-                                <div>Threats Neutralized: <strong class="mono text-slate-900" id="cyber-mem-count">19</strong></div>
+                                <div>States: <strong class="mono text-slate-900" id="cyber-mem-count">19</strong></div>
                                 <div>Last Burn: <strong class="mono text-flame">0.015 CTX 🔥</strong></div>
                             </div>
                             <div class="agent-thought-bubble mt-2" id="cyber-thought">
@@ -623,8 +623,216 @@
                         </div>
                     </div>
 
+                    <!-- ======================================================== -->
+                    <!-- INSTITUTIONAL AI AGENT SETTLEMENT COCKPIT (POC PLAYGROUND)-->
+                    <!-- ======================================================== -->
+                    <div class="ai-studio-vault mt-4">
+                        <!-- TOP TERMINAL HUD BAR -->
+                        <div class="terminal-bar-hud">
+                            <div class="flex items-center gap-2">
+                                <span class="window-dot dot-red"></span>
+                                <span class="window-dot dot-amber"></span>
+                                <span class="window-dot dot-green"></span>
+                                <span class="terminal-title-text mono text-xs text-slate-300 font-bold ml-2">
+                                    <i class="fa-solid fa-terminal text-indigo"></i> CORTEX-L1 // AUTONOMOUS AGENT SETTLEMENT CONSOLE v2.4
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="pulse-beacon-indicator"></span>
+                                <span class="mono text-xs font-bold text-emerald">TESTNET SETTLEMENT ACTIVE</span>
+                            </div>
+                        </div>
+
+                        <!-- COCKPIT BANNER -->
+                        <div class="cockpit-banner mt-2 pb-3 border-bottom-subtle">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <div>
+                                    <span class="badge-subtle badge-indigo"><i class="fa-solid fa-microchip"></i> CRYPTOGRAPHIC REASONING ENGINE</span>
+                                    <h3 class="text-xl font-bold text-white mt-1">Autonomous AI Agent Memory Vault</h3>
+                                    <p class="text-xs text-slate-400 mt-1 max-w-3xl">
+                                        Test Cortex L1's primary value proposition: trigger a real on-chain transaction that signs cognitive agent state, broadcasts to the mempool, computes Merkle root authentication, and burns 30% of gas fees permanently.
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="badge-subtle badge-flame font-mono text-xs"><i class="fa-solid fa-fire"></i> 30% GAS BURN DEFLATION</span>
+                                    <span class="badge-subtle badge-emerald font-mono text-xs"><i class="fa-solid fa-shield-check"></i> secp256k1 NATIVE</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 1. PERSONA COCKPIT SELECTOR -->
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                                    <i class="fa-solid fa-users-gear text-indigo"></i> 1. Select Autonomous Agent Persona:
+                                </label>
+                                <span class="text-xs text-indigo-light font-mono font-bold" id="current-persona-desc">DeFi Quantitative Arbitrage Engine</span>
+                            </div>
+                            <div class="persona-cockpit-grid">
+                                <div class="persona-card active" data-persona="nexus-quant" onclick="selectAgentPersona('nexus-quant')">
+                                    <div class="persona-card-icon" style="background:rgba(16, 185, 129, 0.15); border-color:#10b98140;"><i class="fa-solid fa-chart-line text-emerald"></i></div>
+                                    <div class="persona-card-info">
+                                        <div class="persona-card-name">Nexus-Quant-01</div>
+                                        <div class="persona-card-desc">DeFi / Arbitrage</div>
+                                    </div>
+                                    <div class="persona-card-check"><i class="fa-solid fa-circle-check"></i></div>
+                                </div>
+                                <div class="persona-card" data-persona="aegis-security" onclick="selectAgentPersona('aegis-security')">
+                                    <div class="persona-card-icon" style="background:rgba(99, 102, 241, 0.15); border-color:#6366f140;"><i class="fa-solid fa-shield-halved text-indigo"></i></div>
+                                    <div class="persona-card-info">
+                                        <div class="persona-card-name">Aegis-Security-AI</div>
+                                        <div class="persona-card-desc">Zero-Day Shield</div>
+                                    </div>
+                                    <div class="persona-card-check"><i class="fa-solid fa-circle-check"></i></div>
+                                </div>
+                                <div class="persona-card" data-persona="helix-biotech" onclick="selectAgentPersona('helix-biotech')">
+                                    <div class="persona-card-icon" style="background:rgba(139, 92, 246, 0.15); border-color:#8b5cf640;"><i class="fa-solid fa-dna text-violet"></i></div>
+                                    <div class="persona-card-info">
+                                        <div class="persona-card-name">Helix-BioTech-Core</div>
+                                        <div class="persona-card-desc">Molecular R&D</div>
+                                    </div>
+                                    <div class="persona-card-check"><i class="fa-solid fa-circle-check"></i></div>
+                                </div>
+                                <div class="persona-card" data-persona="deepseek-reasoner" onclick="selectAgentPersona('deepseek-reasoner')">
+                                    <div class="persona-card-icon" style="background:rgba(245, 158, 11, 0.15); border-color:#f59e0b40;"><i class="fa-solid fa-brain text-amber"></i></div>
+                                    <div class="persona-card-info">
+                                        <div class="persona-card-name">DeepSeek-Reasoner</div>
+                                        <div class="persona-card-desc">Logic & Proof</div>
+                                    </div>
+                                    <div class="persona-card-check"><i class="fa-solid fa-circle-check"></i></div>
+                                </div>
+                                <div class="persona-card" data-persona="custom-agent" onclick="selectAgentPersona('custom-agent')">
+                                    <div class="persona-card-icon" style="background:rgba(148, 163, 184, 0.15); border-color:#94a3b840;"><i class="fa-solid fa-sliders text-slate-300"></i></div>
+                                    <div class="persona-card-info">
+                                        <div class="persona-card-name">Custom Agent</div>
+                                        <div class="persona-card-desc">User-Defined</div>
+                                    </div>
+                                    <div class="persona-card-check"><i class="fa-solid fa-circle-check"></i></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. QUICK PRESET CHIPS BAR -->
+                        <div class="presets-bar flex items-center flex-wrap gap-2 mt-3">
+                            <span class="text-xs font-bold text-slate-400 flex items-center gap-1">
+                                <i class="fa-solid fa-wand-magic-sparkles text-indigo"></i> Quick Presets:
+                            </span>
+                            <button type="button" class="cockpit-chip" onclick="applyMemoryTemplate('arbitrage')">
+                                <i class="fa-solid fa-bolt text-emerald"></i> Curve 3pool Arbitrage
+                            </button>
+                            <button type="button" class="cockpit-chip" onclick="applyMemoryTemplate('reentrancy')">
+                                <i class="fa-solid fa-shield-virus text-indigo"></i> Reentrancy Mitigation
+                            </button>
+                            <button type="button" class="cockpit-chip" onclick="applyMemoryTemplate('biotech')">
+                                <i class="fa-solid fa-atom text-violet"></i> EGFR Kinase CX-882
+                            </button>
+                            <button type="button" class="cockpit-chip" onclick="applyMemoryTemplate('zkproof')">
+                                <i class="fa-solid fa-square-root-variable text-amber"></i> zk-SNARK Settlement
+                            </button>
+                        </div>
+
+                        <!-- 3. SPLIT-SCREEN WORKSPACE -->
+                        <div class="ai-studio-inputs-grid mt-3">
+                            <!-- Left: Agent Identity & Protocol Type -->
+                            <div class="studio-input-col">
+                                <div class="cockpit-input-group">
+                                    <label class="cockpit-label" for="poc-agent-id">
+                                        <span><i class="fa-solid fa-id-badge text-indigo"></i> Agent Identifier (Public ID)</span>
+                                        <span class="text-xs text-slate-500 font-mono">secp256k1</span>
+                                    </label>
+                                    <input type="text" id="poc-agent-id" class="cockpit-input" value="Nexus-Quant-01" placeholder="e.g. Nexus-Quant-01">
+                                </div>
+
+                                <div class="cockpit-input-group">
+                                    <label class="cockpit-label" for="poc-topic">
+                                        <span><i class="fa-solid fa-key text-emerald"></i> Epistemic Topic / Key</span>
+                                        <span class="text-xs text-slate-500 font-mono">SHA-256</span>
+                                    </label>
+                                    <input type="text" id="poc-topic" class="cockpit-input" value="CURVE_3POOL_ARBITRAGE_SIGNAL" placeholder="e.g. CURVE_3POOL_ARBITRAGE">
+                                </div>
+
+                                <div class="cockpit-input-group mb-0">
+                                    <label class="cockpit-label" for="poc-memory-type">
+                                        <span><i class="fa-solid fa-cubes text-violet"></i> Protocol Memory Classification</span>
+                                        <span class="text-xs text-slate-500 font-mono">L1 OpCode</span>
+                                    </label>
+                                    <select id="poc-memory-type" class="cockpit-select">
+                                        <option value="COGNITIVE_REASONING" selected>COGNITIVE_REASONING (State & Thought)</option>
+                                        <option value="STATE_SETTLEMENT">STATE_SETTLEMENT (On-Chain Settlement)</option>
+                                        <option value="ZERO_DAY_DISCOVERY">ZERO_DAY_DISCOVERY (Security Exploit)</option>
+                                        <option value="CROSS_AGENT_CONTRACT">CROSS_AGENT_CONTRACT (M2M Escrow)</option>
+                                        <option value="VECTOR_SNAPSHOT">VECTOR_SNAPSHOT (Embedding Hash)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Right: Visual Code Matrix Editor -->
+                            <div class="studio-input-col">
+                                <div class="cockpit-code-wrapper">
+                                    <div class="cockpit-code-header">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-brands fa-js text-amber"></i>
+                                            <span class="mono text-xs font-bold text-slate-300">state_payload.json</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="mono text-xs text-violet font-bold" id="poc-vector-hash-preview" title="Live SHA-256 Vector Digest">H(v): 0x00cfa5de...</span>
+                                            <span class="badge-subtle mono text-xs" id="poc-payload-bytes">164 bytes</span>
+                                        </div>
+                                    </div>
+                                    <textarea id="poc-content" class="cockpit-code-editor" rows="7" spellcheck="false"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. INSTITUTIONAL SETTLEMENT HUD & CTA -->
+                        <div class="cockpit-settlement-hud mt-3">
+                            <div class="settlement-tiles-grid">
+                                <div class="settlement-tile">
+                                    <div class="tile-icon"><i class="fa-solid fa-gas-pump text-indigo"></i></div>
+                                    <div>
+                                        <div class="tile-label">EST. GAS FEE</div>
+                                        <div class="tile-val font-bold text-slate-100">0.0500 CTX</div>
+                                    </div>
+                                </div>
+                                <div class="settlement-tile tile-burn">
+                                    <div class="tile-icon"><i class="fa-solid fa-fire text-flame"></i></div>
+                                    <div>
+                                        <div class="tile-label text-flame">BURN DEFLATION (30%)</div>
+                                        <div class="tile-val font-bold text-flame">0.0150 CTX 🔥</div>
+                                    </div>
+                                </div>
+                                <div class="settlement-tile">
+                                    <div class="tile-icon"><i class="fa-solid fa-key text-emerald"></i></div>
+                                    <div>
+                                        <div class="tile-label">CURVE CRYPTO</div>
+                                        <div class="tile-val font-bold text-emerald">secp256k1</div>
+                                    </div>
+                                </div>
+                                <div class="settlement-tile">
+                                    <div class="tile-icon"><i class="fa-solid fa-tree text-violet"></i></div>
+                                    <div>
+                                        <div class="tile-label">CONSENSUS PROOF</div>
+                                        <div class="tile-val font-bold text-violet">Dual Merkle ($M_r$)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="cockpit-cta-row mt-3 flex items-center justify-between flex-wrap gap-3">
+                                <div class="text-xs text-slate-400 mono">
+                                    <i class="fa-solid fa-shield-check text-emerald"></i> Inscriptions are broadcasted to L1 mempool, validated by RandomX miners, and burned permanently.
+                                </div>
+                                <button type="button" id="btn-anchor-memory" class="btn btn-hero-cta btn-lg btn-shimmer cockpit-anchor-btn" onclick="submitInteractiveAgentMemory()">
+                                    <i class="fa-solid fa-bolt text-amber"></i> <span>⚡ Sign & Anchor on Cortex L1</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 5. LIVE CRYPTOGRAPHIC ATTESTATION RECEIPT CONTAINER -->
+                        <div id="poc-receipt-container" class="poc-receipt-container mt-4" style="display:none;"></div>
+                    </div>
+
                     <!-- LIVE SWARM ACTIVITY LOG STREAM -->
-                    <div class="swarm-activity-stream mt-3">
+                    <div class="swarm-activity-stream mt-4">
                         <div class="stream-header flex items-center justify-between">
                             <span class="text-xs font-bold text-slate-700 uppercase tracking-wider"><i class="fa-solid fa-wave-square text-indigo"></i> Live Epistemic Mesh Event Stream</span>
                             <span class="badge-subtle font-mono text-xs">Merkle Verified Receipts</span>
@@ -960,7 +1168,7 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
                                             <th class="p-2">Worker Address</th>
                                             <th class="p-2">Rig ID</th>
                                             <th class="p-2">Valid Shares</th>
-                                            <th class="p-2">Est. Hashrate</th>
+                                            <th class="p-2">Rig Hashrate</th>
                                             <th class="p-2">Status</th>
                                         </tr>
                                     </thead>
@@ -1515,6 +1723,15 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
                     <div class="stat-card-value text-violet" id="exp-stat-memories">-- Vectors</div>
                     <div class="stat-card-sub">Autonomous AI Swarm State</div>
                 </div>
+
+                <div class="explorer-stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">DEFLATIONARY BURN</span>
+                        <i class="fa-solid fa-fire text-flame stat-card-icon" style="color:#f97316;"></i>
+                    </div>
+                    <div class="stat-card-value text-flame" id="exp-stat-burned" style="color:#f97316;">-- CTX 🔥</div>
+                    <div class="stat-card-sub">30% AI Gas Combustion</div>
+                </div>
             </div>
 
             <!-- OMNI-SEARCH BAR -->
@@ -1547,11 +1764,20 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
                         </div>
                         <span class="pill-badge pill-green-light"><span class="pulse-dot-green"></span> Realtime Stream</span>
                     </div>
+
+                    <!-- BLOCK FILTER TABS -->
+                    <div class="explorer-filter-tabs">
+                        <button class="filter-tab-btn active" id="btn-filter-all" onclick="setBlockFilter('all', this)"><i class="fa-solid fa-list"></i> All Blocks</button>
+                        <button class="filter-tab-btn" id="btn-filter-ai" onclick="setBlockFilter('ai', this)"><i class="fa-solid fa-brain text-violet"></i> AI Inscriptions</button>
+                        <button class="filter-tab-btn" id="btn-filter-txs" onclick="setBlockFilter('transfers', this)"><i class="fa-solid fa-arrow-right-arrow-left text-emerald"></i> Transfers</button>
+                    </div>
+
                     <div class="table-container">
                         <table class="table-explorer">
                             <thead>
                                 <tr>
                                     <th>Height</th>
+                                    <th>Age</th>
                                     <th>Miner</th>
                                     <th>Txs / State</th>
                                     <th>Diff</th>
@@ -1560,6 +1786,11 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
                             </thead>
                             <tbody id="blocks-tbody"></tbody>
                         </table>
+                    </div>
+
+                    <div class="explorer-table-footer">
+                        <span class="text-muted text-xs" id="blocks-count-label">Showing latest blocks</span>
+                        <button class="btn btn-outline btn-sm" id="btn-load-more-blocks" onclick="loadMoreBlocks()"><i class="fa-solid fa-arrow-down"></i> Load More Blocks</button>
                     </div>
                 </div>
 
@@ -1714,6 +1945,6 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
     <!-- NOTIFICATION TOAST -->
     <div id="toast" class="toast-light"></div>
 
-    <script src="app.js?v=7.1"></script>
+    <script src="app.js?v=8.4"></script>
 </body>
 </html>
