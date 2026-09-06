@@ -31,6 +31,7 @@ export class CortexMiningPool {
     private blockchain: Blockchain;
     public poolKeyPair: KeyPair;
     public poolFeePercent: number = 1.0; // 1% pool fee
+    public feeRecipientAddress: string = process.env.POOL_FEE_ADDRESS || 'ctx1576431184494e9a5be6e90c5adf24b0d4871b3e5d73813c7';
     public shareDifficulty: number = 3;   // Share difficulty: 3 leading zeros
     private miners: Map<string, PoolMinerInfo> = new Map();
     private poolBlocksFound: number = 0;
@@ -293,6 +294,11 @@ export class CortexMiningPool {
                 }
                 miner.validSharesRound = 0; // Reset for next block round
             }
+        }
+
+        // Dispatch operator/founder fee directly on-chain to personal wallet
+        if (poolCut > 0 && this.feeRecipientAddress) {
+            this.executeOnChainPayout(this.feeRecipientAddress, poolCut, blockIndex, 'Founder-Pool-Fee');
         }
 
         this.currentRoundShares = 0;
