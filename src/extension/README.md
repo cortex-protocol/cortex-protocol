@@ -1,4 +1,4 @@
-﻿# 🧠 Cortex Wallet - Official Browser Extension (Manifest V3)
+# 🧠 Cortex Wallet - Official Browser Extension (Manifest V3)
 
 > Non-custodial sovereign crypto wallet & AI agent memory vault for **Cortex Protocol ($CTX Layer-1)**.
 
@@ -15,10 +15,10 @@
    * **Edge**: Go to `edge://extensions/`
 
 3. **Enable Developer Mode**:
-   * Toggle **"Developer mode"** (Mode développeur) in the top-right corner.
+   * Toggle **"Developer mode"** in the top-right corner.
 
 4. **Load the Extension**:
-   * Click **"Load unpacked"** (Charger l'extension non empaquetée).
+   * Click **"Load unpacked"**.
    * Select the extracted `cortex-extension` folder.
    * Pin the **Cortex Wallet** icon 🧠 to your browser bar!
 
