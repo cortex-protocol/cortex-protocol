@@ -31,9 +31,10 @@ echo "[3/5] Installing PM2 for 24/7 background execution..."
 sudo npm install -g pm2
 
 # 4. Configure Firewall
-echo "[4/5] Opening HTTP (3000) and P2P (6001) ports..."
+echo "[4/5] Opening HTTP (3000), P2P (6001), and Stratum (3333) ports..."
 sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 3000 -j ACCEPT
 sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 6001 -j ACCEPT
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 3333 -j ACCEPT
 sudo netfilter-persistent save 2>/dev/null || true
 
 # 5. Build & Launch with PM2

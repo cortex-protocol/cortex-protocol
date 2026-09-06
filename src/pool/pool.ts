@@ -58,6 +58,10 @@ export class CortexMiningPool {
         return this.poolKeyPair.address;
     }
 
+    public getBlockchain(): Blockchain {
+        return this.blockchain;
+    }
+
     /**
      * Get work template for connected pool miners
      */
