@@ -13,6 +13,7 @@ interface StratumJob {
     headerPrefix: string;
     headerSuffix: string;
     seed: string;
+    seedHash: string;
     targetHex: string;
     blobHex: string;
     transactions: any[];
@@ -238,7 +239,7 @@ export class CortexStratumServer {
                     blob: job.blobHex,
                     job_id: job.jobId,
                     target: client.targetHex,
-                    seed_hash: job.seed,
+                    seed_hash: job.seedHash,
                     height: job.templateIndex,
                     algo: 'rx/0'
                 },
@@ -449,7 +450,7 @@ export class CortexStratumServer {
                 blob: job.blobHex,
                 job_id: job.jobId,
                 target: client.targetHex,
-                seed_hash: job.seed,
+                seed_hash: job.seedHash,
                 height: job.templateIndex,
                 algo: 'rx/0'
             }
@@ -483,6 +484,7 @@ export class CortexStratumServer {
         const template = this.pool.getWorkTemplate(this.pool.getPoolAddress(), 'stratum-hub', 0);
         const jobId = crypto.randomBytes(6).toString('hex');
         const seed = CortexRandomX.getSeedForBlock(template.index);
+        const seedHash = crypto.createHash('sha256').update(seed).digest('hex');
 
         const prefixBuf = Buffer.from(template.headerPrefix, 'utf8');
         const paddedBuf = Buffer.alloc(76);
@@ -499,6 +501,7 @@ export class CortexStratumServer {
             headerPrefix: template.headerPrefix,
             headerSuffix: template.headerSuffix,
             seed,
+            seedHash,
             targetHex: this.diffToTargetHex(template.shareDifficulty),
             blobHex,
             transactions: template.transactions,
@@ -539,7 +542,7 @@ export class CortexStratumServer {
                         blob: job.blobHex,
                         job_id: job.jobId,
                         target: client.targetHex,
-                        seed_hash: job.seed,
+                        seed_hash: job.seedHash,
                         height: job.templateIndex,
                         algo: 'rx/0'
                     }
