@@ -1,0 +1,35 @@
+{
+  "name": "@cortex-protocol/plugin-eliza",
+  "version": "1.0.0",
+  "description": "Official ElizaOS Plugin for Cortex Protocol ($CTX) – Sovereign Decentralized Memory, State Anchoring, and Layer-1 PoW Settlement for Autonomous AI Agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "ts-node test.ts"
+  },
+  "keywords": [
+    "eliza",
+    "elizaos",
+    "ai-agent",
+    "cortex",
+    "cortex-protocol",
+    "blockchain",
+    "crypto",
+    "pow",
+    "randomx",
+    "memory",
+    "decentralized-ai"
+  ],
+  "author": "Cortex Protocol Foundation",
+  "license": "MIT",
+  "dependencies": {
+    "elliptic": "^6.6.1"
+  },
+  "devDependencies": {
+    "@types/elliptic": "^6.4.18",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

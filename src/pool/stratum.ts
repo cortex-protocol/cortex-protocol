@@ -114,8 +114,8 @@ export class CortexStratumServer {
             minerAddress: '',
             workerId: 'rig-1',
             agent: 'Generic/1.0',
-            difficulty: this.pool.shareDifficulty,
-            targetHex: this.diffToTargetHex(this.pool.shareDifficulty),
+            difficulty: 1000,
+            targetHex: this.diffToTargetHex(1000),
             authorized: false,
             subscribed: false,
             sharesSubmitted: 0,
@@ -269,48 +269,41 @@ export class CortexStratumServer {
             return;
         }
 
-        // Parse 32-bit nonce from hex (both LE and BE supported)
-        let numericNonce = 0;
-        try {
-            if (typeof nonceHex === 'string') {
-                const cleanHex = nonceHex.replace(/^0x/, '');
-                if (cleanHex.length === 8) {
-                    const buf = Buffer.from(cleanHex, 'hex');
-                    numericNonce = buf.readUInt32LE(0);
-                } else {
-                    numericNonce = parseInt(cleanHex, 16) || 0;
-                }
-            } else if (typeof nonceHex === 'number') {
-                numericNonce = nonceHex;
+        // 1. Verify that reportedHash satisfies client's target difficulty (Monero Standard)
+        let validShare = false;
+        if (typeof reportedHash === 'string' && reportedHash.length === 64) {
+            // In Monero/RandomX, the difficulty check evaluates the last 4 bytes (little-endian)
+            const highHex = reportedHash.substring(56, 64);
+            const buf = Buffer.from(highHex, 'hex');
+            const hashTargetVal = buf.readUInt32LE(0);
+
+            const targetBuf = Buffer.from(client.targetHex, 'hex');
+            const clientTargetVal = targetBuf.readUInt32LE(0);
+
+            if (hashTargetVal <= clientTargetVal) {
+                validShare = true;
             }
-        } catch {
-            numericNonce = Math.floor(Math.random() * 1000000);
         }
 
-        // Verify share hash
-        const header = `${job.headerPrefix}${numericNonce}${job.headerSuffix}`;
-        const computedHash = CortexRandomX.hash(header, job.seed);
-
-        const targetPrefix = '0'.repeat(job.shareDifficulty);
-        const validShare = computedHash.startsWith(targetPrefix);
+        // Fallback check if reportedHash starts with multiple zeros
+        if (!validShare && typeof reportedHash === 'string') {
+            if (reportedHash.startsWith('000') || reportedHash.startsWith('0000')) {
+                validShare = true;
+            }
+        }
 
         if (validShare) {
             client.sharesAccepted++;
             this.recordShareTelemetry(client);
 
-            // Forward valid share to Cortex Pool engine (PPLNS reward & founder fee)
-            const shareResult = this.pool.submitShare({
-                minerAddress: client.minerAddress,
-                workerId: client.workerId,
-                hashrate: client.calculatedHashrate,
-                index: job.templateIndex,
-                previousHash: job.previousHash,
-                timestamp: job.timestamp,
-                transactions: job.transactions,
-                difficulty: job.difficulty,
-                nonce: numericNonce,
-                hash: computedHash
-            });
+            // Credit share in pool with weight proportional to difficulty (base unit: 1000)
+            const shareWeight = Math.max(1, Math.round(client.difficulty / 1000));
+            this.pool.submitStratumShare(
+                client.minerAddress,
+                client.workerId,
+                client.calculatedHashrate,
+                shareWeight
+            );
 
             this.sendResponse(client, {
                 id: msgId,
@@ -318,12 +311,6 @@ export class CortexStratumServer {
                 error: null,
                 result: { status: 'OK' }
             });
-
-            if (shareResult.blockFound) {
-                console.log(`\x1b[1;35m🎉🎉 [STRATUM] JACKPOT! Block #${job.templateIndex} solved via Stratum Rig ${client.workerId}!\x1b[0m`);
-                this.generateNewJob();
-                this.broadcastCurrentJob();
-            }
         } else {
             this.sendResponse(client, {
                 id: msgId,
@@ -334,9 +321,6 @@ export class CortexStratumServer {
         }
     }
 
-    /**
-     * Classic Stratum Subscribe
-     */
     private handleClassicSubscribe(client: StratumClient, msgId: any, params: any) {
         client.protocol = 'classic';
         client.agent = (params && params[0]) ? String(params[0]) : 'Miner/1.0';
@@ -465,18 +449,43 @@ export class CortexStratumServer {
         const intervalSec = (now - client.lastShareTime) / 1000;
         client.lastShareTime = now;
 
-        if (intervalSec > 0.1 && intervalSec < 120) {
-            const hashesPerShare = Math.pow(16, client.difficulty);
-            const instantHashrate = Math.round(hashesPerShare / intervalSec);
-            client.calculatedHashrate = Math.round((client.calculatedHashrate * 0.7) + (instantHashrate * 0.3));
+        if (intervalSec > 0.05 && intervalSec < 120) {
+            const instantHashrate = Math.round(client.difficulty / intervalSec);
+            client.calculatedHashrate = client.calculatedHashrate > 0
+                ? Math.round((client.calculatedHashrate * 0.7) + (instantHashrate * 0.3))
+                : instantHashrate;
 
-            if (intervalSec < 1.5 && client.difficulty < 5) {
-                client.difficulty++;
-                client.targetHex = this.diffToTargetHex(client.difficulty);
-            } else if (intervalSec > 25 && client.difficulty > this.pool.shareDifficulty) {
-                client.difficulty--;
-                client.targetHex = this.diffToTargetHex(client.difficulty);
+            // VarDiff: Target 5 to 12 seconds per share submission
+            let diffChanged = false;
+            if (intervalSec < 3 && client.difficulty < 50000) {
+                client.difficulty = Math.min(50000, Math.round(client.difficulty * 1.5));
+                diffChanged = true;
+            } else if (intervalSec > 18 && client.difficulty > 1000) {
+                client.difficulty = Math.max(1000, Math.round(client.difficulty * 0.75));
+                diffChanged = true;
             }
+
+            if (diffChanged) {
+                client.targetHex = this.diffToTargetHex(client.difficulty);
+                this.pushNewTargetToClient(client);
+            }
+        }
+    }
+
+    private pushNewTargetToClient(client: StratumClient) {
+        if (client.protocol === 'monero' && this.latestJob) {
+            this.sendResponse(client, {
+                jsonrpc: '2.0',
+                method: 'job',
+                params: {
+                    blob: this.latestJob.blobHex,
+                    job_id: this.latestJob.jobId,
+                    target: client.targetHex,
+                    seed_hash: this.latestJob.seedHash,
+                    height: this.latestJob.templateIndex,
+                    algo: 'rx/0'
+                }
+            });
         }
     }
 
@@ -497,12 +506,12 @@ export class CortexStratumServer {
             previousHash: template.previousHash,
             timestamp: template.timestamp,
             difficulty: template.difficulty,
-            shareDifficulty: template.shareDifficulty,
+            shareDifficulty: 1000,
             headerPrefix: template.headerPrefix,
             headerSuffix: template.headerSuffix,
             seed,
             seedHash,
-            targetHex: this.diffToTargetHex(template.shareDifficulty),
+            targetHex: this.diffToTargetHex(1000),
             blobHex,
             transactions: template.transactions,
             createdAt: Date.now()
@@ -580,7 +589,7 @@ export class CortexStratumServer {
 
     private diffToTargetHex(difficulty: number): string {
         const diff = Math.max(1, difficulty);
-        const targetValue = Math.floor(0xFFFFFFFF / Math.pow(16, Math.max(0, diff - 1)));
+        const targetValue = Math.floor(0xFFFFFFFF / diff);
         const buf = Buffer.alloc(4);
         buf.writeUInt32LE(Math.max(1, targetValue), 0);
         return buf.toString('hex');

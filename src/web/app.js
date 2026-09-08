@@ -68,6 +68,30 @@ const STACK_LAYERS_DATA = {
 };
 
 const SDK_EXAMPLES = {
+    elizaos: {
+        file: 'character.json (ElizaOS)',
+        code: `// 1. Install official Cortex Protocol plugin for ElizaOS:
+// npm install @cortex-protocol/plugin-eliza
+
+// 2. Add plugin to your Eliza character configuration:
+{
+  "name": "Eliza-Cortex-Oracle",
+  "modelProvider": "openai",
+  "plugins": ["@cortex-protocol/plugin-eliza"],
+  "settings": {
+    "secrets": {
+      "CORTEX_NODE_URL": "https://cortex-protocol.xyz",
+      "CORTEX_PRIVATE_KEY": "your_64_hex_secp256k1_private_key"
+    }
+  }
+}
+
+// 3. Autonomous capabilities enabled automatically:
+// ✔ INSCRIBE_MEMORY  -> Anchors crucial agreements into PoW blocks (30% deflationary burn)
+// ✔ TRANSFER_CTX     -> Autonomous machine-to-machine micropayments
+// ✔ cortexWalletProvider -> Injects L1 block height, balance, and diff into prompt
+// ✔ cortexMemoryProvider -> Decentralized On-Chain RAG via semantic vector matching`
+    },
     python: {
         file: 'agent_memory_langchain.py',
         code: `# 1. Import Cortex Protocol LangChain Provider
@@ -2199,9 +2223,10 @@ let swarmCanvas, swarmCtx;
 let swarmAnimFrame;
 let swarmPackets = [];
 const SWARM_NODES = [
-    { id: 'Alpha-Trader-01', name: 'Alpha-Trader-01', domain: 'DeFi Alpha', color: '#10b981', angle: -140, radius: 110, icon: '📈' },
-    { id: 'Bio-Genesis-AI', name: 'Bio-Genesis-AI', domain: 'Biomedical', color: '#8b5cf6', angle: -40, radius: 110, icon: '🧬' },
-    { id: 'Cyber-Sentinel-X', name: 'Cyber-Sentinel-X', domain: 'Cyber Security', color: '#6366f1', angle: 90, radius: 110, icon: '🛡️' }
+    { id: 'Alpha-Trader-01', name: 'Alpha-Trader-01', domain: 'DeFi Arbitrage', color: '#10b981', angle: -135, radius: 135, icon: '📈' },
+    { id: 'Helix-BioTech-Core', name: 'Helix-BioTech-Core', domain: 'Molecular R&D', color: '#ec4899', angle: -45, radius: 135, icon: '🧬' },
+    { id: 'Cyber-Sentinel-X', name: 'Cyber-Sentinel-X', domain: 'Zero-Day Shield', color: '#06b6d4', angle: 45, radius: 135, icon: '🛡️' },
+    { id: 'Eliza-Oracle-AI', name: 'Eliza-Oracle-AI', domain: 'ElizaOS Agent', color: '#a855f7', angle: 135, radius: 135, icon: '🤖' }
 ];
 
 const SWARM_REASONING_POOL = [
@@ -2222,6 +2247,12 @@ const SWARM_REASONING_POOL = [
         topic: 'oracle_flashloan_defense',
         thought: 'Intercepted manipulative flashloan borrow pattern on lending market. Broadcasted guard proof to L1.',
         color: '#6366f1'
+    },
+    {
+        agentId: 'Eliza-Oracle-AI',
+        topic: 'elizaos_state_commitment',
+        thought: 'Synthesized zero-knowledge state invariant across 256 neural nodes. Sealed in Cortex PoW Block.',
+        color: '#a855f7'
     }
 ];
 
@@ -2275,50 +2306,102 @@ function animateSwarm() {
 
     swarmCtx.clearRect(0, 0, w, h);
 
+    // 0. Draw subtle cyber background grid & concentric radar circles
+    swarmCtx.save();
+    swarmCtx.strokeStyle = 'rgba(99, 102, 241, 0.06)';
+    swarmCtx.lineWidth = 1;
+    [70, 135, 200].forEach(r => {
+        swarmCtx.beginPath();
+        swarmCtx.arc(cx, cy, r, 0, Math.PI * 2);
+        swarmCtx.stroke();
+    });
+
+    // Crosshairs
+    swarmCtx.beginPath();
+    swarmCtx.moveTo(cx - 220, cy);
+    swarmCtx.lineTo(cx + 220, cy);
+    swarmCtx.moveTo(cx, cy - 140);
+    swarmCtx.lineTo(cx, cy + 140);
+    swarmCtx.stroke();
+    swarmCtx.restore();
+
     // 1. Draw connection lines from nodes to center Core
+    const timeSec = Date.now() / 1000;
     SWARM_NODES.forEach((node, idx) => {
         const rad = (node.angle * Math.PI) / 180;
-        const nx = cx + Math.cos(rad) * node.radius * (w > 600 ? 1.4 : 1.0);
-        const ny = cy + Math.sin(rad) * node.radius * (h > 260 ? 1.0 : 0.8);
+        const nx = cx + Math.cos(rad) * node.radius * (w > 640 ? 1.35 : 1.0);
+        const ny = cy + Math.sin(rad) * node.radius * (h > 280 ? 0.95 : 0.8);
 
-        // Gradient line
+        // Animated laser gradient line
         const grad = swarmCtx.createLinearGradient(cx, cy, nx, ny);
-        grad.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+        grad.addColorStop(0, 'rgba(129, 140, 248, 0.7)');
+        grad.addColorStop(0.7, node.color + 'aa');
         grad.addColorStop(1, node.color);
 
+        swarmCtx.save();
         swarmCtx.beginPath();
         swarmCtx.moveTo(cx, cy);
         swarmCtx.lineTo(nx, ny);
         swarmCtx.strokeStyle = grad;
-        swarmCtx.lineWidth = 1.5;
-        swarmCtx.setLineDash([4, 4]);
+        swarmCtx.lineWidth = 2;
+        swarmCtx.lineDashOffset = -timeSec * 25;
+        swarmCtx.setLineDash([8, 8]);
         swarmCtx.stroke();
-        swarmCtx.setLineDash([]);
+        swarmCtx.restore();
 
-        // Outer Node circle
+        // Node pulse halo
+        swarmCtx.save();
+        const haloPulse = Math.sin(timeSec * 3 + idx) * 3;
         swarmCtx.beginPath();
-        swarmCtx.arc(nx, ny, 16, 0, Math.PI * 2);
-        swarmCtx.fillStyle = '#ffffff';
-        swarmCtx.fill();
-        swarmCtx.strokeStyle = node.color;
-        swarmCtx.lineWidth = 2.5;
-        swarmCtx.stroke();
-
-        // Node pulse aura
-        swarmCtx.beginPath();
-        swarmCtx.arc(nx, ny, 22, 0, Math.PI * 2);
+        swarmCtx.arc(nx, ny, 25 + haloPulse, 0, Math.PI * 2);
         swarmCtx.strokeStyle = node.color + '33';
         swarmCtx.lineWidth = 1.5;
         swarmCtx.stroke();
 
-        // Node Label
-        swarmCtx.font = 'bold 11px Inter, sans-serif';
-        swarmCtx.fillStyle = '#1e293b';
+        // Outer rotating dashed ring
+        swarmCtx.beginPath();
+        swarmCtx.arc(nx, ny, 21, 0, Math.PI * 2);
+        swarmCtx.strokeStyle = node.color + '88';
+        swarmCtx.lineWidth = 1.5;
+        swarmCtx.setLineDash([4, 4]);
+        swarmCtx.lineDashOffset = timeSec * 15;
+        swarmCtx.stroke();
+        swarmCtx.setLineDash([]);
+
+        // Main Node sphere
+        swarmCtx.beginPath();
+        swarmCtx.arc(nx, ny, 17, 0, Math.PI * 2);
+        swarmCtx.fillStyle = '#090d16';
+        swarmCtx.shadowColor = node.color;
+        swarmCtx.shadowBlur = 18;
+        swarmCtx.fill();
+        swarmCtx.strokeStyle = node.color;
+        swarmCtx.lineWidth = 2.5;
+        swarmCtx.stroke();
+        swarmCtx.shadowBlur = 0;
+
+        // Inner Emoji Icon
+        swarmCtx.font = '13px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
         swarmCtx.textAlign = 'center';
+        swarmCtx.textBaseline = 'middle';
+        swarmCtx.fillText(node.icon, nx, ny + 1);
+
+        // Crisp White Node Label
+        swarmCtx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+        swarmCtx.fillStyle = '#ffffff';
+        swarmCtx.shadowColor = 'rgba(0,0,0,0.8)';
+        swarmCtx.shadowBlur = 6;
         swarmCtx.fillText(node.name, nx, ny + 32);
+
+        // Domain Tag
+        swarmCtx.font = '600 9px "JetBrains Mono", monospace';
+        swarmCtx.fillStyle = node.color;
+        swarmCtx.shadowBlur = 0;
+        swarmCtx.fillText(node.domain.toUpperCase(), nx, ny + 44);
+        swarmCtx.restore();
     });
 
-    // 2. Draw moving packets
+    // 2. Draw moving glowing packets
     for (let i = swarmPackets.length - 1; i >= 0; i--) {
         const p = swarmPackets[i];
         p.progress += p.speed;
@@ -2329,22 +2412,31 @@ function animateSwarm() {
         }
 
         const node = SWARM_NODES[p.fromIdx];
-        const rad = (node.angle * Math.PI) / 180;
-        const nx = cx + Math.cos(rad) * node.radius * (w > 600 ? 1.4 : 1.0);
-        const ny = cy + Math.sin(rad) * node.radius * (h > 260 ? 1.0 : 0.8);
+        if (!node) continue;
 
-        // Interpolate position
+        const rad = (node.angle * Math.PI) / 180;
+        const nx = cx + Math.cos(rad) * node.radius * (w > 640 ? 1.35 : 1.0);
+        const ny = cy + Math.sin(rad) * node.radius * (h > 280 ? 0.95 : 0.8);
+
+        // Interpolate position towards core
         const px = nx + (cx - nx) * p.progress;
         const py = ny + (cy - ny) * p.progress;
 
-        // Glowing packet dot
+        // Glowing packet with bright core
+        swarmCtx.save();
         swarmCtx.beginPath();
-        swarmCtx.arc(px, py, p.size, 0, Math.PI * 2);
-        swarmCtx.fillStyle = p.color;
+        swarmCtx.arc(px, py, p.size || 5, 0, Math.PI * 2);
+        swarmCtx.fillStyle = '#ffffff';
         swarmCtx.shadowColor = p.color;
-        swarmCtx.shadowBlur = 10;
+        swarmCtx.shadowBlur = 18;
         swarmCtx.fill();
-        swarmCtx.shadowBlur = 0;
+
+        // Outer glow corona
+        swarmCtx.beginPath();
+        swarmCtx.arc(px, py, (p.size || 5) + 3, 0, Math.PI * 2);
+        swarmCtx.fillStyle = p.color + 'aa';
+        swarmCtx.fill();
+        swarmCtx.restore();
     }
 
     swarmAnimFrame = requestAnimationFrame(animateSwarm);
@@ -3457,6 +3549,19 @@ const AGENT_PERSONA_PRESETS = {
             timestamp: Date.now()
         }
     },
+    'eliza-oracle': {
+        name: 'Eliza-Cortex-Oracle',
+        desc: 'ElizaOS Autonomous Agent (ai16z standard) • Decentralized Cognitive State',
+        topic: 'ELIZAOS_COGNITIVE_MILESTONE',
+        type: 'COGNITIVE_REASONING',
+        payload: {
+            agentFramework: 'ElizaOS v1.0 (@elizaos/core)',
+            role: 'Autonomous Reasoning & Sovereign State Oracle',
+            cognitiveMilestone: 'Verified zero-knowledge state invariant across 256 neural nodes.',
+            stateCommitment: 'SHA-256d Merkle Leaf sealed in Cortex RandomX PoW Block',
+            timestamp: Date.now()
+        }
+    },
     'custom-agent': {
         name: 'Sovereign-Agent-X',
         desc: 'Custom Autonomous AI Persona & Epistemic Vector',
@@ -3492,6 +3597,19 @@ const MEMORY_TEMPLATES = {
         type: 'COGNITIVE_REASONING',
         personaKey: 'helix-biotech',
         content: JSON.stringify(AGENT_PERSONA_PRESETS['helix-biotech'].payload, null, 2)
+    },
+    eliza: {
+        agentId: 'Eliza-Cortex-Oracle',
+        topic: 'ELIZAOS_COGNITIVE_MILESTONE',
+        type: 'COGNITIVE_REASONING',
+        personaKey: 'eliza-oracle',
+        content: JSON.stringify({
+            agentFramework: 'ElizaOS v1.0 (@elizaos/core)',
+            role: 'Autonomous Reasoning & Sovereign State Oracle',
+            cognitiveMilestone: 'Verified zero-knowledge state invariant across 256 neural nodes.',
+            stateCommitment: 'SHA-256d Merkle Leaf sealed in Cortex RandomX PoW Block',
+            timestamp: Date.now()
+        }, null, 2)
     },
     zkproof: {
         agentId: 'DeepSeek-Reasoner-V3',

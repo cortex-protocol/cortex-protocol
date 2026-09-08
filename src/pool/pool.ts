@@ -225,6 +225,24 @@ export class CortexMiningPool {
         return existing;
     }
 
+    /**
+     * Credit verified share from Stratum TCP bridge (XMRig / HiveOS / SRBMiner)
+     */
+    public submitStratumShare(minerAddress: string, workerId: string, reportedHashrate: number = 0, shareWeight: number = 1): void {
+        if (!minerAddress || !minerAddress.startsWith('ctx1') || minerAddress.length < 20) {
+            return;
+        }
+        const miner = this.recordValidShare(minerAddress, workerId, reportedHashrate);
+        const extraWeight = Math.max(0, shareWeight - 1);
+        if (extraWeight > 0) {
+            miner.shares += extraWeight;
+            miner.validSharesRound += extraWeight;
+            this.currentRoundShares += extraWeight;
+        } else {
+            this.currentRoundShares++;
+        }
+    }
+
     private recordValidShare(address: string, workerId: string, reportedHashrate: number = 0): PoolMinerInfo {
         const key = `${address.toLowerCase()}:${workerId}`;
         let existing = this.miners.get(key);
