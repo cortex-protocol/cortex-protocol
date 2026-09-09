@@ -139,6 +139,7 @@
             align-items: center;
             gap: 7px;
             transition: all 0.2s ease;
+            cursor: pointer;
         }
         .dex-nav-link-btn:hover {
             background: rgba(255, 255, 255, 0.09);
@@ -440,6 +441,62 @@
             overflow: hidden;
         }
 
+        /* User LP Position Box */
+        .user-lp-position-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 0.8rem;
+        }
+
+        /* Modal Overlay */
+        .dex-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(3, 7, 18, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+        .dex-modal-overlay.active {
+            display: flex;
+        }
+        .dex-modal-card {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(99, 102, 241, 0.2);
+            border-radius: 24px;
+            max-width: 480px;
+            width: 100%;
+            padding: 26px;
+            position: relative;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .dex-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+        .dex-modal-close:hover {
+            color: #ffffff;
+        }
+
         /* Connected Wallet Pill */
         .connected-wallet-pill {
             display: inline-flex;
@@ -476,7 +533,7 @@
             transform: translateY(20px);
             transition: all 0.25s ease;
             pointer-events: none;
-            z-index: 9999;
+            z-index: 99999;
         }
         #toast.show {
             opacity: 1;
@@ -550,27 +607,27 @@
     <!-- MAIN DEX APPLICATION -->
     <main class="dex-standalone-container">
         
-        <!-- TOP PROTOCOL STATS BAR (4 TILES) -->
+        <!-- TOP PROTOCOL STATS BAR (4 DYNAMIC TILES) -->
         <div class="dex-stats-grid">
             <div class="dex-stat-tile">
                 <div class="dex-stat-label">CTX SPOT PRICE</div>
-                <div class="dex-stat-value text-emerald" id="dex-spot-price-val">$1.2450 USD</div>
-                <div class="dex-stat-sub">Continuous AMM Curve</div>
+                <div class="dex-stat-value text-emerald" id="dex-spot-price-val">$2.0061 USD</div>
+                <div class="dex-stat-sub" id="dex-spot-sub">Continuous AMM Curve (+4.8%)</div>
             </div>
             <div class="dex-stat-tile">
                 <div class="dex-stat-label">TOTAL POOL LIQUIDITY</div>
-                <div class="dex-stat-value text-indigo" id="dex-tvl-val">$1,245,000 USD</div>
-                <div class="dex-stat-sub">500K CTX + 622.5K tUSDC</div>
+                <div class="dex-stat-value text-indigo" id="dex-tvl-val">$1,580,950 USD</div>
+                <div class="dex-stat-sub" id="dex-reserves-sub">394.0K CTX + 790.5K tUSDC</div>
             </div>
             <div class="dex-stat-tile">
                 <div class="dex-stat-label">24H TRADING VOLUME</div>
-                <div class="dex-stat-value text-cyan" id="dex-volume-val">$98,420 USD</div>
-                <div class="dex-stat-sub text-emerald"><i class="fa-solid fa-arrow-trend-up"></i> +14.8% vs yesterday</div>
+                <div class="dex-stat-value text-cyan" id="dex-volume-val">$148,500 USD</div>
+                <div class="dex-stat-sub text-emerald" id="dex-volume-sub"><i class="fa-solid fa-arrow-trend-up"></i> +14.8% vs yesterday</div>
             </div>
             <div class="dex-stat-tile">
                 <div class="dex-stat-label">LP REWARDS APY</div>
                 <div class="dex-stat-value text-amber" id="dex-apy-val">18.4% APY</div>
-                <div class="dex-stat-sub">Auto-distributed to LPs</div>
+                <div class="dex-stat-sub">Continuous 0.3% trading fee yield</div>
             </div>
         </div>
 
@@ -635,7 +692,7 @@
                 <div class="dex-meta-box">
                     <div class="dex-meta-row">
                         <span>Exchange Rate</span>
-                        <span class="dex-meta-value" id="dex-rate-text">1 CTX ≈ 1.2450 tUSDC</span>
+                        <span class="dex-meta-value" id="dex-rate-text">1 CTX ≈ 2.0061 tUSDC</span>
                     </div>
                     <div class="dex-meta-row">
                         <span>LP Fee Tier (0.3%)</span>
@@ -665,11 +722,11 @@
                         <div>
                             <div class="dex-card-title">
                                 <i class="fa-solid fa-chart-area text-emerald"></i>
-                                <span>CTX / USD Price Action</span>
+                                <span>CTX / USD Live Price Curve</span>
                             </div>
-                            <span style="font-size:0.75rem; color:#64748b;">Autonomous Constant-Product Pricing</span>
+                            <span style="font-size:0.75rem; color:#64748b;">Autonomous AMM Continuous Pricing</span>
                         </div>
-                        <span class="dex-nav-badge" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.35);">
+                        <span class="dex-nav-badge" id="dex-chart-badge" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.35);">
                             +4.8% 24h
                         </span>
                     </div>
@@ -683,20 +740,33 @@
                     <div class="dex-card-header">
                         <div class="dex-card-title">
                             <i class="fa-solid fa-water text-cyan"></i>
-                            <span>Provide Liquidity</span>
+                            <span>Provide Liquidity (LP)</span>
                         </div>
-                        <span class="dex-nav-badge" style="background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.35); color: #c084fc;">
+                        <span class="dex-nav-badge" id="dex-lp-apy-badge" style="background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.35); color: #c084fc;">
                             18.4% APY
                         </span>
                     </div>
-                    <p style="font-size:0.82rem; color:#94a3b8; line-height:1.5; margin-bottom:16px;">
-                        Deposit equal shares of CTX and tUSDC to provide depth to the sovereign Layer-1 pool. Earn continuous 0.3% trading fees proportional to your pool share.
+                    <p style="font-size:0.82rem; color:#94a3b8; line-height:1.5; margin-bottom:14px;">
+                        Deposit proportional CTX and tUSDC into the autonomous AMM pool. Earn continuous 0.3% protocol fee rewards on all network swaps.
                     </p>
+
+                    <!-- User Active Position Display (if any) -->
+                    <div id="dex-user-lp-display" style="display:none;" class="user-lp-position-box mb-3">
+                        <div class="flex items-center justify-between font-bold text-slate-100 mb-1">
+                            <span><i class="fa-solid fa-shield-halved text-cyan mr-1"></i> Your Active LP Position</span>
+                            <span class="mono text-emerald" id="lp-my-share-val">0.00% pool</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span id="lp-my-assets-val">0 CTX + 0 tUSDC</span>
+                            <span class="mono font-bold text-indigo" id="lp-my-usd-val">≈ $0.00 USD</span>
+                        </div>
+                    </div>
+
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <button class="dex-nav-link-btn" style="justify-content:center; padding:12px; background:rgba(99, 102, 241, 0.15); border-color:rgba(99, 102, 241, 0.35); color:#ffffff;" onclick="depositLiquidityDemo()">
+                        <button class="dex-nav-link-btn" style="justify-content:center; padding:12px; background:rgba(99, 102, 241, 0.18); border-color:rgba(99, 102, 241, 0.4); color:#ffffff;" onclick="openAddLiquidityModal()">
                             <i class="fa-solid fa-plus text-cyan"></i> <span>Add Liquidity</span>
                         </button>
-                        <button class="dex-nav-link-btn" style="justify-content:center; padding:12px; background:rgba(16, 185, 129, 0.15); border-color:rgba(16, 185, 129, 0.35); color:#ffffff;" onclick="claimLpYieldDemo()">
+                        <button class="dex-nav-link-btn" style="justify-content:center; padding:12px; background:rgba(16, 185, 129, 0.18); border-color:rgba(16, 185, 129, 0.4); color:#ffffff;" onclick="claimLpYield()">
                             <i class="fa-solid fa-gift text-emerald"></i> <span>Claim Yield</span>
                         </button>
                     </div>
@@ -706,6 +776,79 @@
         </div>
     </main>
 
+    <!-- ADD LIQUIDITY MODAL -->
+    <div class="dex-modal-overlay" id="add-liquidity-modal">
+        <div class="dex-modal-card">
+            <button class="dex-modal-close" onclick="closeAddLiquidityModal()">&times;</button>
+            <div class="dex-card-title mb-3">
+                <i class="fa-solid fa-water text-cyan"></i>
+                <span>Deposit AMM Liquidity</span>
+            </div>
+            <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:16px;">
+                Provide liquidity in a 50/50 value ratio according to the current spot price curve.
+            </p>
+
+            <!-- CTX Deposit Box -->
+            <div class="dex-token-box mb-3">
+                <div class="dex-token-box-top">
+                    <span>Input CTX</span>
+                    <span>Bal: <strong class="mono text-slate-100" id="modal-ctx-bal">0.00 CTX</strong></span>
+                </div>
+                <div class="dex-token-input-row">
+                    <input type="number" id="modal-input-ctx" class="dex-amount-input" placeholder="0.0" oninput="calcLiquidityPair()">
+                    <div class="dex-token-badge">
+                        <span>🧠</span>
+                        <span>CTX</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center text-slate-500 mb-2" style="font-size:0.85rem;">
+                <i class="fa-solid fa-plus"></i>
+            </div>
+
+            <!-- Required tUSDC Box -->
+            <div class="dex-token-box mb-3">
+                <div class="dex-token-box-top">
+                    <span>Required tUSDC (Proportional)</span>
+                    <span>Bal: <strong class="mono text-slate-100" id="modal-usdc-bal">1,000.00 tUSDC</strong></span>
+                </div>
+                <div class="dex-token-input-row">
+                    <input type="number" id="modal-input-usdc" class="dex-amount-input text-cyan" placeholder="0.0" readonly>
+                    <div class="dex-token-badge">
+                        <span>💵</span>
+                        <span>tUSDC</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Position Preview Stats -->
+            <div class="dex-meta-box mb-3">
+                <div class="dex-meta-row">
+                    <span>Pool Rate</span>
+                    <span class="dex-meta-value" id="modal-rate-val">1 CTX = 2.0061 tUSDC</span>
+                </div>
+                <div class="dex-meta-row">
+                    <span>Estimated Pool Share</span>
+                    <span class="dex-meta-value text-emerald" id="modal-share-val">&lt; 0.01%</span>
+                </div>
+                <div class="dex-meta-row">
+                    <span>Rewards Yield</span>
+                    <span class="dex-meta-value text-amber">18.4% APY</span>
+                </div>
+                <div class="dex-meta-row">
+                    <span>Network Fee</span>
+                    <span class="dex-meta-value text-slate-400">0.01 CTX</span>
+                </div>
+            </div>
+
+            <button class="btn-dex-swap" id="btn-confirm-deposit-lp" onclick="executeAddLiquidity()">
+                <i class="fa-solid fa-shield-halved"></i> <span>Confirm & Deposit Liquidity</span>
+            </button>
+            <div id="modal-liq-status" class="mt-2 text-center text-xs"></div>
+        </div>
+    </div>
+
     <!-- NOTIFICATION TOAST -->
     <div id="toast"></div>
 
@@ -714,32 +857,64 @@
         let dexState = {
             fromSymbol: 'CTX',
             toSymbol: 'tUSDC',
-            poolCtx: 500000,
-            poolUsdc: 622500,
-            spotPrice: 1.2450,
+            poolCtx: 394043,
+            poolUsdc: 790475,
+            spotPrice: 2.0061,
+            tvl: 1580950,
+            volume24h: 148500,
+            priceChange24h: '+4.8%',
+            apy: 18.4,
             userCtx: 0,
             userUsdc: 1000.00,
             slippage: 0.5,
+            priceHistory: [],
             activeWallet: null
         };
 
         document.addEventListener('DOMContentLoaded', async () => {
-            initStandaloneDex();
-            drawDexPriceChart();
+            await initStandaloneDex();
             autoDetectExtension();
             window.addEventListener('resize', drawDexPriceChart);
+            // Polling every 6 seconds to keep live TVL, Volume, Price and chart updated
+            setInterval(initStandaloneDex, 6000);
         });
 
         async function initStandaloneDex() {
             try {
                 const res = await fetch('/api/dex/pool');
                 const data = await res.json();
-                dexState.poolCtx = data.poolCtx || 500000;
-                dexState.poolUsdc = data.poolUsdc || 622500;
-                dexState.spotPrice = data.spotPrice || 1.2450;
+                
+                dexState.poolCtx = data.poolCtx || dexState.poolCtx;
+                dexState.poolUsdc = data.poolUsdc || dexState.poolUsdc;
+                dexState.spotPrice = data.spotPrice || +(dexState.poolUsdc / dexState.poolCtx).toFixed(4);
+                dexState.tvl = data.tvl || (dexState.poolUsdc * 2);
+                dexState.volume24h = data.volume24h || dexState.volume24h;
+                dexState.apy = data.apy || 18.4;
+                dexState.priceChange24h = data.priceChange24h || '+4.8%';
+                if (data.priceHistory && data.priceHistory.length > 0) {
+                    dexState.priceHistory = data.priceHistory;
+                }
+
+                // Update Top Stats Tiles
                 document.getElementById('dex-spot-price-val').textContent = `$${dexState.spotPrice.toFixed(4)} USD`;
-                const tvl = Math.round(dexState.poolCtx * dexState.spotPrice + dexState.poolUsdc);
-                document.getElementById('dex-tvl-val').textContent = `$${tvl.toLocaleString()} USD`;
+                document.getElementById('dex-spot-sub').textContent = `Continuous AMM Curve (${dexState.priceChange24h})`;
+                
+                document.getElementById('dex-tvl-val').textContent = `$${Math.round(dexState.tvl).toLocaleString()} USD`;
+                const ctxK = (dexState.poolCtx / 1000).toFixed(1);
+                const usdcK = (dexState.poolUsdc / 1000).toFixed(1);
+                document.getElementById('dex-reserves-sub').textContent = `${ctxK}K CTX + ${usdcK}K tUSDC`;
+
+                document.getElementById('dex-volume-val').textContent = `$${Math.round(dexState.volume24h).toLocaleString()} USD`;
+                document.getElementById('dex-volume-sub').innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> ${data.volumeChange24h || '+14.8%'} vs yesterday`;
+
+                document.getElementById('dex-apy-val').textContent = `${dexState.apy}% APY`;
+                const apyBadge = document.getElementById('dex-lp-apy-badge');
+                if (apyBadge) apyBadge.textContent = `${dexState.apy}% APY`;
+
+                const chartBadge = document.getElementById('dex-chart-badge');
+                if (chartBadge) chartBadge.textContent = `${dexState.priceChange24h} 24h`;
+
+                drawDexPriceChart();
             } catch(e) {}
             syncDexDisplay();
         }
@@ -794,7 +969,24 @@
                 const res = await fetch(`/api/dex/balance/${addr}`);
                 const data = await res.json();
                 dexState.userCtx = data.ctx || 0;
-                dexState.userUsdc = data.usdc || 1000.00;
+                dexState.userUsdc = data.usdc !== undefined ? data.usdc : 1000.00;
+            } catch(e) {}
+
+            // Also fetch user LP info
+            try {
+                const lpRes = await fetch(`/api/dex/liquidity/${addr}`);
+                const lpData = await lpRes.json();
+                const lpBox = document.getElementById('dex-user-lp-display');
+                if (lpBox) {
+                    if (lpData.userShares > 0) {
+                        lpBox.style.display = 'block';
+                        document.getElementById('lp-my-share-val').textContent = `${lpData.poolSharePercent}% pool`;
+                        document.getElementById('lp-my-assets-val').textContent = `${lpData.ctxValue.toFixed(2)} CTX + ${lpData.usdcValue.toFixed(2)} tUSDC`;
+                        document.getElementById('lp-my-usd-val').textContent = `≈ $${lpData.totalValueUsd.toLocaleString()} USD`;
+                    } else {
+                        lpBox.style.display = 'none';
+                    }
+                }
             } catch(e) {}
 
             const headerContainer = document.getElementById('dex-header-wallet-container');
@@ -864,6 +1056,9 @@
                 outEl.value = '';
                 feeText.textContent = `0.00 ${dexState.fromSymbol}`;
                 impactText.textContent = '< 0.01%';
+                rateText.textContent = dexState.fromSymbol === 'CTX' 
+                    ? `1 CTX ≈ ${dexState.spotPrice.toFixed(4)} tUSDC` 
+                    : `1 tUSDC ≈ ${(1 / dexState.spotPrice).toFixed(4)} CTX`;
                 return;
             }
 
@@ -936,7 +1131,7 @@
                             </div>
                         `;
                         await syncUserBalances();
-                        drawDexPriceChart();
+                        await initStandaloneDex();
                         return;
                     } else if (result && result.error) {
                         statusBox.innerHTML = `<div style="padding:8px; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.35); border-radius:10px; color:#f87171;">${result.error}</div>`;
@@ -950,14 +1145,152 @@
                 }
             }
 
-            connectDexWallet();
+            // Fallback: prompt private key
+            const key = dexState.activeWallet && dexState.activeWallet.privateKey 
+                ? dexState.activeWallet.privateKey 
+                : prompt('Enter private key to sign swap:');
+            if (key) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Executing Swap...';
+                try {
+                    const res = await fetch('/api/dex/swap', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            senderPrivateKey: key.trim(),
+                            fromSymbol: dexState.fromSymbol,
+                            amountIn: inAmount
+                        })
+                    });
+                    const data = await res.json();
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> <span>Swap Tokens Instantly</span>';
+
+                    if (data.error) {
+                        statusBox.innerHTML = `<div style="padding:8px; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.35); border-radius:10px; color:#f87171;">${data.error}</div>`;
+                        return showToast(data.error, true);
+                    }
+
+                    showToast(`🎉 Swap Executed! Tx: ${data.txId.substring(0, 10)}...`);
+                    document.getElementById('dex-input-pay').value = '';
+                    document.getElementById('dex-input-receive').value = '';
+                    statusBox.innerHTML = `
+                        <div style="padding:10px; background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.35); border-radius:12px; color:#34d399; font-weight:700;">
+                            ✓ Confirmed! Received ${data.amountOut} ${data.toSymbol}
+                        </div>
+                    `;
+                    await syncUserBalances();
+                    await initStandaloneDex();
+                } catch(e) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> <span>Swap Tokens Instantly</span>';
+                    showToast('Swap failed', true);
+                }
+            }
         }
 
-        function depositLiquidityDemo() {
-            showToast('💧 Liquidity Deposited (Earning 18.4% APY)');
+        // --- ADD LIQUIDITY MODAL & LOGIC ---
+        function openAddLiquidityModal() {
+            document.getElementById('modal-ctx-bal').textContent = `${dexState.userCtx.toFixed(2)} CTX`;
+            document.getElementById('modal-usdc-bal').textContent = `${dexState.userUsdc.toFixed(2)} tUSDC`;
+            document.getElementById('modal-rate-val').textContent = `1 CTX = ${dexState.spotPrice.toFixed(4)} tUSDC`;
+            document.getElementById('modal-input-ctx').value = '';
+            document.getElementById('modal-input-usdc').value = '';
+            document.getElementById('modal-liq-status').innerHTML = '';
+            document.getElementById('add-liquidity-modal').classList.add('active');
         }
-        function claimLpYieldDemo() {
-            showToast('🎁 +14.80 tUSDC LP Yield Claimed!');
+
+        function closeAddLiquidityModal() {
+            document.getElementById('add-liquidity-modal').classList.remove('active');
+        }
+
+        function calcLiquidityPair() {
+            const inCtx = parseFloat(document.getElementById('modal-input-ctx').value || '0');
+            const outUsdcEl = document.getElementById('modal-input-usdc');
+            const shareEl = document.getElementById('modal-share-val');
+
+            if (inCtx <= 0) {
+                outUsdcEl.value = '';
+                shareEl.textContent = '< 0.01%';
+                return;
+            }
+
+            const reqUsdc = inCtx * dexState.spotPrice;
+            outUsdcEl.value = reqUsdc.toFixed(4);
+
+            const poolShare = ((inCtx / (dexState.poolCtx + inCtx)) * 100).toFixed(3);
+            shareEl.textContent = `${poolShare}%`;
+        }
+
+        async function executeAddLiquidity() {
+            const inCtx = parseFloat(document.getElementById('modal-input-ctx').value || '0');
+            if (inCtx <= 0) return showToast('Enter a valid CTX amount to deposit', true);
+
+            const btn = document.getElementById('btn-confirm-deposit-lp');
+            const statusBox = document.getElementById('modal-liq-status');
+
+            // Find private key from active wallet or prompt
+            let pKey = dexState.activeWallet && dexState.activeWallet.privateKey ? dexState.activeWallet.privateKey : null;
+            if (!pKey) {
+                pKey = prompt('Enter your private key to sign liquidity deposit:');
+            }
+            if (!pKey) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Depositing Liquidity...';
+            statusBox.innerHTML = '<span class="text-cyan">Submitting on-chain deposit transaction...</span>';
+
+            try {
+                const res = await fetch('/api/dex/liquidity/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        senderPrivateKey: pKey.trim(),
+                        amountCtx: inCtx
+                    })
+                });
+                const data = await res.json();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>Confirm & Deposit Liquidity</span>';
+
+                if (data.error) {
+                    statusBox.innerHTML = `<span class="text-rose font-bold">${data.error}</span>`;
+                    return showToast(data.error, true);
+                }
+
+                showToast(`💧 Deposited ${data.amountCtx} CTX + ${data.amountUsdc} tUSDC!`);
+                closeAddLiquidityModal();
+                await syncUserBalances();
+                await initStandaloneDex();
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>Confirm & Deposit Liquidity</span>';
+                statusBox.innerHTML = `<span class="text-rose font-bold">${e.message || 'Deposit failed'}</span>`;
+                showToast('Deposit failed', true);
+            }
+        }
+
+        async function claimLpYield() {
+            let pKey = dexState.activeWallet && dexState.activeWallet.privateKey ? dexState.activeWallet.privateKey : null;
+            if (!pKey) {
+                pKey = prompt('Enter your private key to claim LP fee yield:');
+            }
+            if (!pKey) return;
+
+            try {
+                const res = await fetch('/api/dex/liquidity/claim', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ senderPrivateKey: pKey.trim() })
+                });
+                const data = await res.json();
+                if (data.error) return showToast(data.error, true);
+
+                showToast(`🎁 +${data.claimedUsdc} tUSDC Claimed to Wallet!`);
+                await syncUserBalances();
+            } catch(e) {
+                showToast('Failed to claim yield', true);
+            }
         }
 
         function drawDexPriceChart() {
@@ -985,21 +1318,26 @@
                 ctx.stroke();
             }
 
-            const currentPrice = dexState.spotPrice || 1.2450;
-            const points = [
-                currentPrice * 0.935,
-                currentPrice * 0.948,
-                currentPrice * 0.922,
-                currentPrice * 0.965,
-                currentPrice * 0.954,
-                currentPrice * 0.988,
-                currentPrice * 0.972,
-                currentPrice * 1.014,
-                currentPrice * 0.998,
-                currentPrice * 1.036,
-                currentPrice * 1.012,
-                currentPrice
-            ];
+            const currentPrice = dexState.spotPrice || 2.0061;
+            let points = [];
+            if (dexState.priceHistory && dexState.priceHistory.length >= 8) {
+                points = dexState.priceHistory.map(p => p.price);
+            } else {
+                points = [
+                    currentPrice * 0.942,
+                    currentPrice * 0.958,
+                    currentPrice * 0.935,
+                    currentPrice * 0.972,
+                    currentPrice * 0.961,
+                    currentPrice * 0.989,
+                    currentPrice * 0.978,
+                    currentPrice * 1.015,
+                    currentPrice * 0.994,
+                    currentPrice * 1.026,
+                    currentPrice * 1.011,
+                    currentPrice
+                ];
+            }
 
             const minP = Math.min(...points) * 0.985;
             const maxP = Math.max(...points) * 1.015;
@@ -1007,7 +1345,7 @@
 
             const coords = points.map((p, i) => ({
                 x: i * stepX,
-                y: h - 25 - ((p - minP) / (maxP - minP)) * (h - 60)
+                y: h - 25 - ((p - minP) / (maxP - minP || 1)) * (h - 60)
             }));
 
             // Radiant neon gradient fill
@@ -1063,7 +1401,7 @@
 
             ctx.fillStyle = '#34d399';
             ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
-            ctx.fillText('+4.8% continuous AMM curve', 14, 42);
+            ctx.fillText(`${dexState.priceChange24h} continuous AMM curve`, 14, 42);
         }
 
         function showToast(msg, isErr = false) {
