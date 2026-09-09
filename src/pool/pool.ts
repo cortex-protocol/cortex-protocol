@@ -373,6 +373,7 @@ export class CortexMiningPool {
         let totalPaid = 0;
         let hashrate = 0;
         let workersCount = 0;
+        const workersList: any[] = [];
 
         for (const miner of this.miners.values()) {
             if (miner.address.toLowerCase() === target) {
@@ -381,6 +382,13 @@ export class CortexMiningPool {
                 totalPaid += miner.totalPaid;
                 hashrate += miner.hashrate;
                 workersCount++;
+                workersList.push({
+                    workerId: miner.workerId,
+                    hashrate: miner.hashrate,
+                    shares: miner.shares,
+                    validSharesRound: miner.validSharesRound,
+                    lastSeen: miner.lastSeen
+                });
             }
         }
 
@@ -396,7 +404,8 @@ export class CortexMiningPool {
             estimatedBlockReward,
             totalPaid: +(totalPaid.toFixed(4)),
             hashrate,
-            workersCount
+            workersCount,
+            workers: workersList
         };
     }
 

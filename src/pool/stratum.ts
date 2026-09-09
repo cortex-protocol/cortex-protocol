@@ -199,16 +199,25 @@ export class CortexStratumServer {
     private handleXmrigLogin(client: StratumClient, msgId: any, params: any) {
         client.protocol = 'monero';
         let rawLogin = (params?.login || '').trim();
-        let worker = (params?.rigid || '').trim();
+        let rigid = (params?.rigid || '').trim();
+        let pass = (params?.pass || '').trim();
+        let workerFromPass = '';
+        if (pass && pass.toLowerCase() !== 'x') {
+            if (pass.toLowerCase().startsWith('w=')) {
+                workerFromPass = pass.substring(2).trim();
+            } else if (!pass.includes(':')) {
+                workerFromPass = pass;
+            }
+        }
 
-        // Support "address.worker_name" syntax
+        // Support "address.worker_name" syntax, --rig-id, or -p worker_name
         if (rawLogin.includes('.')) {
             const parts = rawLogin.split('.');
-            client.minerAddress = parts[0];
-            client.workerId = parts.slice(1).join('.') || worker || 'worker-1';
+            client.minerAddress = parts[0].trim();
+            client.workerId = parts.slice(1).join('.').trim() || rigid || workerFromPass || 'worker-1';
         } else {
             client.minerAddress = rawLogin;
-            client.workerId = worker || 'worker-1';
+            client.workerId = rigid || workerFromPass || 'worker-1';
         }
 
         // Fallback default address if invalid format

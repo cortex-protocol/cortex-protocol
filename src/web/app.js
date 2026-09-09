@@ -2537,6 +2537,60 @@ function resetSwarmSimulation() {
     showToast('Swarm Mesh state reset!');
 }
 
+let cachedPoolMiners = [];
+let activePoolWorkerFilter = '';
+
+function filterPoolWorkersTable(query) {
+    activePoolWorkerFilter = (query || '').trim().toLowerCase();
+    renderPoolWorkersTable();
+}
+
+function renderPoolWorkersTable() {
+    const tbody = document.getElementById('pool-workers-tbody');
+    if (!tbody) return;
+    const myAddr = (currentWallet?.address || cortexWeb3State?.address || '').toLowerCase();
+
+    let list = cachedPoolMiners || [];
+    if (activePoolWorkerFilter) {
+        list = list.filter(m => 
+            (m.address && m.address.toLowerCase().includes(activePoolWorkerFilter)) ||
+            (m.workerId && m.workerId.toLowerCase().includes(activePoolWorkerFilter))
+        );
+    }
+
+    if (list.length > 0) {
+        tbody.innerHTML = list.map(m => {
+            const mHr = m.hashrate > 1000000 
+                ? `${(m.hashrate/1000000).toFixed(2)} MH/s` 
+                : m.hashrate > 1000 
+                ? `${(m.hashrate/1000).toFixed(1)} kH/s` 
+                : `${m.hashrate || 0} H/s`;
+            const shortAddr = `${m.address.substring(0, 10)}...${m.address.substring(m.address.length - 6)}`;
+            const isMe = myAddr && m.address.toLowerCase() === myAddr;
+            return `
+                <tr class="border-bottom-subtle" style="${isMe ? 'background: rgba(99, 102, 241, 0.08);' : ''}">
+                    <td class="p-2 mono font-bold text-slate-900">
+                        <span class="clickable-link" onclick="openAddressInspector('${m.address}')">${shortAddr}</span>
+                        ${isMe ? '<span class="pill-badge pill-violet-light" style="font-size:0.6rem; padding:1px 5px; margin-left:4px;"><i class="fa-solid fa-user"></i> You</span>' : ''}
+                    </td>
+                    <td class="p-2 mono text-indigo font-bold">${escapeHtml(m.workerId || 'worker-1')}</td>
+                    <td class="p-2 mono text-emerald font-bold">${m.shares} shares</td>
+                    <td class="p-2 mono text-slate-900 font-bold"><span class="badge-subtle badge-emerald" style="font-size:0.75rem; font-weight:700;">${mHr}</span></td>
+                    <td class="p-2"><span class="badge-subtle badge-emerald text-xs">● Active</span></td>
+                </tr>
+            `;
+        }).join('');
+    } else {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="p-3 text-center text-slate-400">
+                    ${activePoolWorkerFilter ? `No workers found matching "${escapeHtml(activePoolWorkerFilter)}"` : 'No external workers connected. Run the 1-Click miner to join the pool!'}
+                </td>
+            </tr>
+        `;
+    }
+}
+
 async function fetchPoolStats() {
     try {
         const res = await fetch('/api/pool/stats');
@@ -2547,7 +2601,6 @@ async function fetchPoolStats() {
         const minersEl = document.getElementById('pool-miners-count');
         const diffEl = document.getElementById('pool-share-diff');
         const blocksEl = document.getElementById('pool-blocks-won');
-        const tbody = document.getElementById('pool-workers-tbody');
 
         const hr = data.totalPoolHashrate || 0;
         const hrStr = hr > 1000000 ? `${(hr/1000000).toFixed(2)} MH/s` : hr > 1000 ? `${(hr/1000).toFixed(2)} kH/s` : `${hr} H/s`;
@@ -2557,38 +2610,8 @@ async function fetchPoolStats() {
         if (diffEl) diffEl.textContent = `Diff ${data.shareDifficulty} (Fast)`;
         if (blocksEl) blocksEl.textContent = `${data.poolBlocksFound} Block${data.poolBlocksFound === 1 ? '' : 's'}`;
 
-        if (tbody) {
-            const myAddr = (currentWallet?.address || cortexWeb3State?.address || '').toLowerCase();
-            if (data.miners && data.miners.length > 0) {
-                tbody.innerHTML = data.miners.map(m => {
-                    const mHr = m.hashrate > 1000000 
-                        ? `${(m.hashrate/1000000).toFixed(2)} MH/s` 
-                        : m.hashrate > 1000 
-                        ? `${(m.hashrate/1000).toFixed(1)} kH/s` 
-                        : `${m.hashrate || 0} H/s`;
-                    const shortAddr = `${m.address.substring(0, 10)}...${m.address.substring(m.address.length - 6)}`;
-                    const isMe = myAddr && m.address.toLowerCase() === myAddr;
-                    return `
-                        <tr class="border-bottom-subtle" style="${isMe ? 'background: rgba(99, 102, 241, 0.08);' : ''}">
-                            <td class="p-2 mono font-bold text-slate-900">
-                                <span class="clickable-link" onclick="openAddressInspector('${m.address}')">${shortAddr}</span>
-                                ${isMe ? '<span class="pill-badge pill-violet-light" style="font-size:0.6rem; padding:1px 5px; margin-left:4px;"><i class="fa-solid fa-user"></i> You</span>' : ''}
-                            </td>
-                            <td class="p-2 mono text-indigo font-bold">${escapeHtml(m.workerId || 'worker-1')}</td>
-                            <td class="p-2 mono text-emerald font-bold">${m.shares} shares</td>
-                            <td class="p-2 mono text-slate-900 font-bold"><span class="badge-subtle badge-emerald" style="font-size:0.75rem; font-weight:700;">${mHr}</span></td>
-                            <td class="p-2"><span class="badge-subtle badge-emerald text-xs">● Active</span></td>
-                        </tr>
-                    `;
-                }).join('');
-            } else {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="p-3 text-center text-slate-400">No external workers connected. Run the 1-Click miner to join the pool!</td>
-                    </tr>
-                `;
-            }
-        }
+        cachedPoolMiners = data.miners || [];
+        renderPoolWorkersTable();
     } catch(e) {}
 }
 
