@@ -3,6 +3,7 @@
 let currentWallet = null;
 let pollingTimer = null;
 let currentDifficulty = 2;
+let currentNetworkHashrate = 350000;
 let selectedApiEndpoint = 'stats';
 let currentSdkTab = 'python';
 
@@ -281,38 +282,38 @@ let currentOs = 'windows';
 // DOM READY & INITIALIZATION
 // ========================================================
 document.addEventListener('DOMContentLoaded', () => {
-    loadSavedWallet();
-    fetchStats();
-    fetchBlocks();
-    fetchMemories();
-    fetchMempool();
-    updateMiningCalculator();
-    updateCostCalculator();
+    try { initScrollReveal(); } catch (e) { console.error('initScrollReveal error:', e); }
+    try { loadSavedWallet(); } catch (e) { console.error('loadSavedWallet error:', e); }
+    try { fetchStats(); } catch (e) { console.error('fetchStats error:', e); }
+    try { fetchBlocks(); } catch (e) { console.error('fetchBlocks error:', e); }
+    try { fetchMemories(); } catch (e) { console.error('fetchMemories error:', e); }
+    try { fetchMempool(); } catch (e) { console.error('fetchMempool error:', e); }
+    try { updateMiningCalculator(); } catch (e) { console.error('updateMiningCalculator error:', e); }
+    try { updateCostCalculator(); } catch (e) { console.error('updateCostCalculator error:', e); }
 
-    selectStackLayer(1);
-    switchSdkTab('python');
+    try { selectStackLayer(1); } catch (e) { console.error('selectStackLayer error:', e); }
+    try { switchSdkTab('python'); } catch (e) { console.error('switchSdkTab error:', e); }
 
-    initNeuralCanvas();
-    initSpotlightCards();
-    initScrollReveal();
-    initChartInteraction();
-    initSwarmCanvas();
+    try { initNeuralCanvas(); } catch (e) { console.error('initNeuralCanvas error:', e); }
+    try { initSpotlightCards(); } catch (e) { console.error('initSpotlightCards error:', e); }
+    try { initChartInteraction(); } catch (e) { console.error('initChartInteraction error:', e); }
+    try { initSwarmCanvas(); } catch (e) { console.error('initSwarmCanvas error:', e); }
 
-    executeSemanticSearch();
-    drawSparklineChart();
-    fetchPoolStats();
+    try { executeSemanticSearch(); } catch (e) { console.error('executeSemanticSearch error:', e); }
+    try { drawSparklineChart(); } catch (e) { console.error('drawSparklineChart error:', e); }
+    try { fetchPoolStats(); } catch (e) { console.error('fetchPoolStats error:', e); }
 
     // Live polling loop (3.5s interval with tab-visibility awareness)
     pollingTimer = setInterval(() => {
         if (document.hidden) return; // Save server resources if tab is minimized/backgrounded
-        fetchStats();
-        fetchBlocks();
-        fetchMemories();
-        fetchMempool();
-        fetchPoolStats();
-        drawSparklineChart();
+        try { fetchStats(); } catch(e) {}
+        try { fetchBlocks(); } catch(e) {}
+        try { fetchMemories(); } catch(e) {}
+        try { fetchMempool(); } catch(e) {}
+        try { fetchPoolStats(); } catch(e) {}
+        try { drawSparklineChart(); } catch(e) {}
         if (currentWallet) {
-            updateWalletBalance();
+            try { updateWalletBalance(); } catch(e) {}
         }
     }, 3500);
 
@@ -1325,17 +1326,26 @@ function initSpotlightCards() {
 
 // SCROLL REVEAL
 function initScrollReveal() {
+    if (!('IntersectionObserver' in window)) {
+        document.querySelectorAll('.reveal-on-scroll').forEach(el => el.classList.add('is-revealed'));
+        return;
+    }
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('is-revealed');
             }
         });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.05 });
 
     document.querySelectorAll('.reveal-on-scroll').forEach(el => {
         observer.observe(el);
     });
+
+    // Safety fallback: reveal all elements after 1s to guarantee content visibility
+    setTimeout(() => {
+        document.querySelectorAll('.reveal-on-scroll').forEach(el => el.classList.add('is-revealed'));
+    }, 1000);
 }
 
 // MOBILE NAVIGATION DRAWER
