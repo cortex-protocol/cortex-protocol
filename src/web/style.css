@@ -249,15 +249,15 @@ body {
     flex-wrap: nowrap;
     white-space: nowrap;
 }
-@media (max-width: 1300px) {
+@media (max-width: 1400px) {
     .nav-links {
         gap: 8px;
     }
     .nav-link {
-        font-size: 0.80rem;
+        font-size: 0.78rem;
     }
 }
-@media (max-width: 1140px) {
+@media (max-width: 1250px) {
     .nav-links {
         display: none;
     }

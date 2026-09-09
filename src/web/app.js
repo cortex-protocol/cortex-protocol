@@ -1564,7 +1564,7 @@ async function fetchStats() {
     } catch (e) {}
 }
 
-// MINING YIELD CALCULATOR
+// MINING YIELD CALCULATOR (CALIBRATED ACCURATELY FOR RANDOMX RX/0)
 function updateMiningCalculator() {
     const slider = document.getElementById('calc-cores-slider');
     if (!slider) return;
@@ -1572,15 +1572,95 @@ function updateMiningCalculator() {
     const cores = Number(slider.value);
     document.getElementById('calc-cores-val').textContent = `${cores} Thread${cores > 1 ? 's' : ''}`;
 
-    const estimatedKh = cores * 15;
-    document.getElementById('calc-estimated-hr').textContent = `${estimatedKh} kH/s`;
-    document.getElementById('calc-network-diff').textContent = currentDifficulty;
+    // RandomX standard benchmark: ~750 H/s (0.75 kH/s) per CPU thread
+    // E.g. 8 threads = 6.0 kH/s, 16 threads = 12.0 kH/s, 32 threads (Ryzen 9 7950X) = 24.0 kH/s
+    const estimatedKh = +(cores * 0.75).toFixed(2);
+    const estimatedH = cores * 750;
+    document.getElementById('calc-estimated-hr').textContent = `${estimatedKh} kH/s (${estimatedH.toLocaleString()} H/s)`;
+    
+    const diffVal = currentDifficulty || 5;
+    document.getElementById('calc-network-diff').textContent = diffVal;
 
-    const baseDaily = Math.round((cores * 32) * (3 / Math.max(1, currentDifficulty)));
-    const baseMonthly = baseDaily * 30;
+    // PoW continuous block emission formula:
+    // Block time = 30s -> 2,880 blocks/day * 49.5 CTX (pool reward) = 142,560 CTX/day
+    const dailyEmission = 2880 * 49.5;
+    const netHr = Math.max(100000, currentNetworkHashrate || 380000);
+    
+    // Hashrate share of the network
+    const myShare = estimatedH / (netHr + estimatedH);
+    const baseDaily = Math.round(dailyEmission * myShare);
+    const baseMonthly = Math.round(baseDaily * 30);
 
     document.getElementById('calc-daily-ctx').textContent = `~ ${baseDaily.toLocaleString()} CTX`;
     document.getElementById('calc-monthly-ctx').textContent = `~ ${baseMonthly.toLocaleString()} CTX`;
+}
+
+// DEDICATED PERSONAL RIG & WORKERS DASHBOARD
+async function updateMyRigDashboard(address) {
+    const dashboard = document.getElementById('my-rig-dashboard');
+    if (!dashboard) return;
+    
+    const addr = (address || currentWallet?.address || cortexWeb3State?.address || '').trim().toLowerCase();
+    if (!addr || !addr.startsWith('ctx1') || addr.length < 20) {
+        dashboard.style.display = 'none';
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/pool/miner/${addr}`);
+        const data = await res.json();
+        if (!data) return;
+
+        dashboard.style.display = 'block';
+        const shortAddr = `${addr.substring(0, 10)}...${addr.substring(addr.length - 6)}`;
+        document.getElementById('my-rig-address-short').textContent = shortAddr;
+
+        const hr = data.hashrate || 0;
+        const hrStr = hr > 1000000 ? `${(hr/1000000).toFixed(2)} MH/s` : hr > 1000 ? `${(hr/1000).toFixed(2)} kH/s` : `${hr} H/s`;
+        document.getElementById('my-rig-total-hr').textContent = `${hrStr} Total`;
+        document.getElementById('my-rig-workers-count').textContent = `${data.workersCount || 0} Rig${data.workersCount === 1 ? '' : 's'}`;
+        document.getElementById('my-rig-round-share').textContent = `${data.roundEffortPercent || 0}%`;
+        document.getElementById('my-rig-est-reward').textContent = `${data.estimatedBlockReward || 0} CTX`;
+        document.getElementById('my-rig-total-paid').textContent = `${(data.totalPaid || 0).toFixed(2)} CTX`;
+
+        const workersTbody = document.getElementById('my-workers-tbody');
+        if (workersTbody) {
+            if (data.workers && data.workers.length > 0) {
+                workersTbody.innerHTML = data.workers.map(w => {
+                    const wHr = w.hashrate > 1000000 
+                        ? `${(w.hashrate/1000000).toFixed(2)} MH/s` 
+                        : w.hashrate > 1000 
+                        ? `${(w.hashrate/1000).toFixed(2)} kH/s` 
+                        : `${w.hashrate || 0} H/s`;
+                    return `
+                        <tr class="border-bottom-subtle">
+                            <td class="p-2 mono text-white font-bold"><i class="fa-solid fa-server text-indigo mr-1"></i> ${escapeHtml(w.workerId || 'worker-1')}</td>
+                            <td class="p-2 mono text-emerald font-bold">${wHr}</td>
+                            <td class="p-2 mono text-slate-300">${w.shares || 0} shares (${w.validSharesRound || 0} round)</td>
+                            <td class="p-2"><span class="badge-subtle badge-emerald text-xs">● Active</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                workersTbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-3 text-center text-slate-400">No active workers currently submitting shares for this address.</td>
+                    </tr>
+                `;
+            }
+        }
+    } catch(e) {
+        dashboard.style.display = 'none';
+    }
+}
+
+function clearMyRigFilter() {
+    const filterInput = document.getElementById('pool-worker-filter-input');
+    if (filterInput) filterInput.value = '';
+    activePoolWorkerFilter = '';
+    const dashboard = document.getElementById('my-rig-dashboard');
+    if (dashboard) dashboard.style.display = 'none';
+    renderPoolWorkersTable();
 }
 
 // BLOCKS EXPLORER STATE & HANDLERS
@@ -2542,6 +2622,17 @@ let activePoolWorkerFilter = '';
 
 function filterPoolWorkersTable(query) {
     activePoolWorkerFilter = (query || '').trim().toLowerCase();
+    if (activePoolWorkerFilter.startsWith('ctx1') && activePoolWorkerFilter.length >= 20) {
+        updateMyRigDashboard(activePoolWorkerFilter);
+    } else if (!activePoolWorkerFilter) {
+        const connectedAddr = (currentWallet?.address || cortexWeb3State?.address || '').trim().toLowerCase();
+        if (connectedAddr && connectedAddr.startsWith('ctx1')) {
+            updateMyRigDashboard(connectedAddr);
+        } else {
+            const dashboard = document.getElementById('my-rig-dashboard');
+            if (dashboard) dashboard.style.display = 'none';
+        }
+    }
     renderPoolWorkersTable();
 }
 
@@ -2612,6 +2703,11 @@ async function fetchPoolStats() {
 
         cachedPoolMiners = data.miners || [];
         renderPoolWorkersTable();
+
+        const connectedAddr = (currentWallet?.address || cortexWeb3State?.address || activePoolWorkerFilter || '').trim().toLowerCase();
+        if (connectedAddr && connectedAddr.startsWith('ctx1') && connectedAddr.length >= 20) {
+            updateMyRigDashboard(connectedAddr);
+        }
     } catch(e) {}
 }
 
@@ -3391,6 +3487,7 @@ async function setWebWalletConnected(address) {
     localStorage.setItem('cortex_web3_connected', 'true');
 
     updateWebWalletHeader();
+    updateMyRigDashboard(address);
     await syncWebWalletBalances();
 }
 
@@ -3404,6 +3501,9 @@ function disconnectWebWallet(e) {
 
     const dropdown = document.getElementById('web-wallet-dropdown');
     if (dropdown) dropdown.classList.remove('show');
+
+    const myRigDashboard = document.getElementById('my-rig-dashboard');
+    if (myRigDashboard) myRigDashboard.style.display = 'none';
 
     updateWebWalletHeader();
     showToast('Wallet disconnected');

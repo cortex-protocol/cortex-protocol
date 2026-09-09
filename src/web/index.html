@@ -1171,6 +1171,55 @@ MINER_ADDRESS=ctx1... npm run miner</code></pre>
                             </div>
                         </div>
 
+                        <!-- DEDICATED PERSONAL RIG & WORKERS DASHBOARD (AUTO-DISPLAYED WHEN CONNECTED OR SEARCHED) -->
+                        <div id="my-rig-dashboard" class="my-rig-card p-3 rounded-12 mt-3 mb-3" style="display:none; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.35);">
+                            <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-bottom-subtle">
+                                <div class="flex items-center gap-2">
+                                    <span class="status-dot-emerald"></span>
+                                    <span class="font-bold text-white text-sm"><i class="fa-solid fa-microchip text-indigo"></i> My Dedicated Rig Dashboard</span>
+                                    <span class="mono text-xs text-slate-400" id="my-rig-address-short">ctx1...</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="badge-subtle badge-emerald mono text-xs font-bold" id="my-rig-total-hr">0.00 kH/s Total</span>
+                                    <button class="btn btn-outline btn-xs text-xs" style="padding: 2px 8px; font-size:0.75rem;" onclick="clearMyRigFilter()" title="Clear filter">Show All Pool Workers</button>
+                                </div>
+                            </div>
+                            
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 10px 0;">
+                                <div class="p-2 rounded-8 bg-subtle border-subtle">
+                                    <div class="text-slate-400" style="font-size:0.7rem;">Active Workers</div>
+                                    <strong class="mono text-white text-sm" id="my-rig-workers-count">0 Rigs</strong>
+                                </div>
+                                <div class="p-2 rounded-8 bg-subtle border-subtle">
+                                    <div class="text-slate-400" style="font-size:0.7rem;">Round Share</div>
+                                    <strong class="mono text-indigo text-sm" id="my-rig-round-share">0.0%</strong>
+                                </div>
+                                <div class="p-2 rounded-8 bg-subtle border-subtle">
+                                    <div class="text-slate-400" style="font-size:0.7rem;">Est. Next Block Reward</div>
+                                    <strong class="mono text-emerald text-sm" id="my-rig-est-reward">0.00 CTX</strong>
+                                </div>
+                                <div class="p-2 rounded-8 bg-subtle border-subtle">
+                                    <div class="text-slate-400" style="font-size:0.7rem;">Total Paid On-Chain</div>
+                                    <strong class="mono text-amber text-sm" id="my-rig-total-paid">0.00 CTX</strong>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive mt-2">
+                                <table class="table-subtle w-full text-xs" style="width: 100%;">
+                                    <thead>
+                                        <tr class="text-left text-slate-400 border-bottom-subtle">
+                                            <th class="p-2">Worker Name (Rig ID)</th>
+                                            <th class="p-2">Hashrate</th>
+                                            <th class="p-2">Valid Shares</th>
+                                            <th class="p-2">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="my-workers-tbody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                         <!-- LIVE POOL WORKERS TABLE -->
                         <div class="pool-workers-table-container mt-3">
                             <div class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between flex-wrap gap-2">
