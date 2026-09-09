@@ -3,102 +3,545 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cortex AMM DEX - Sovereign L1 Exchange</title>
+    <title>Cortex DEX - Sovereign Autonomous AMM</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { background: #f8fafc; color: var(--slate-900); }
+        :root {
+            --dex-bg: #070a13;
+            --dex-surface: rgba(15, 23, 42, 0.72);
+            --dex-surface-inner: rgba(7, 11, 22, 0.75);
+            --dex-border: rgba(255, 255, 255, 0.08);
+            --dex-border-glow: rgba(99, 102, 241, 0.35);
+        }
+
+        body {
+            background-color: var(--dex-bg);
+            color: #e2e8f0;
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glow Background Orbs */
+        .ambient-glow-orb-1 {
+            position: fixed;
+            top: -120px;
+            left: 20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(99, 102, 241, 0) 70%);
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .ambient-glow-orb-2 {
+            position: fixed;
+            bottom: -150px;
+            right: 15%;
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.14) 0%, rgba(56, 189, 248, 0) 70%);
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Floating Dark Glass Navbar */
         .dex-standalone-header {
-            background: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 14px 28px;
+            background: rgba(11, 17, 32, 0.82);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+            border-radius: 100px;
+            margin: 16px auto;
+            max-width: 1320px;
+            width: 95%;
+            padding: 10px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: sticky;
-            top: 0;
+            top: 14px;
             z-index: 100;
         }
-        .dex-standalone-container {
-            max-width: 1200px;
-            margin: 32px auto;
-            padding: 0 20px;
+
+        .dex-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
         }
+        .dex-brand img {
+            width: 34px;
+            height: 34px;
+            filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.6));
+        }
+        .dex-brand-title {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+        }
+        .dex-brand-title span {
+            background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
         .dex-nav-badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.25);
+            gap: 7px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.28);
             padding: 4px 12px;
             border-radius: 9999px;
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             font-weight: 700;
-            color: var(--emerald);
+            color: #34d399;
+            letter-spacing: 0.03em;
         }
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(8px);
-            display: none;
+        .pulse-dot-green {
+            width: 7px;
+            height: 7px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulseGreen 2s infinite ease-in-out;
+        }
+        @keyframes pulseGreen {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .dex-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dex-nav-link-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            padding: 8px 14px;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s ease;
+        }
+        .dex-nav-link-btn:hover {
+            background: rgba(255, 255, 255, 0.09);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
+        }
+        .dex-nav-link-telegram {
+            color: #38bdf8;
+            border-color: rgba(56, 189, 248, 0.25);
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .dex-nav-link-telegram:hover {
+            color: #ffffff;
+            background: rgba(56, 189, 248, 0.22);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        /* Container */
+        .dex-standalone-container {
+            max-width: 1260px;
+            margin: 28px auto 60px auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Stats Grid */
+        .dex-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .dex-stat-tile {
+            background: var(--dex-surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--dex-border);
+            border-radius: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .dex-stat-tile:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.16);
+        }
+        .dex-stat-label {
+            font-size: 0.73rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #94a3b8;
+        }
+        .dex-stat-value {
+            font-family: var(--font-mono);
+            font-size: 1.45rem;
+            font-weight: 800;
+            margin: 6px 0 4px 0;
+            letter-spacing: -0.02em;
+        }
+        .dex-stat-sub {
+            font-size: 0.76rem;
+            color: #64748b;
+        }
+
+        /* 2-Column App Grid */
+        .dex-app-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* Swap Card */
+        .dex-card {
+            background: var(--dex-surface);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--dex-border);
+            border-radius: 24px;
+            padding: 24px 26px;
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 30px rgba(99, 102, 241, 0.05);
+        }
+
+        .dex-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--dex-border);
+            margin-bottom: 18px;
+        }
+        .dex-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            font-family: var(--font-heading);
+            margin: 0;
+        }
+
+        /* Slippage Selector */
+        .dex-slippage-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 3px 6px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .slippage-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .slippage-btn.active-slippage {
+            background: rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.35);
+        }
+
+        /* Token Input Box */
+        .dex-token-box {
+            background: var(--dex-surface-inner);
+            border: 1px solid var(--dex-border);
+            border-radius: 18px;
+            padding: 16px 18px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .dex-token-box:focus-within {
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+        }
+        .dex-token-box-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+        .dex-token-input-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+        .dex-amount-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: var(--font-mono);
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: #ffffff;
+            padding: 0;
+        }
+        .dex-amount-input::placeholder {
+            color: #475569;
+        }
+        .dex-token-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 7px 14px;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #ffffff;
+            user-select: none;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+        .max-pill-btn {
+            background: rgba(56, 189, 248, 0.14);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: #38bdf8;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            margin-left: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .max-pill-btn:hover {
+            background: rgba(56, 189, 248, 0.28);
+            color: #ffffff;
+        }
+
+        /* Invert Swap Button */
+        .swap-switch-container {
+            display: flex;
+            justify-content: center;
+            margin: -13px auto;
+            position: relative;
+            z-index: 5;
+        }
+        .swap-switch-btn {
+            width: 42px;
+            height: 42px;
+            background: #0f172a;
+            border: 2px solid rgba(99, 102, 241, 0.38);
+            color: #38bdf8;
+            border-radius: 50%;
+            display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.2);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .swap-switch-btn:hover {
+            transform: rotate(180deg) scale(1.08);
+            border-color: #38bdf8;
+            color: #ffffff;
+            background: #1e293b;
+        }
+
+        /* Swap Meta Details */
+        .dex-meta-box {
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .dex-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .dex-meta-value {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        /* Primary Action Button */
+        .btn-dex-swap {
+            width: 100%;
+            background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+            border: none;
+            color: #ffffff;
+            font-family: var(--font-sans);
+            font-size: 1.05rem;
+            font-weight: 800;
+            padding: 16px;
+            border-radius: 16px;
+            margin-top: 18px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.35), 0 8px 25px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+        .btn-dex-swap:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 45px rgba(6, 182, 212, 0.55), 0 10px 30px rgba(0, 0, 0, 0.5);
+            filter: brightness(1.08);
+        }
+        .btn-dex-swap:active {
+            transform: translateY(0);
+        }
+        .btn-dex-swap:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Chart Canvas Wrap */
+        .dex-chart-canvas-wrap {
+            background: var(--dex-surface-inner);
+            border: 1px solid var(--dex-border);
+            border-radius: 18px;
+            padding: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Connected Wallet Pill */
+        .connected-wallet-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .connected-wallet-pill:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+        }
+
+        /* Toast Dark */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #ffffff;
+            padding: 14px 22px;
+            border-radius: 14px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.25s ease;
+            pointer-events: none;
             z-index: 9999;
         }
-        .modal-overlay.active {
-            display: flex !important;
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
         }
-        .signature-dialog-card {
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid #e2e8f0;
-            width: 100%;
-            max-width: 440px;
-            overflow: hidden;
-            animation: modalPop 0.2s ease-out;
+
+        /* Responsive Breakpoints */
+        @media (max-width: 960px) {
+            .dex-app-grid {
+                grid-template-columns: 1fr;
+            }
+            .dex-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .dex-standalone-header {
+                padding: 10px 16px;
+            }
         }
-        @keyframes modalPop {
-            from { transform: scale(0.95); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        @media (max-width: 640px) {
+            .dex-stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .dex-header-actions .dex-nav-link-btn span {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 
+    <!-- Ambient Glowing Orbs -->
+    <div class="ambient-glow-orb-1"></div>
+    <div class="ambient-glow-orb-2"></div>
+    <div class="light-mesh-bg"></div>
+
     <!-- STANDALONE DEX HEADER -->
     <header class="dex-standalone-header">
-        <div class="flex items-center gap-3">
-            <a href="/" class="brand-logo-light flex items-center gap-2" style="text-decoration:none;">
-                <img src="assets/logo.svg" alt="Cortex Logo" style="width: 34px; height: 34px; filter: drop-shadow(0 2px 6px rgba(79, 70, 229, 0.3));">
-                <div class="flex items-baseline gap-2">
-                    <span class="brand-name-light font-extrabold" style="font-size:1.2rem; letter-spacing:-0.02em;">CORTEX <span class="text-indigo">DEX</span></span>
-                    <span class="badge-subtle badge-indigo text-xs">AMM v1.0</span>
-                </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <a href="/" class="dex-brand">
+                <img src="assets/logo.svg" alt="Cortex Logo">
+                <div class="dex-brand-title">CORTEX <span>DEX</span></div>
             </a>
-            <div class="dex-nav-badge ml-2">
-                <span class="dot-indicator"></span>
-                <span>Layer-1 Testnet</span>
+            <div class="dex-nav-badge">
+                <span class="pulse-dot-green"></span>
+                <span>L1 Testnet (Live)</span>
             </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <a href="https://github.com/cortex-protocol/cortex-protocol" target="_blank" class="btn btn-outline btn-sm">
+        <div class="dex-header-actions">
+            <a href="https://t.me/cortex_ctx" target="_blank" class="dex-nav-link-btn dex-nav-link-telegram" title="Official Telegram">
+                <i class="fa-brands fa-telegram"></i> <span>Telegram</span>
+            </a>
+            <a href="https://discord.gg/WK7tYSse2" target="_blank" class="dex-nav-link-btn" title="Official Discord" style="color:#818cf8;">
+                <i class="fa-brands fa-discord"></i> <span>Discord</span>
+            </a>
+            <a href="https://github.com/cortex-protocol/cortex-protocol" target="_blank" class="dex-nav-link-btn" title="GitHub Repository">
                 <i class="fa-brands fa-github"></i> <span>GitHub</span>
             </a>
-            <a href="/" class="btn btn-outline btn-sm">
-                <i class="fa-solid fa-arrow-left"></i> <span>Protocol Home</span>
-            </a>
-            <a href="/downloads/cortex-wallet-extension.zip" download class="btn btn-outline btn-sm">
-                <i class="fa-solid fa-download"></i> <span>Get Extension</span>
+            <a href="/" class="dex-nav-link-btn" title="Protocol Homepage">
+                <i class="fa-solid fa-arrow-left"></i> <span>Home</span>
             </a>
             <div id="dex-header-wallet-container">
-                <button class="btn btn-primary btn-sm" id="btn-dex-connect" onclick="connectDexWallet()">
-                    <i class="fa-solid fa-wallet"></i> <span>Connect Extension</span>
+                <button class="dex-nav-link-btn" id="btn-dex-connect" onclick="connectDexWallet()" style="background:linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(6, 182, 212, 0.25)); border-color: rgba(99, 102, 241, 0.4); color: #ffffff;">
+                    <i class="fa-solid fa-wallet text-cyan"></i> <span>Connect Wallet</span>
                 </button>
             </div>
         </div>
@@ -106,67 +549,68 @@
 
     <!-- MAIN DEX APPLICATION -->
     <main class="dex-standalone-container">
-        <!-- TOP PROTOCOL STATS BAR (4 COMPACT COLUMNS) -->
-        <div class="dex-stats-row" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 24px;">
-            <div class="dex-stat-card stat-card-emerald">
-                <span class="text-xs text-slate-500 font-bold">CTX SPOT PRICE</span>
-                <div class="text-xl font-bold text-emerald mono mt-1" id="dex-spot-price-val">$1.2450 USD</div>
-                <span class="text-xs text-slate-400">Continuous AMM Curve</span>
+        
+        <!-- TOP PROTOCOL STATS BAR (4 TILES) -->
+        <div class="dex-stats-grid">
+            <div class="dex-stat-tile">
+                <div class="dex-stat-label">CTX SPOT PRICE</div>
+                <div class="dex-stat-value text-emerald" id="dex-spot-price-val">$1.2450 USD</div>
+                <div class="dex-stat-sub">Continuous AMM Curve</div>
             </div>
-            <div class="dex-stat-card stat-card-indigo">
-                <span class="text-xs text-slate-500 font-bold">TOTAL POOL LIQUIDITY</span>
-                <div class="text-xl font-bold text-indigo mono mt-1" id="dex-tvl-val">$1,245,000 USD</div>
-                <span class="text-xs text-slate-400">500K CTX + 622.5K USDC</span>
+            <div class="dex-stat-tile">
+                <div class="dex-stat-label">TOTAL POOL LIQUIDITY</div>
+                <div class="dex-stat-value text-indigo" id="dex-tvl-val">$1,245,000 USD</div>
+                <div class="dex-stat-sub">500K CTX + 622.5K tUSDC</div>
             </div>
-            <div class="dex-stat-card stat-card-violet">
-                <span class="text-xs text-slate-500 font-bold">24H TRADING VOLUME</span>
-                <div class="text-xl font-bold text-violet mono mt-1">$98,420 USD</div>
-                <span class="text-xs text-slate-400">+14.8% vs yesterday</span>
+            <div class="dex-stat-tile">
+                <div class="dex-stat-label">24H TRADING VOLUME</div>
+                <div class="dex-stat-value text-cyan" id="dex-volume-val">$98,420 USD</div>
+                <div class="dex-stat-sub text-emerald"><i class="fa-solid fa-arrow-trend-up"></i> +14.8% vs yesterday</div>
             </div>
-            <div class="dex-stat-card stat-card-amber">
-                <span class="text-xs text-slate-500 font-bold">LP REWARDS APY</span>
-                <div class="text-xl font-bold text-amber mono mt-1">18.4% APY</div>
-                <span class="text-xs text-slate-400">Auto-distributed to LPs</span>
+            <div class="dex-stat-tile">
+                <div class="dex-stat-label">LP REWARDS APY</div>
+                <div class="dex-stat-value text-amber" id="dex-apy-val">18.4% APY</div>
+                <div class="dex-stat-sub">Auto-distributed to LPs</div>
             </div>
         </div>
 
         <!-- 2-COLUMN SWAP & CHART GRID -->
-        <div class="grid-2col" style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div class="dex-app-grid">
             
             <!-- LEFT COLUMN: SWAP INTERFACE -->
-            <div class="dex-swap-card spotlight-card">
-                <div class="flex items-center justify-between pb-3 border-bottom-subtle">
-                    <div class="flex items-center gap-2">
-                        <span class="dot-indicator"></span>
-                        <h3 class="text-slate-900 font-bold m-0">Instant Token Swap</h3>
+            <div class="dex-card">
+                <div class="dex-card-header">
+                    <div class="dex-card-title">
+                        <span class="pulse-dot-green"></span>
+                        <span>Instant Swap</span>
                     </div>
-                    <div class="flex items-center gap-1 text-xs">
-                        <span class="text-slate-500 mr-1">Slippage:</span>
-                        <button class="badge-subtle cursor-pointer active-slippage" onclick="setDexSlippage(0.5, this)">0.5%</button>
-                        <button class="badge-subtle cursor-pointer" onclick="setDexSlippage(1.0, this)">1.0%</button>
+                    <div class="dex-slippage-selector">
+                        <span style="font-size:0.72rem; color:#64748b; padding-left:4px;">Slippage:</span>
+                        <button class="slippage-btn active-slippage" onclick="setDexSlippage(0.5, this)">0.5%</button>
+                        <button class="slippage-btn" onclick="setDexSlippage(1.0, this)">1.0%</button>
                     </div>
                 </div>
 
                 <!-- PAY TOKEN BOX -->
-                <div class="dex-token-box mt-3">
-                    <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
-                        <span class="font-bold">You Pay</span>
-                        <div class="flex items-center">
-                            <span>Balance: <strong class="mono text-slate-900" id="dex-pay-bal">0.00 CTX</strong></span>
+                <div class="dex-token-box">
+                    <div class="dex-token-box-top">
+                        <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">You Pay</span>
+                        <div>
+                            <span>Bal: <strong class="mono text-slate-100" id="dex-pay-bal">0.00 CTX</strong></span>
                             <button class="max-pill-btn" onclick="setDexMaxPay()">MAX</button>
                         </div>
                     </div>
-                    <div class="dex-input-row">
-                        <input type="number" id="dex-input-pay" class="dex-input-amount" placeholder="0.0" oninput="calcSwapOutput()">
-                        <div class="token-pill-badge" id="dex-pay-token-pill">
-                            <span style="font-size: 1.1rem;">🧠</span>
+                    <div class="dex-token-input-row">
+                        <input type="number" id="dex-input-pay" class="dex-amount-input" placeholder="0.0" oninput="calcSwapOutput()">
+                        <div class="dex-token-badge" id="dex-pay-token-pill">
+                            <span style="font-size: 1.15rem;">🧠</span>
                             <span id="dex-pay-sym">CTX</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- SWITCH DIRECTION BUTTON -->
-                <div class="swap-switch-wrap">
+                <div class="swap-switch-container">
                     <button class="swap-switch-btn" onclick="invertSwapPair()" title="Switch Pair Direction">
                         <i class="fa-solid fa-arrow-down-up-across-line"></i>
                     </button>
@@ -174,41 +618,41 @@
 
                 <!-- RECEIVE TOKEN BOX -->
                 <div class="dex-token-box">
-                    <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
-                        <span class="font-bold">You Receive (Estimated)</span>
-                        <span>Balance: <strong class="mono text-slate-900" id="dex-receive-bal">1,000.00 tUSDC</strong></span>
+                    <div class="dex-token-box-top">
+                        <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">You Receive (Estimated)</span>
+                        <span>Bal: <strong class="mono text-slate-100" id="dex-receive-bal">1,000.00 tUSDC</strong></span>
                     </div>
-                    <div class="dex-input-row">
-                        <input type="number" id="dex-input-receive" class="dex-input-amount text-emerald" placeholder="0.0" readonly>
-                        <div class="token-pill-badge" id="dex-receive-token-pill">
-                            <span style="font-size: 1.1rem;">💵</span>
+                    <div class="dex-token-input-row">
+                        <input type="number" id="dex-input-receive" class="dex-amount-input text-emerald" placeholder="0.0" readonly>
+                        <div class="dex-token-badge" id="dex-receive-token-pill">
+                            <span style="font-size: 1.15rem;">💵</span>
                             <span id="dex-receive-sym">tUSDC</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- SWAP DETAILS ACCORDION -->
-                <div class="dex-meta-rows mt-3">
+                <div class="dex-meta-box">
                     <div class="dex-meta-row">
-                        <span class="text-slate-500">Exchange Rate</span>
-                        <span class="mono font-bold text-slate-800" id="dex-rate-text">1 CTX ≈ 1.2450 tUSDC</span>
+                        <span>Exchange Rate</span>
+                        <span class="dex-meta-value" id="dex-rate-text">1 CTX ≈ 1.2450 tUSDC</span>
                     </div>
                     <div class="dex-meta-row">
-                        <span class="text-slate-500">LP Fee Tier (0.3%)</span>
-                        <span class="mono font-bold text-slate-800" id="dex-fee-text">0.00 CTX</span>
+                        <span>LP Fee Tier (0.3%)</span>
+                        <span class="dex-meta-value" id="dex-fee-text">0.00 CTX</span>
                     </div>
                     <div class="dex-meta-row">
-                        <span class="text-slate-500">Price Impact</span>
-                        <span class="mono text-emerald font-bold" id="dex-impact-text">&lt; 0.01%</span>
+                        <span>Price Impact</span>
+                        <span class="dex-meta-value text-emerald" id="dex-impact-text">&lt; 0.01%</span>
                     </div>
                     <div class="dex-meta-row">
-                        <span class="text-slate-500">Routing</span>
-                        <span class="mono text-indigo font-bold">Cortex Constant-Product AMM (x·y=k)</span>
+                        <span>Routing Path</span>
+                        <span class="dex-meta-value text-indigo">Cortex AMM Curve (x·y=k)</span>
                     </div>
                 </div>
 
-                <button class="btn btn-hero-cta btn-block btn-shimmer mt-3" id="btn-dex-execute-swap" onclick="requestSwapSignature()">
-                    <i class="fa-solid fa-arrows-rotate"></i> Swap Tokens Instantly
+                <button class="btn-dex-swap" id="btn-dex-execute-swap" onclick="requestSwapSignature()">
+                    <i class="fa-solid fa-arrows-rotate"></i> <span>Swap Tokens Instantly</span>
                 </button>
                 <div id="dex-swap-status-box" class="mt-2 text-center text-sm"></div>
             </div>
@@ -216,35 +660,44 @@
             <!-- RIGHT COLUMN: PRICE CHART & LIQUIDITY POOL -->
             <div style="display:flex; flex-direction:column; gap:20px;">
                 <!-- PRICE ACTION CHART CARD -->
-                <div class="dex-chart-card spotlight-card">
-                    <div class="flex items-center justify-between pb-2 border-bottom-subtle">
+                <div class="dex-card">
+                    <div class="dex-card-header">
                         <div>
-                            <h3 class="text-slate-900 font-bold m-0"><i class="fa-solid fa-chart-area text-emerald"></i> CTX / USD Price Action</h3>
-                            <span class="text-xs text-slate-400">AMM Continuous Pricing Curve</span>
+                            <div class="dex-card-title">
+                                <i class="fa-solid fa-chart-area text-emerald"></i>
+                                <span>CTX / USD Price Action</span>
+                            </div>
+                            <span style="font-size:0.75rem; color:#64748b;">Autonomous Constant-Product Pricing</span>
                         </div>
-                        <span class="badge-subtle badge-emerald font-bold">+4.8% 24h</span>
+                        <span class="dex-nav-badge" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.35);">
+                            +4.8% 24h
+                        </span>
                     </div>
-                    <div class="dex-chart-canvas-wrap mt-3" style="background:#ffffff; border-radius:12px; border:1px solid #f1f5f9; padding:10px;">
-                        <canvas id="dex-price-canvas" style="width:100%; height:180px;"></canvas>
+                    <div class="dex-chart-canvas-wrap">
+                        <canvas id="dex-price-canvas" style="width:100%; height:190px; display:block;"></canvas>
                     </div>
                 </div>
 
                 <!-- LIQUIDITY POOL CARD -->
-                <div class="light-card rounded-16 p-4">
-                    <div class="flex items-center justify-between pb-2 border-bottom-subtle">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-water text-indigo" style="font-size:1.1rem;"></i>
-                            <h4 class="text-slate-900 font-bold m-0">Provide Liquidity</h4>
+                <div class="dex-card">
+                    <div class="dex-card-header">
+                        <div class="dex-card-title">
+                            <i class="fa-solid fa-water text-cyan"></i>
+                            <span>Provide Liquidity</span>
                         </div>
-                        <span class="badge-subtle badge-violet font-bold">18.4% APY</span>
+                        <span class="dex-nav-badge" style="background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.35); color: #c084fc;">
+                            18.4% APY
+                        </span>
                     </div>
-                    <p class="text-xs text-slate-500 mt-2 mb-3">Earn 0.3% protocol fee on all trades proportional to your share of the pool.</p>
-                    <div class="grid-2col gap-2">
-                        <button class="btn btn-outline btn-block btn-sm" onclick="depositLiquidityDemo()">
-                            <i class="fa-solid fa-plus"></i> Add Liquidity
+                    <p style="font-size:0.82rem; color:#94a3b8; line-height:1.5; margin-bottom:16px;">
+                        Deposit equal shares of CTX and tUSDC to provide depth to the sovereign Layer-1 pool. Earn continuous 0.3% trading fees proportional to your pool share.
+                    </p>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button class="dex-nav-link-btn" style="justify-content:center; padding:12px; background:rgba(99, 102, 241, 0.15); border-color:rgba(99, 102, 241, 0.35); color:#ffffff;" onclick="depositLiquidityDemo()">
+                            <i class="fa-solid fa-plus text-cyan"></i> <span>Add Liquidity</span>
                         </button>
-                        <button class="btn btn-outline btn-block btn-sm" onclick="claimLpYieldDemo()">
-                            <i class="fa-solid fa-gift"></i> Claim Rewards
+                        <button class="dex-nav-link-btn" style="justify-content:center; padding:12px; background:rgba(16, 185, 129, 0.15); border-color:rgba(16, 185, 129, 0.35); color:#ffffff;" onclick="claimLpYieldDemo()">
+                            <i class="fa-solid fa-gift text-emerald"></i> <span>Claim Yield</span>
                         </button>
                     </div>
                 </div>
@@ -254,7 +707,7 @@
     </main>
 
     <!-- NOTIFICATION TOAST -->
-    <div id="toast" class="toast-light"></div>
+    <div id="toast"></div>
 
     <script>
         // STANDALONE DEX LOGIC
@@ -274,24 +727,24 @@
             initStandaloneDex();
             drawDexPriceChart();
             autoDetectExtension();
+            window.addEventListener('resize', drawDexPriceChart);
         });
 
         async function initStandaloneDex() {
             try {
                 const res = await fetch('/api/dex/pool');
                 const data = await res.json();
-                dexState.poolCtx = data.poolCtx;
-                dexState.poolUsdc = data.poolUsdc;
-                dexState.spotPrice = data.spotPrice;
-                document.getElementById('dex-spot-price-val').textContent = `$${data.spotPrice.toFixed(4)} USD`;
-                const tvl = Math.round(data.poolCtx * data.spotPrice + data.poolUsdc);
+                dexState.poolCtx = data.poolCtx || 500000;
+                dexState.poolUsdc = data.poolUsdc || 622500;
+                dexState.spotPrice = data.spotPrice || 1.2450;
+                document.getElementById('dex-spot-price-val').textContent = `$${dexState.spotPrice.toFixed(4)} USD`;
+                const tvl = Math.round(dexState.poolCtx * dexState.spotPrice + dexState.poolUsdc);
                 document.getElementById('dex-tvl-val').textContent = `$${tvl.toLocaleString()} USD`;
             } catch(e) {}
             syncDexDisplay();
         }
 
         async function autoDetectExtension() {
-            // Check if wallet is saved in localStorage or extension
             const saved = localStorage.getItem('cortex_wallet');
             if (saved) {
                 try {
@@ -314,8 +767,7 @@
                     }
                 } catch(e) {}
             }
-            // Prompt manual key or generate
-            const key = prompt('Paste your 64-char private key to connect to DEX:');
+            const key = prompt('Paste your 64-char private key to connect:');
             if (key) {
                 try {
                     const res = await fetch('/api/wallet/import', {
@@ -346,13 +798,13 @@
             } catch(e) {}
 
             const headerContainer = document.getElementById('dex-header-wallet-container');
-            const shortAddr = `${addr.substring(0, 8)}...${addr.substring(addr.length - 4)}`;
+            const shortAddr = `${addr.substring(0, 7)}...${addr.substring(addr.length - 4)}`;
             if (headerContainer) {
                 headerContainer.innerHTML = `
-                    <div class="connected-wallet-pill" onclick="connectDexWallet()" title="Wallet Active">
-                        <span class="dot-indicator"></span>
-                        <span class="mono text-xs font-bold text-slate-800">${shortAddr}</span>
-                        <span class="badge-subtle badge-emerald mono text-xs font-bold">${dexState.userCtx.toFixed(2)} CTX</span>
+                    <div class="connected-wallet-pill" onclick="connectDexWallet()" title="Connected Wallet: ${addr}">
+                        <span class="pulse-dot-green"></span>
+                        <span class="mono" style="font-size:0.8rem; font-weight:700; color:#f8fafc;">${shortAddr}</span>
+                        <span style="background:rgba(16, 185, 129, 0.2); color:#34d399; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:9999px;" class="mono">${dexState.userCtx.toFixed(2)} CTX</span>
                     </div>
                 `;
             }
@@ -437,11 +889,10 @@
 
         function setDexSlippage(val, btn) {
             dexState.slippage = val;
-            document.querySelectorAll('.active-slippage').forEach(el => el.classList.remove('active-slippage'));
+            document.querySelectorAll('.slippage-btn').forEach(el => el.classList.remove('active-slippage'));
             if (btn) btn.classList.add('active-slippage');
         }
 
-        // STEP 1: TRIGGER DEDICATED EXTENSION POPUP APPROVAL
         async function requestSwapSignature() {
             let inAmount = parseFloat(document.getElementById('dex-input-pay').value || '0');
             if (inAmount <= 0) {
@@ -461,11 +912,10 @@
                 amountOut: outAmount
             };
 
-            // Call official Cortex Wallet Extension (triggers independent popup window)
             if (window.cortex && typeof window.cortex.request === 'function') {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Confirm in Cortex Extension...';
-                statusBox.innerHTML = '<div class="p-3 bg-indigo-50 rounded-12 text-indigo font-bold mt-2 border-indigo flex items-center justify-center gap-2"><i class="fa-solid fa-arrow-up-right-from-square"></i> Please approve the swap in your Cortex Wallet Extension popup window.</div>';
+                statusBox.innerHTML = '<div style="padding:10px; background:rgba(99, 102, 241, 0.15); border:1px solid rgba(99, 102, 241, 0.35); border-radius:12px; color:#a5b4fc; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Please approve the swap in your Cortex Wallet Extension popup window.</div>';
 
                 try {
                     const result = await window.cortex.request({
@@ -474,38 +924,37 @@
                     });
 
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Swap Tokens Instantly';
+                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> <span>Swap Tokens Instantly</span>';
 
                     if (result && result.success) {
-                        showToast(`🎉 Swap Signed in Extension! Tx: ${result.txId.substring(0, 10)}...`);
+                        showToast(`🎉 Swap Signed! Tx: ${result.txId.substring(0, 10)}...`);
                         document.getElementById('dex-input-pay').value = '';
                         document.getElementById('dex-input-receive').value = '';
                         statusBox.innerHTML = `
-                            <div class="p-3 bg-emerald-50 rounded-12 text-emerald font-bold mt-2">
-                                ✓ Confirmed! Swapped ${swapParams.amountIn} ${result.fromSymbol || swapParams.fromSymbol} for ${result.amountOut || swapParams.amountOut} ${result.toSymbol || swapParams.toSymbol} (Tx: ${result.txId.substring(0, 12)}...)
+                            <div style="padding:10px; background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.35); border-radius:12px; color:#34d399; font-weight:700;">
+                                ✓ Confirmed! Swapped ${swapParams.amountIn} ${result.fromSymbol || swapParams.fromSymbol} for ${result.amountOut || swapParams.amountOut} ${result.toSymbol || swapParams.toSymbol}
                             </div>
                         `;
                         await syncUserBalances();
                         drawDexPriceChart();
                         return;
                     } else if (result && result.error) {
-                        statusBox.innerHTML = `<div class="p-2 bg-rose-50 text-flame rounded-10 mt-2">${result.error}</div>`;
+                        statusBox.innerHTML = `<div style="padding:8px; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.35); border-radius:10px; color:#f87171;">${result.error}</div>`;
                         return showToast(result.error, true);
                     }
                 } catch(e) {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Swap Tokens Instantly';
-                    statusBox.innerHTML = `<div class="p-2 bg-rose-50 text-flame rounded-10 mt-2">${e.message || 'Transaction rejected in wallet'}</div>`;
+                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> <span>Swap Tokens Instantly</span>';
+                    statusBox.innerHTML = `<div style="padding:8px; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.35); border-radius:10px; color:#f87171;">${e.message || 'Transaction rejected in wallet'}</div>`;
                     return showToast(e.message || 'Transaction rejected in wallet', true);
                 }
             }
 
-            // If extension not yet connected or installed, prompt connect
             connectDexWallet();
         }
 
         function depositLiquidityDemo() {
-            showToast('💧 Liquidity Deposited (Earn 18.4% APY)');
+            showToast('💧 Liquidity Deposited (Earning 18.4% APY)');
         }
         function claimLpYieldDemo() {
             showToast('🎁 +14.80 tUSDC LP Yield Claimed!');
@@ -518,38 +967,37 @@
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.getBoundingClientRect();
             const w = rect.width || 450;
-            const h = 180;
+            const h = 190;
 
             canvas.width = w * dpr;
             canvas.height = h * dpr;
             ctx.scale(dpr, dpr);
 
             ctx.clearRect(0, 0, w, h);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, w, h);
 
-            ctx.strokeStyle = '#f1f5f9';
+            // Subtle dark grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
             ctx.lineWidth = 1;
-            for (let y = 30; y < h; y += 35) {
+            for (let y = 35; y < h; y += 38) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(w, y);
                 ctx.stroke();
             }
 
-            const currentPrice = dexState.spotPrice;
+            const currentPrice = dexState.spotPrice || 1.2450;
             const points = [
-                currentPrice * 0.925,
-                currentPrice * 0.942,
-                currentPrice * 0.918,
+                currentPrice * 0.935,
+                currentPrice * 0.948,
+                currentPrice * 0.922,
                 currentPrice * 0.965,
-                currentPrice * 0.952,
-                currentPrice * 0.984,
-                currentPrice * 0.970,
+                currentPrice * 0.954,
+                currentPrice * 0.988,
+                currentPrice * 0.972,
+                currentPrice * 1.014,
+                currentPrice * 0.998,
+                currentPrice * 1.036,
                 currentPrice * 1.012,
-                currentPrice * 0.995,
-                currentPrice * 1.034,
-                currentPrice * 1.008,
                 currentPrice
             ];
 
@@ -559,12 +1007,14 @@
 
             const coords = points.map((p, i) => ({
                 x: i * stepX,
-                y: h - 28 - ((p - minP) / (maxP - minP)) * (h - 55)
+                y: h - 25 - ((p - minP) / (maxP - minP)) * (h - 60)
             }));
 
+            // Radiant neon gradient fill
             const grad = ctx.createLinearGradient(0, 0, 0, h);
-            grad.addColorStop(0, 'rgba(16, 185, 129, 0.22)');
-            grad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+            grad.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
+            grad.addColorStop(0.7, 'rgba(6, 182, 212, 0.10)');
+            grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
 
             ctx.beginPath();
             ctx.moveTo(coords[0].x, h);
@@ -579,6 +1029,7 @@
             ctx.fillStyle = grad;
             ctx.fill();
 
+            // Neon glowing stroke
             ctx.beginPath();
             ctx.moveTo(coords[0].x, coords[0].y);
             for (let i = 0; i < coords.length - 1; i++) {
@@ -589,8 +1040,12 @@
             ctx.lineTo(coords[coords.length - 1].x, coords[coords.length - 1].y);
             ctx.strokeStyle = '#10b981';
             ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#10b981';
+            ctx.shadowBlur = 10;
             ctx.stroke();
+            ctx.shadowBlur = 0;
 
+            // Dot on latest price
             const last = coords[coords.length - 1];
             ctx.beginPath();
             ctx.arc(last.x - 3, last.y, 5, 0, Math.PI * 2);
@@ -600,21 +1055,22 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 15px JetBrains Mono';
+            // Price HUD overlay inside chart
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px "JetBrains Mono", monospace';
             ctx.textAlign = 'left';
-            ctx.fillText(`$${currentPrice.toFixed(4)} USD`, 12, 24);
+            ctx.fillText(`$${currentPrice.toFixed(4)} USD`, 14, 25);
 
-            ctx.fillStyle = '#10b981';
-            ctx.font = '11px Plus Jakarta Sans';
-            ctx.fillText('+4.8% (24h continuous AMM curve)', 12, 40);
+            ctx.fillStyle = '#34d399';
+            ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('+4.8% continuous AMM curve', 14, 42);
         }
 
         function showToast(msg, isErr = false) {
             const t = document.getElementById('toast');
             if (!t) return;
             t.textContent = msg;
-            t.style.borderColor = isErr ? 'var(--flame)' : 'var(--indigo)';
+            t.style.borderColor = isErr ? 'rgba(239, 68, 68, 0.6)' : 'rgba(56, 189, 248, 0.6)';
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 3500);
         }
