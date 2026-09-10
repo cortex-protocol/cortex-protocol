@@ -2,6 +2,8 @@
 ### The Settlement & State Layer for Autonomous AI Agents
 
 [![Discord Community](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/WK7tYSse2)
+[![X (Twitter)](https://img.shields.io/badge/X-@Cortex__L1-000000?logo=x&logoColor=white)](https://x.com/Cortex_L1)
+[![Telegram](https://img.shields.io/badge/Telegram-Join%20Chat-24A1DE?logo=telegram&logoColor=white)](https://t.me/cortex_ctx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Network](https://img.shields.io/badge/Network-Incentivized%20Testnet%202.0%20(Live)-6366f1.svg)](https://cortex-protocol.xyz)
 [![Consensus](https://img.shields.io/badge/Consensus-RandomX%20CPU%20PoW-10b981.svg)](https://cortex-protocol.xyz)
@@ -11,8 +13,10 @@
 ---
 
 ## 💬 Official Community
-* **Discord Community**: [https://discord.gg/WK7tYSse2](https://discord.gg/WK7tYSse2)
 * **Official Website**: [https://cortex-protocol.xyz](https://cortex-protocol.xyz)
+* **X (Twitter)**: [@Cortex_L1 (https://x.com/Cortex_L1)](https://x.com/Cortex_L1)
+* **Discord Community**: [https://discord.gg/WK7tYSse2](https://discord.gg/WK7tYSse2)
+* **Telegram Official**: [https://t.me/cortex_ctx](https://t.me/cortex_ctx)
 * **Live Incentivized Leaderboard**: [https://cortex-protocol.xyz/#leaderboard](https://cortex-protocol.xyz/#leaderboard)
 
 ---
