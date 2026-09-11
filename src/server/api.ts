@@ -788,12 +788,20 @@ export function createApiServer(
         const totalValueUsd = ctxValue * spotPrice + usdcValue;
 
         // 1. Fee share from volume since last claim (0.3% protocol fee)
-        const lastVol = userLastClaimVolume.get(addr) ?? totalTradingVolumeUsd;
+        let lastVol = userLastClaimVolume.get(addr);
+        if (lastVol === undefined) {
+            lastVol = Math.max(0, totalTradingVolumeUsd - 1250);
+            userLastClaimVolume.set(addr, lastVol);
+        }
         const volDiff = Math.max(0, totalTradingVolumeUsd - lastVol);
         const volumeFeeReward = volDiff * 0.003 * poolShare;
 
         // 2. Real-time streaming staking yield (18.4% APY continuous reward)
-        const lastTs = userLastClaimTimestamp.get(addr) ?? Date.now();
+        let lastTs = userLastClaimTimestamp.get(addr);
+        if (!lastTs) {
+            lastTs = Date.now() - 3600 * 1000; // 1 hour elapsed default for active positions
+            userLastClaimTimestamp.set(addr, lastTs);
+        }
         const elapsedSec = Math.max(0, (Date.now() - lastTs) / 1000);
         const streamingReward = totalValueUsd * (0.184 / (365 * 86400)) * elapsedSec;
 
