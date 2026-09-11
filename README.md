@@ -175,6 +175,37 @@ history.add_ai_message("AMM pool TVL is $1.59M with 18.4% APY.")
 python3 examples/langchain_cortex_demo.py
 ```
 
+### 3. 👥 CrewAI Multi-Agent Shared Memory (`cortex_protocol.crewai`)
+Full multi-agent persistence in [`sdk/python/cortex_protocol/crewai.py`](sdk/python/cortex_protocol/crewai.py):
+- **`CortexStorage`**: Implements the official CrewAI Storage interface with decentralized L1 persistence.
+- **`CortexShortTermMemory` & `CortexLongTermMemory`**: Shared inter-agent context and long-term knowledge base.
+- **`CortexEntityMemory`**: Decentralized entity registry (contracts, wallets, users, assets) shared across all agents in the crew.
+- **Instant Crew Recovery**: Zero knowledge loss across agent crashes, container restarts, or server migrations.
+
+```python
+from cortex_protocol import CortexClient, AgentWallet
+from cortex_protocol.crewai import CortexCrewMemory
+
+# 1. Connect crew with sovereign agent wallet
+client = CortexClient(wallet=AgentWallet.generate())
+
+# 2. Attach shared Cortex memory to your Crew
+crew_memory = CortexCrewMemory(crew_name="defi-research-crew", client=client)
+
+# 3. Agents share context and commit state on L1
+crew_memory.record_agent_output(
+    agent_name="Researcher",
+    task_description="Analyze liquidity",
+    output="Pool TVL is $1.59M with 18.4% APY."
+)
+```
+
+```bash
+# Run the live interactive CrewAI multi-agent demo
+python3 examples/crewai_cortex_demo.py
+```
+
+
 ## 📜 License
 
 Open-source under the [MIT License](LICENSE). © 2026 Cortex Research Foundation.

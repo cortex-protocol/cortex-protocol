@@ -18,8 +18,15 @@ from .langchain import (
     AIMessage,
     SystemMessage
 )
+from .crewai import (
+    CortexStorage,
+    CortexShortTermMemory,
+    CortexLongTermMemory,
+    CortexEntityMemory,
+    CortexCrewMemory
+)
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __all__ = [
     "AgentWallet",
     "CortexClient",
@@ -31,6 +38,11 @@ __all__ = [
     "HumanMessage",
     "AIMessage",
     "SystemMessage",
+    "CortexStorage",
+    "CortexShortTermMemory",
+    "CortexLongTermMemory",
+    "CortexEntityMemory",
+    "CortexCrewMemory",
     "sha256",
     "sha256d",
     "simple_encrypt",
