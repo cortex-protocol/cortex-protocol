@@ -689,6 +689,9 @@ export function createApiServer(
     let poolUsdcReserve = 622500;
     const userUsdcBalances = new Map<string, number>();
     const userLpShares = new Map<string, number>();
+    const userClaimedYield = new Map<string, number>();
+    const userLastClaimTimestamp = new Map<string, number>();
+    const userLastClaimVolume = new Map<string, number>();
     let totalLpShares = 1000000;
     let totalTradingVolumeUsd = 148500;
     let priceHistory: { timestamp: number; price: number }[] = [];
@@ -727,6 +730,21 @@ export function createApiServer(
                         userLpShares.set(k.toLowerCase(), Number(v));
                     }
                 }
+                if (raw.claimedYield) {
+                    for (const [k, v] of Object.entries(raw.claimedYield)) {
+                        userClaimedYield.set(k.toLowerCase(), Number(v));
+                    }
+                }
+                if (raw.lastClaimTimestamp) {
+                    for (const [k, v] of Object.entries(raw.lastClaimTimestamp)) {
+                        userLastClaimTimestamp.set(k.toLowerCase(), Number(v));
+                    }
+                }
+                if (raw.lastClaimVolume) {
+                    for (const [k, v] of Object.entries(raw.lastClaimVolume)) {
+                        userLastClaimVolume.set(k.toLowerCase(), Number(v));
+                    }
+                }
             }
         } catch(e) {}
 
@@ -749,10 +767,37 @@ export function createApiServer(
                 totalLpShares,
                 priceHistory: priceHistory.slice(-48),
                 balances: Object.fromEntries(userUsdcBalances.entries()),
-                lpShares: Object.fromEntries(userLpShares.entries())
+                lpShares: Object.fromEntries(userLpShares.entries()),
+                claimedYield: Object.fromEntries(userClaimedYield.entries()),
+                lastClaimTimestamp: Object.fromEntries(userLastClaimTimestamp.entries()),
+                lastClaimVolume: Object.fromEntries(userLastClaimVolume.entries())
             };
             fs.writeFileSync(dexStateFile, JSON.stringify(obj, null, 2));
         } catch(e) {}
+    }
+
+    function calculateUserPendingYield(userAddr: string): number {
+        const addr = userAddr.toLowerCase();
+        const userShares = userLpShares.get(addr) || 0;
+        if (userShares <= 0 || totalLpShares <= 0) return 0;
+
+        const poolShare = userShares / totalLpShares;
+        const ctxValue = poolCtxReserve * poolShare;
+        const usdcValue = poolUsdcReserve * poolShare;
+        const spotPrice = poolUsdcReserve / poolCtxReserve;
+        const totalValueUsd = ctxValue * spotPrice + usdcValue;
+
+        // 1. Fee share from volume since last claim (0.3% protocol fee)
+        const lastVol = userLastClaimVolume.get(addr) ?? totalTradingVolumeUsd;
+        const volDiff = Math.max(0, totalTradingVolumeUsd - lastVol);
+        const volumeFeeReward = volDiff * 0.003 * poolShare;
+
+        // 2. Real-time streaming staking yield (18.4% APY continuous reward)
+        const lastTs = userLastClaimTimestamp.get(addr) ?? Date.now();
+        const elapsedSec = Math.max(0, (Date.now() - lastTs) / 1000);
+        const streamingReward = totalValueUsd * (0.184 / (365 * 86400)) * elapsedSec;
+
+        return +(volumeFeeReward + streamingReward).toFixed(4);
     }
 
     loadDexState();
@@ -984,6 +1029,11 @@ export function createApiServer(
             const userCurrentShares = userLpShares.get(userAddr.toLowerCase()) || 0;
             userLpShares.set(userAddr.toLowerCase(), +(userCurrentShares + mintedShares).toFixed(4));
 
+            if (!userLastClaimTimestamp.has(userAddr.toLowerCase())) {
+                userLastClaimTimestamp.set(userAddr.toLowerCase(), Date.now());
+                userLastClaimVolume.set(userAddr.toLowerCase(), totalTradingVolumeUsd);
+            }
+
             // Add reserves
             poolCtxReserve += inCtx;
             poolUsdcReserve += requiredUsdc;
@@ -1017,17 +1067,23 @@ export function createApiServer(
             const usdcValue = +(poolUsdcReserve * poolShare).toFixed(4);
             const spotPrice = +(poolUsdcReserve / poolCtxReserve).toFixed(4);
             const totalValueUsd = +(ctxValue * spotPrice + usdcValue).toFixed(2);
-            const claimableYieldUsdc = +(Math.max(0, totalTradingVolumeUsd * 0.003 * poolShare)).toFixed(4);
+            const claimableYieldUsdc = calculateUserPendingYield(address);
+            const totalClaimedYieldUsdc = +(userClaimedYield.get(address) || 0).toFixed(4);
 
             res.json({
                 address,
                 userShares: +userShares.toFixed(4),
-                totalLpShares,
+                totalLpShares: +totalLpShares.toFixed(4),
                 poolSharePercent: +(poolShare * 100).toFixed(4),
                 ctxValue,
                 usdcValue,
                 totalValueUsd,
-                claimableYieldUsdc
+                claimableYieldUsdc,
+                totalClaimedYieldUsdc,
+                poolCtxReserve: +poolCtxReserve.toFixed(2),
+                poolUsdcReserve: +poolUsdcReserve.toFixed(2),
+                spotPrice,
+                apy: 18.4
             });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
@@ -1045,16 +1101,101 @@ export function createApiServer(
                 return res.status(400).json({ error: 'No active liquidity deposited to claim yield from.' });
             }
 
-            const poolShare = userShares / totalLpShares;
-            const yieldAmount = +(Math.max(0.50, totalTradingVolumeUsd * 0.003 * poolShare)).toFixed(2);
+            const yieldAmount = calculateUserPendingYield(userAddr);
+            if (yieldAmount < 0.005) {
+                return res.status(400).json({ error: 'No pending yield available to claim yet (minimum $0.01 tUSDC). Yield accrues continuously with volume and time.' });
+            }
+
             const currentUsdc = userUsdcBalances.get(userAddr) ?? 1000.00;
             userUsdcBalances.set(userAddr, +(currentUsdc + yieldAmount).toFixed(4));
+            userClaimedYield.set(userAddr, +((userClaimedYield.get(userAddr) || 0) + yieldAmount).toFixed(4));
+            userLastClaimTimestamp.set(userAddr, Date.now());
+            userLastClaimVolume.set(userAddr, totalTradingVolumeUsd);
             saveDexState();
 
             res.json({
                 success: true,
                 claimedUsdc: yieldAmount,
+                pendingYield: 0,
+                totalClaimed: userClaimedYield.get(userAddr),
                 newUsdcBalance: userUsdcBalances.get(userAddr)
+            });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    app.post('/api/dex/liquidity/remove', (req, res) => {
+        try {
+            const { senderPrivateKey, percent = 100 } = req.body || {};
+            if (!senderPrivateKey) return res.status(400).json({ error: 'senderPrivateKey is required' });
+            const keyPair = CortexCrypto.fromPrivateKey(senderPrivateKey.trim());
+            const userAddr = keyPair.address;
+            const userAddrLower = userAddr.toLowerCase();
+            const userShares = userLpShares.get(userAddrLower) || 0;
+
+            if (userShares <= 0) {
+                return res.status(400).json({ error: 'No active liquidity position to withdraw.' });
+            }
+
+            const pct = Math.min(100, Math.max(1, Number(percent) || 100));
+            const sharesToRemove = +(userShares * (pct / 100)).toFixed(4);
+            const poolShare = sharesToRemove / totalLpShares;
+
+            const ctxToReturn = +(poolCtxReserve * poolShare).toFixed(4);
+            const usdcToReturn = +(poolUsdcReserve * poolShare).toFixed(4);
+
+            // Auto-claim any pending yield before removal
+            const pendingYield = calculateUserPendingYield(userAddrLower);
+
+            // Deduct shares
+            const remainingShares = +(userShares - sharesToRemove).toFixed(4);
+            if (remainingShares <= 0.0001) {
+                userLpShares.delete(userAddrLower);
+            } else {
+                userLpShares.set(userAddrLower, remainingShares);
+            }
+            totalLpShares = Math.max(1000, +(totalLpShares - sharesToRemove).toFixed(4));
+
+            // Deduct reserves
+            poolCtxReserve = Math.max(1000, +(poolCtxReserve - ctxToReturn).toFixed(4));
+            poolUsdcReserve = Math.max(1000, +(poolUsdcReserve - usdcToReturn).toFixed(4));
+
+            // Credit USDC + pending yield
+            const currentUsdc = userUsdcBalances.get(userAddrLower) ?? 1000.00;
+            userUsdcBalances.set(userAddrLower, +(currentUsdc + usdcToReturn + pendingYield).toFixed(4));
+            if (pendingYield > 0) {
+                userClaimedYield.set(userAddrLower, +((userClaimedYield.get(userAddrLower) || 0) + pendingYield).toFixed(4));
+            }
+            userLastClaimTimestamp.set(userAddrLower, Date.now());
+            userLastClaimVolume.set(userAddrLower, totalTradingVolumeUsd);
+            saveDexState();
+
+            // Send CTX on-chain back to user from AMM address
+            const nonce = blockchain.getNextNonce(FAUCET_KEYPAIR.address);
+            const tx = new Transaction({
+                type: 'TRANSFER',
+                sender: FAUCET_KEYPAIR.address,
+                senderPublicKey: FAUCET_KEYPAIR.publicKey,
+                recipient: userAddr,
+                amount: ctxToReturn,
+                fee: 0.01,
+                burnAmount: 0,
+                nonce: nonce,
+                timestamp: Date.now()
+            });
+            tx.sign(FAUCET_KEYPAIR.privateKey, FAUCET_KEYPAIR.publicKey);
+            blockchain.mempool.addTransaction(tx);
+            p2p.broadcastTransaction(tx);
+
+            res.json({
+                success: true,
+                txId: tx.id,
+                returnedCtx: ctxToReturn,
+                returnedUsdc: usdcToReturn,
+                claimedYield: pendingYield,
+                remainingShares,
+                newUsdcBalance: userUsdcBalances.get(userAddrLower)
             });
         } catch (err: any) {
             res.status(500).json({ error: err.message });

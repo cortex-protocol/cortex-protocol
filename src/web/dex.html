@@ -749,28 +749,62 @@
                             18.4% APY
                         </span>
                     </div>
-                    <p style="font-size:0.82rem; color:#94a3b8; line-height:1.5; margin-bottom:14px;">
+                    <p style="font-size:0.82rem; color:#94a3b8; line-height:1.5; margin-bottom:12px;">
                         Deposit proportional CTX and tUSDC into the autonomous AMM pool. Earn continuous 0.3% protocol fee rewards on all network swaps.
                     </p>
 
-                    <!-- User Active Position Display (if any) -->
-                    <div id="dex-user-lp-display" style="display:none;" class="user-lp-position-box mb-3">
-                        <div class="flex items-center justify-between font-bold text-slate-100 mb-1">
-                            <span><i class="fa-solid fa-shield-halved text-cyan mr-1"></i> Your Active LP Position</span>
-                            <span class="mono text-emerald" id="lp-my-share-val">0.00% pool</span>
+                    <!-- LIVE POOL GLOBAL STATS PILLARS -->
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px;">
+                        <div class="p-2 rounded-8" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);">
+                            <div class="text-slate-400" style="font-size:0.7rem;">Pool Reserves</div>
+                            <div class="mono text-white text-xs font-bold" id="pool-reserves-stat">-- CTX / -- tUSDC</div>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-slate-400">
-                            <span id="lp-my-assets-val">0 CTX + 0 tUSDC</span>
-                            <span class="mono font-bold text-indigo" id="lp-my-usd-val">≈ $0.00 USD</span>
+                        <div class="p-2 rounded-8" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);">
+                            <div class="text-slate-400" style="font-size:0.7rem;">Total Pool TVL</div>
+                            <div class="mono text-emerald text-xs font-bold" id="pool-tvl-stat">$0.00 USD</div>
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <button class="dex-nav-link-btn" style="justify-content:center; padding:12px; background:rgba(99, 102, 241, 0.18); border-color:rgba(99, 102, 241, 0.4); color:#ffffff;" onclick="openAddLiquidityModal()">
-                            <i class="fa-solid fa-plus text-cyan"></i> <span>Add Liquidity</span>
+                    <!-- User Active Position & Real-Time Yield Display -->
+                    <div id="dex-user-lp-display" style="display:none;" class="user-lp-position-box mb-3">
+                        <div class="flex items-center justify-between font-bold text-slate-100 mb-1 pb-1 border-bottom-subtle">
+                            <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved text-cyan"></i> Your LP Position</span>
+                            <span class="mono text-emerald font-bold" id="lp-my-share-val">0.00% pool</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-300 mt-2 mb-1">
+                            <span>Pooled Assets:</span>
+                            <span class="mono font-bold text-slate-100" id="lp-my-assets-val">0.00 CTX + 0.00 tUSDC</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                            <span>Underlying Value:</span>
+                            <span class="mono font-bold text-indigo" id="lp-my-usd-val">≈ $0.00 USD</span>
+                        </div>
+                        
+                        <!-- LIVE TICKING YIELD COUNTER -->
+                        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 8px 10px; margin: 8px 0;">
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center gap-1 text-xs text-slate-300">
+                                    <span class="pulse-dot-green"></span>
+                                    <span>Real-Time Pending Yield:</span>
+                                </span>
+                                <strong class="mono text-emerald text-sm font-bold" id="lp-my-pending-yield">+0.0000 tUSDC</strong>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-slate-400 mt-1" style="font-size:0.7rem;">
+                                <span>Total Yield Claimed:</span>
+                                <span class="mono text-amber font-bold" id="lp-my-total-claimed">0.0000 tUSDC</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                        <button class="dex-nav-link-btn" style="justify-content:center; padding:10px 6px; background:rgba(99, 102, 241, 0.18); border-color:rgba(99, 102, 241, 0.4); color:#ffffff; font-size:0.8rem;" onclick="openAddLiquidityModal()">
+                            <i class="fa-solid fa-plus text-cyan"></i> <span>Add LP</span>
                         </button>
-                        <button class="dex-nav-link-btn" style="justify-content:center; padding:12px; background:rgba(16, 185, 129, 0.18); border-color:rgba(16, 185, 129, 0.4); color:#ffffff;" onclick="claimLpYield()">
+                        <button class="dex-nav-link-btn" id="btn-claim-yield" style="justify-content:center; padding:10px 6px; background:rgba(16, 185, 129, 0.18); border-color:rgba(16, 185, 129, 0.4); color:#ffffff; font-size:0.8rem;" onclick="claimLpYield()">
                             <i class="fa-solid fa-gift text-emerald"></i> <span>Claim Yield</span>
+                        </button>
+                        <button class="dex-nav-link-btn" style="justify-content:center; padding:10px 6px; background:rgba(239, 68, 68, 0.14); border-color:rgba(239, 68, 68, 0.35); color:#ffffff; font-size:0.8rem;" onclick="openRemoveLiquidityModal()">
+                            <i class="fa-solid fa-arrow-up-from-bracket text-rose"></i> <span>Withdraw</span>
                         </button>
                     </div>
                 </div>
@@ -826,17 +860,13 @@
             </div>
 
             <!-- Position Preview Stats -->
-            <div class="dex-meta-box mb-3">
+            <div class="dex-meta-table mb-3">
                 <div class="dex-meta-row">
-                    <span>Pool Rate</span>
-                    <span class="dex-meta-value" id="modal-rate-val">1 CTX = 2.0061 tUSDC</span>
+                    <span>Est. LP Share Minted</span>
+                    <span class="dex-meta-value mono text-emerald" id="modal-est-shares">0.0000 LP</span>
                 </div>
                 <div class="dex-meta-row">
-                    <span>Estimated Pool Share</span>
-                    <span class="dex-meta-value text-emerald" id="modal-share-val">&lt; 0.01%</span>
-                </div>
-                <div class="dex-meta-row">
-                    <span>Rewards Yield</span>
+                    <span>Pool Fee Yield</span>
                     <span class="dex-meta-value text-amber">18.4% APY</span>
                 </div>
                 <div class="dex-meta-row">
@@ -849,6 +879,53 @@
                 <i class="fa-solid fa-shield-halved"></i> <span>Confirm & Deposit Liquidity</span>
             </button>
             <div id="modal-liq-status" class="mt-2 text-center text-xs"></div>
+        </div>
+    </div>
+
+    <!-- REMOVE LIQUIDITY MODAL -->
+    <div class="dex-modal-overlay" id="remove-liquidity-modal">
+        <div class="dex-modal-card">
+            <button class="dex-modal-close" onclick="closeRemoveLiquidityModal()">&times;</button>
+            <div class="dex-card-title mb-3">
+                <i class="fa-solid fa-arrow-up-from-bracket text-rose"></i>
+                <span>Withdraw Liquidity</span>
+            </div>
+            <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:16px;">
+                Redeem your LP shares to withdraw your proportional CTX and tUSDC tokens back to your wallet. Any pending yield will be automatically collected!
+            </p>
+
+            <div class="dex-token-box mb-3">
+                <div class="dex-token-box-top">
+                    <span>Withdraw Amount</span>
+                    <span>Shares: <strong class="mono text-slate-100" id="modal-remove-shares-bal">0.0000 LP</strong></span>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                    <button type="button" class="btn btn-outline btn-xs" style="padding: 4px 10px; font-size:0.75rem;" onclick="setRemovePercent(25)">25%</button>
+                    <button type="button" class="btn btn-outline btn-xs" style="padding: 4px 10px; font-size:0.75rem;" onclick="setRemovePercent(50)">50%</button>
+                    <button type="button" class="btn btn-outline btn-xs" style="padding: 4px 10px; font-size:0.75rem;" onclick="setRemovePercent(75)">75%</button>
+                    <button type="button" class="btn btn-outline btn-xs" style="padding: 4px 10px; font-size:0.75rem; border-color: rgba(99, 102, 241, 0.5); color:#818cf8;" onclick="setRemovePercent(100)">100% (Max)</button>
+                </div>
+            </div>
+
+            <div class="dex-meta-table mb-3">
+                <div class="dex-meta-row">
+                    <span>You Receive CTX</span>
+                    <strong class="mono text-emerald" id="modal-remove-receive-ctx">0.0000 CTX</strong>
+                </div>
+                <div class="dex-meta-row">
+                    <span>You Receive tUSDC</span>
+                    <strong class="mono text-cyan" id="modal-remove-receive-usdc">0.0000 tUSDC</strong>
+                </div>
+                <div class="dex-meta-row">
+                    <span>Uncollected Yield Claimed</span>
+                    <strong class="mono text-amber" id="modal-remove-receive-yield">+0.0000 tUSDC</strong>
+                </div>
+            </div>
+
+            <button class="btn-dex-swap" id="btn-confirm-remove-lp" onclick="executeRemoveLiquidity()" style="background:linear-gradient(135deg, #ef4444, #f59e0b);">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i> <span>Confirm & Withdraw</span>
+            </button>
+            <div id="modal-remove-status" class="mt-2 text-center text-xs"></div>
         </div>
     </div>
 
@@ -873,6 +950,7 @@
             priceHistory: [],
             activeWallet: null
         };
+        let currentLpData = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             await initStandaloneDex();
@@ -880,7 +958,26 @@
             window.addEventListener('resize', drawDexPriceChart);
             // Polling every 6 seconds to keep live TVL, Volume, Price and chart updated
             setInterval(initStandaloneDex, 6000);
+            // Live Real-Time Yield Counter (ticks up every second)
+            setInterval(tickLiveYield, 1000);
         });
+
+        function tickLiveYield() {
+            if (!currentLpData || currentLpData.userShares <= 0) return;
+            const apy = currentLpData.apy || 18.4;
+            const perSecRate = (apy / 100) / (365 * 86400);
+            const secInc = (currentLpData.totalValueUsd || 0) * perSecRate;
+            currentLpData.claimableYieldUsdc = (currentLpData.claimableYieldUsdc || 0) + secInc;
+            const pendingEl = document.getElementById('lp-my-pending-yield');
+            if (pendingEl) pendingEl.textContent = `+$${currentLpData.claimableYieldUsdc.toFixed(4)} tUSDC`;
+            
+            const claimBtn = document.getElementById('btn-claim-yield');
+            if (claimBtn && currentLpData.claimableYieldUsdc >= 0.005) {
+                claimBtn.disabled = false;
+                claimBtn.style.opacity = '1';
+                claimBtn.style.cursor = 'pointer';
+            }
+        }
 
         async function initStandaloneDex() {
             try {
@@ -906,6 +1003,11 @@
                 const ctxK = (dexState.poolCtx / 1000).toFixed(1);
                 const usdcK = (dexState.poolUsdc / 1000).toFixed(1);
                 document.getElementById('dex-reserves-sub').textContent = `${ctxK}K CTX + ${usdcK}K tUSDC`;
+
+                const poolReservesStat = document.getElementById('pool-reserves-stat');
+                if (poolReservesStat) poolReservesStat.textContent = `${Math.round(dexState.poolCtx).toLocaleString()} CTX / ${Math.round(dexState.poolUsdc).toLocaleString()} tUSDC`;
+                const poolTvlStat = document.getElementById('pool-tvl-stat');
+                if (poolTvlStat) poolTvlStat.textContent = `$${Math.round(dexState.tvl).toLocaleString()} USD`;
 
                 document.getElementById('dex-volume-val').textContent = `$${Math.round(dexState.volume24h).toLocaleString()} USD`;
                 document.getElementById('dex-volume-sub').innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> ${data.volumeChange24h || '+14.8%'} vs yesterday`;
@@ -979,13 +1081,27 @@
             try {
                 const lpRes = await fetch(`/api/dex/liquidity/${addr}`);
                 const lpData = await lpRes.json();
+                currentLpData = lpData;
                 const lpBox = document.getElementById('dex-user-lp-display');
                 if (lpBox) {
                     if (lpData.userShares > 0) {
                         lpBox.style.display = 'block';
-                        document.getElementById('lp-my-share-val').textContent = `${lpData.poolSharePercent}% pool`;
+                        document.getElementById('lp-my-share-val').textContent = `${lpData.poolSharePercent}% pool (${lpData.userShares.toFixed(2)} LP)`;
                         document.getElementById('lp-my-assets-val').textContent = `${lpData.ctxValue.toFixed(2)} CTX + ${lpData.usdcValue.toFixed(2)} tUSDC`;
                         document.getElementById('lp-my-usd-val').textContent = `≈ $${lpData.totalValueUsd.toLocaleString()} USD`;
+                        document.getElementById('lp-my-pending-yield').textContent = `+$${(lpData.claimableYieldUsdc || 0).toFixed(4)} tUSDC`;
+                        document.getElementById('lp-my-total-claimed').textContent = `${(lpData.totalClaimedYieldUsdc || 0).toFixed(4)} tUSDC`;
+
+                        const claimBtn = document.getElementById('btn-claim-yield');
+                        if (claimBtn) {
+                            if ((lpData.claimableYieldUsdc || 0) >= 0.005) {
+                                claimBtn.disabled = false;
+                                claimBtn.style.opacity = '1';
+                                claimBtn.style.cursor = 'pointer';
+                            } else {
+                                claimBtn.style.opacity = '0.65';
+                            }
+                        }
                     } else {
                         lpBox.style.display = 'none';
                     }
@@ -1280,6 +1396,9 @@
             }
             if (!pKey) return;
 
+            const btn = document.getElementById('btn-claim-yield');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Claiming...</span>';
+
             try {
                 const res = await fetch('/api/dex/liquidity/claim', {
                     method: 'POST',
@@ -1287,12 +1406,91 @@
                     body: JSON.stringify({ senderPrivateKey: pKey.trim() })
                 });
                 const data = await res.json();
-                if (data.error) return showToast(data.error, true);
+                if (data.error) {
+                    if (btn) btn.innerHTML = '<i class="fa-solid fa-gift text-emerald"></i> <span>Claim Yield</span>';
+                    return showToast(data.error, true);
+                }
 
-                showToast(`🎁 +${data.claimedUsdc} tUSDC Claimed to Wallet!`);
+                showToast(`🎁 +${Number(data.claimedUsdc).toFixed(4)} tUSDC Claimed to Wallet!`);
+                if (currentLpData) {
+                    currentLpData.claimableYieldUsdc = 0;
+                    currentLpData.totalClaimedYieldUsdc = data.totalClaimed;
+                }
+                const pendingEl = document.getElementById('lp-my-pending-yield');
+                if (pendingEl) pendingEl.textContent = '+$0.0000 tUSDC';
+                const claimedEl = document.getElementById('lp-my-total-claimed');
+                if (claimedEl) claimedEl.textContent = `${Number(data.totalClaimed).toFixed(4)} tUSDC`;
+
                 await syncUserBalances();
             } catch(e) {
                 showToast('Failed to claim yield', true);
+            } finally {
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-gift text-emerald"></i> <span>Claim Yield</span>';
+            }
+        }
+
+        // --- REMOVE LIQUIDITY MODAL & LOGIC ---
+        let removeSelectedPercent = 100;
+        function openRemoveLiquidityModal() {
+            if (!currentLpData || currentLpData.userShares <= 0) {
+                return showToast('You do not have any active liquidity deposited.', true);
+            }
+            document.getElementById('modal-remove-shares-bal').textContent = `${currentLpData.userShares.toFixed(4)} LP`;
+            setRemovePercent(100);
+            document.getElementById('remove-liquidity-modal').classList.add('show');
+        }
+
+        function closeRemoveLiquidityModal() {
+            document.getElementById('remove-liquidity-modal').classList.remove('show');
+        }
+
+        function setRemovePercent(pct) {
+            removeSelectedPercent = pct;
+            if (!currentLpData) return;
+            const fraction = pct / 100;
+            const returnCtx = +(currentLpData.ctxValue * fraction).toFixed(4);
+            const returnUsdc = +(currentLpData.usdcValue * fraction).toFixed(4);
+            const yieldAmt = +(currentLpData.claimableYieldUsdc || 0).toFixed(4);
+
+            document.getElementById('modal-remove-receive-ctx').textContent = `${returnCtx.toFixed(4)} CTX`;
+            document.getElementById('modal-remove-receive-usdc').textContent = `${returnUsdc.toFixed(4)} tUSDC`;
+            document.getElementById('modal-remove-receive-yield').textContent = `+${yieldAmt.toFixed(4)} tUSDC`;
+        }
+
+        async function executeRemoveLiquidity() {
+            let pKey = dexState.activeWallet && dexState.activeWallet.privateKey ? dexState.activeWallet.privateKey : null;
+            if (!pKey) {
+                pKey = prompt('Enter your private key to authorize withdrawal:');
+            }
+            if (!pKey) return;
+
+            const btn = document.getElementById('btn-confirm-remove-lp');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Withdrawing...</span>';
+            const statusBox = document.getElementById('modal-remove-status');
+            statusBox.innerHTML = '<span class="text-indigo">Processing on-chain withdrawal and redeeming LP...</span>';
+
+            try {
+                const res = await fetch('/api/dex/liquidity/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        senderPrivateKey: pKey.trim(),
+                        percent: removeSelectedPercent
+                    })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                showToast(`✅ Withdrawn: +${data.returnedCtx} CTX & +${data.returnedUsdc} tUSDC!`);
+                closeRemoveLiquidityModal();
+                await syncUserBalances();
+                await initStandaloneDex();
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-arrow-up-from-bracket"></i> <span>Confirm & Withdraw</span>';
+                statusBox.innerHTML = `<span class="text-rose font-bold">${e.message || 'Withdrawal failed'}</span>`;
+                showToast(e.message || 'Withdrawal failed', true);
             }
         }
 
