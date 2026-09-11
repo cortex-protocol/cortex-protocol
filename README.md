@@ -129,6 +129,52 @@ Miners on Windows can download the pre-packaged standalone zip directly:
 
 ---
 
+
+---
+
+## 🤖 AI Agent Framework Integrations
+
+Cortex Protocol ($CTX) serves as the sovereign, decentralized memory and state settlement layer for autonomous AI agents across major frameworks:
+
+### 1. 🟣 ElizaOS Plugin (`@cortex-protocol/plugin-eliza`)
+Complete official plugin located in [`packages/plugin-cortex/`](packages/plugin-cortex/):
+- **Cognitive Memory Provider**: Seals episodic and semantic memories into PoW blocks with 3ms Edge RAG recall.
+- **Sovereign Wallet Provider**: Injects real-time $CTX balance and wallet state into agent prompts.
+- **On-Chain Actions**: `INSCRIBE_MEMORY`, `TRANSFER_CTX`, `CLAIM_FAUCET`.
+- **Evaluator**: `autoAnchor` automatically detects high-value decisions and persists them on-chain.
+
+```bash
+# Run the live interactive ElizaOS agent demo
+npx ts-node examples/eliza_cortex_agent.ts
+```
+
+### 2. 🦜🔗 LangChain & LangGraph Memory Provider (`cortex_protocol.langchain`)
+Full integration in [`sdk/python/cortex_protocol/langchain.py`](sdk/python/cortex_protocol/langchain.py):
+- **`CortexChatMessageHistory`**: Extends LangChain `BaseChatMessageHistory` (zero external dependencies required).
+- **`CortexCheckpointer`**: Decentralized state snapshot saver for LangGraph agent decision trees.
+- **30% Gas Fee Burn**: Every message turn burned permanently on-chain.
+- **Cold-Reboot Hydration**: Automatically rehydrates entire conversation history from Cortex L1 state upon agent container restart.
+
+```python
+from cortex_protocol import CortexClient, AgentWallet
+from cortex_protocol.langchain import CortexChatMessageHistory
+
+# 1. Connect agent with sovereign key
+client = CortexClient(wallet=AgentWallet.generate())
+
+# 2. Attach Cortex persistent memory to any LangChain session
+history = CortexChatMessageHistory(session_id="session_01", client=client)
+
+# 3. Add messages - permanently anchored on L1 with 30% gas burn
+history.add_user_message("Analyze liquidity on Cortex DEX.")
+history.add_ai_message("AMM pool TVL is $1.59M with 18.4% APY.")
+```
+
+```bash
+# Run the live interactive LangChain & LangGraph demo
+python3 examples/langchain_cortex_demo.py
+```
+
 ## 📜 License
 
 Open-source under the [MIT License](LICENSE). © 2026 Cortex Research Foundation.
