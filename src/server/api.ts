@@ -386,12 +386,35 @@ export function createApiServer(
 
     app.get('/api/memories', (req, res) => {
         const { agentId, topic, memoryType } = req.query;
-        const memories = blockchain.queryMemories({
+        const confirmed = blockchain.queryMemories({
             agentId: agentId as string,
             topic: topic as string,
             memoryType: memoryType as string
         });
-        res.json(memories);
+        const normalizedConfirmed = confirmed.map(c => ({
+            ...c,
+            payload: c.memory || c.payload
+        }));
+        
+        const pending: any[] = [];
+        for (const tx of blockchain.mempool.getAll()) {
+            if (tx.type === 'MEMORY_COMMIT' && tx.memoryPayload) {
+                const m = tx.memoryPayload;
+                if (agentId && m.agentId !== agentId) continue;
+                if (topic && !m.topic.toLowerCase().includes((topic as string).toLowerCase())) continue;
+                if (memoryType && m.memoryType !== memoryType) continue;
+                pending.push({
+                    blockIndex: null,
+                    timestamp: tx.timestamp,
+                    memory: m,
+                    payload: m,
+                    txId: tx.id,
+                    blockHash: null,
+                    status: 'PENDING_MEMPOOL'
+                });
+            }
+        }
+        res.json([...normalizedConfirmed, ...pending]);
     });
 
     // SEMANTIC VECTOR SEARCH (COSINE SIMILARITY TOP-K)
@@ -427,7 +450,14 @@ export function createApiServer(
             }
 
             const keyPair = CortexCrypto.fromPrivateKey(agentPrivateKey);
-            const balance = blockchain.getBalance(keyPair.address);
+            const confirmedBal = blockchain.getBalance(keyPair.address);
+            let pendingIn = 0;
+            let pendingOut = 0;
+            for (const tx of blockchain.mempool.getAll()) {
+                if (tx.recipient === keyPair.address) pendingIn += tx.amount;
+                if (tx.sender === keyPair.address) pendingOut += (tx.amount + tx.fee + tx.burnAmount);
+            }
+            const balance = +(Math.max(0, confirmedBal + pendingIn - pendingOut)).toFixed(6);
             if (balance < fee) {
                 return res.status(400).json({ error: `Insufficient CTX balance for agent. Required: ${fee} CTX, Available: ${balance} CTX` });
             }
