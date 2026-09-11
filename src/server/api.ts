@@ -1499,6 +1499,9 @@ export function createApiServer(
     
     app.get('/api/sentinel/latest', (req, res) => {
         try {
+            if (req.headers.accept && req.headers.accept.includes('text/html') && !req.query.raw) {
+                return res.redirect('/sentinel.html');
+            }
             const sentinelFile = path.join(__dirname, '../../data/sentinel_broadcasts.json');
             if (fs.existsSync(sentinelFile)) {
                 const data = JSON.parse(fs.readFileSync(sentinelFile, 'utf8'));

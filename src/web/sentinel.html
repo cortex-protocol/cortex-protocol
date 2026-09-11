@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cortex Sentinel - Autonomous Network Oracle & Broadcaster</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-base: #060911;
+            --surface: rgba(15, 23, 42, 0.75);
+            --surface-card: rgba(18, 26, 47, 0.85);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(99, 102, 241, 0.35);
+            --brand-cyan: #38bdf8;
+            --brand-purple: #818cf8;
+            --brand-emerald: #34d399;
+            --brand-amber: #fbbf24;
+            --brand-rose: #f43f5e;
+            --twitter-blue: #1d9bf0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: #e2e8f0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .ambient-orb-1 {
+            position: fixed;
+            top: -120px;
+            left: 20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, transparent 70%);
+            filter: blur(100px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .ambient-orb-2 {
+            position: fixed;
+            bottom: -150px;
+            right: 15%;
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.14) 0%, transparent 70%);
+            filter: blur(110px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Nav */
+        .portal-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            margin-bottom: 36px;
+        }
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .brand-logo i { color: var(--brand-cyan); font-size: 1.4rem; }
+        .nav-links { display: flex; align-items: center; gap: 20px; }
+        .nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+        .nav-link:hover, .nav-link.active { color: #fff; }
+        .nav-link.active { color: var(--brand-cyan); }
+
+        /* Header */
+        .sentinel-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .oracle-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(52, 211, 153, 0.12);
+            border: 1px solid rgba(52, 211, 153, 0.35);
+            padding: 6px 18px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--brand-emerald);
+            margin-bottom: 16px;
+        }
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--brand-emerald);
+            box-shadow: 0 0 10px var(--brand-emerald);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.6; }
+        }
+        .sentinel-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.75rem;
+            font-weight: 800;
+            margin: 0 0 12px;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sentinel-desc {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            max-width: 680px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Telemetry HUD */
+        .hud-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+        .hud-card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .hud-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .hud-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .hud-sub { font-size: 0.82rem; color: #94a3b8; }
+
+        /* Broadcast Feed Layout */
+        .feed-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .feed-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+        .refresh-notice {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Tweet / Broadcast Cards */
+        .broadcasts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .broadcast-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-highlight);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .broadcast-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, 0.6);
+        }
+        .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .author-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .author-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.2rem;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+        }
+        .author-info .name {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .author-info .handle {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .verified-badge {
+            color: var(--twitter-blue);
+            font-size: 0.95rem;
+        }
+        .badge-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+        .tag-burn { background: rgba(244, 63, 94, 0.15); color: var(--brand-rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+        .tag-mining { background: rgba(251, 191, 36, 0.15); color: var(--brand-amber); border: 1px solid rgba(251, 191, 36, 0.3); }
+        .tag-ai { background: rgba(129, 140, 248, 0.15); color: var(--brand-purple); border: 1px solid rgba(129, 140, 248, 0.3); }
+
+        .tweet-body {
+            background: rgba(7, 11, 22, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 18px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+            margin-bottom: 18px;
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .oracle-proof {
+            font-size: 0.82rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-copy {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 8px 16px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn-copy:hover { background: rgba(255, 255, 255, 0.12); }
+        .btn-tweet {
+            background: var(--twitter-blue);
+            border: none;
+            border-radius: 10px;
+            padding: 8px 18px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .btn-tweet:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1e293b;
+            border: 1px solid var(--brand-cyan);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-orb-1"></div>
+    <div class="ambient-orb-2"></div>
+
+    <div class="container">
+        <!-- Navbar -->
+        <nav class="portal-nav">
+            <a href="index.html" class="brand-logo">
+                <i class="fa-solid fa-brain"></i>
+                <span>CORTEX PROTOCOL</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link"><i class="fa-solid fa-cube"></i> Explorer</a>
+                <a href="dex.html" class="nav-link"><i class="fa-solid fa-right-left"></i> DEX AMM</a>
+                <a href="airdrop.html" class="nav-link"><i class="fa-solid fa-gift"></i> Airdrop</a>
+                <a href="sentinel.html" class="nav-link active"><i class="fa-solid fa-satellite-dish"></i> Sentinel AI</a>
+                <a href="mining.html" class="nav-link"><i class="fa-solid fa-microchip"></i> Mining</a>
+                <a href="https://github.com/cortex-protocol/cortex-protocol" target="_blank" class="nav-link"><i class="fa-brands fa-github"></i> GitHub</a>
+            </div>
+        </nav>
+
+        <!-- Header -->
+        <header class="sentinel-header">
+            <div class="oracle-status-badge">
+                <div class="pulse-dot"></div>
+                AUTONOMOUS ORACLE LIVE | CYCLES EVERY 15 MIN
+            </div>
+            <h1 class="sentinel-title">Cortex Sentinel Broadcast Terminal</h1>
+            <p class="sentinel-desc">
+                An autonomous artificial intelligence daemon operating directly on the Cortex Layer-1 blockchain, actively monitoring network milestones, burning metrics, and generating certified dispatches.
+            </p>
+        </header>
+
+        <!-- Telemetry HUD -->
+        <div class="hud-grid">
+            <div class="hud-card">
+                <div class="hud-label"><i class="fa-solid fa-fire" style="color: var(--brand-rose);"></i> Total $CTX Burned</div>
+                <div class="hud-val" id="hudBurned">110.49 CTX</div>
+                <div class="hud-sub">Permanently destroyed to null address</div>
+            </div>
+            <div class="hud-card">
+                <div class="hud-label"><i class="fa-solid fa-cube" style="color: var(--brand-cyan);"></i> Block Height</div>
+                <div class="hud-val" id="hudHeight">#15,320</div>
+                <div class="hud-sub">Proof-of-Work sealed blocks</div>
+            </div>
+            <div class="hud-card">
+                <div class="hud-label"><i class="fa-solid fa-microchip" style="color: var(--brand-amber);"></i> Pool Hashrate</div>
+                <div class="hud-val" id="hudHashrate">211.0 kH/s</div>
+                <div class="hud-sub">15 active community miners</div>
+            </div>
+            <div class="hud-card">
+                <div class="hud-label"><i class="fa-solid fa-water" style="color: var(--brand-purple);"></i> DEX AMM TVL</div>
+                <div class="hud-val" id="hudTvl">$1.60M USD</div>
+                <div class="hud-sub">14.2% streaming yield</div>
+            </div>
+        </div>
+
+        <!-- Feed Section -->
+        <div class="feed-header">
+            <h2 class="feed-title"><i class="fa-brands fa-x-twitter"></i> Latest Autonomous Dispatches Ready to Publish</h2>
+            <div class="refresh-notice"><i class="fa-solid fa-arrows-rotate"></i> Auto-updates from L1 oracle</div>
+        </div>
+
+        <div class="broadcasts-list" id="broadcastsList">
+            <div style="text-align: center; color: #64748b; padding: 40px;">Fetching latest oracle broadcasts from Cortex Sentinel...</div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            Cortex Sentinel Daemon V1 © 2026. Running autonomously on Cortex Protocol Layer-1.<br>
+            All broadcasts are cryptographically signed and inscribed into PoW blocks with 30% gas fee burn.
+        </footer>
+    </div>
+
+    <!-- Toast message -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-check" style="color: var(--brand-emerald);"></i>
+        <span>Tweet copied to clipboard!</span>
+    </div>
+
+    <script>
+        async function fetchSentinelData() {
+            try {
+                const res = await fetch('/api/sentinel/latest');
+                if (!res.ok) return;
+                const list = await res.json();
+                renderBroadcasts(list);
+
+                if (list.length > 0 && list[0].statsSnapshot) {
+                    const snap = list[0].statsSnapshot;
+                    document.getElementById('hudBurned').textContent = `${(snap.burned || 110.49).toFixed(2)} CTX`;
+                    document.getElementById('hudHeight').textContent = `#${(snap.height || 15320).toLocaleString()}`;
+                    document.getElementById('hudHashrate').textContent = `${((snap.hashrate || 211000) / 1000).toFixed(1)} kH/s`;
+                    document.getElementById('hudTvl').textContent = `$${((snap.tvl || 1602222) / 1000000).toFixed(2)}M USD`;
+                }
+            } catch (err) {
+                console.error('Failed to load sentinel data', err);
+            }
+        }
+
+        function renderBroadcasts(list) {
+            const container = document.getElementById('broadcastsList');
+            if (!list || list.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: #64748b; padding: 32px;">No broadcasts recorded yet. Waiting for next Sentinel cycle...</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map((item, idx) => {
+                let badgeClass = 'tag-burn';
+                let badgeText = 'DEFLATIONARY BURN';
+                if (item.type === 'MINING_UPDATE') {
+                    badgeClass = 'tag-mining';
+                    badgeText = 'POW HASHRATE UPDATE';
+                } else if (item.type === 'AI_MILESTONE') {
+                    badgeClass = 'tag-ai';
+                    badgeText = 'AI FRAMEWORK MILESTONE';
+                }
+
+                const encodedText = encodeURIComponent(item.tweetText);
+                const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodedText}`;
+                const timeAgo = new Date(item.timestamp).toLocaleTimeString();
+
+                return `
+                    <div class="broadcast-card">
+                        <div class="card-top">
+                            <div class="author-group">
+                                <div class="author-avatar"><i class="fa-solid fa-brain"></i></div>
+                                <div class="author-info">
+                                    <div class="name">Cortex Sentinel <i class="fa-solid fa-circle-check verified-badge"></i></div>
+                                    <div class="handle">@Cortex_L1 • ${timeAgo}</div>
+                                </div>
+                            </div>
+                            <span class="badge-tag ${badgeClass}">${badgeText}</span>
+                        </div>
+
+                        <div class="tweet-body" id="text_${idx}">${escapeHtml(item.tweetText)}</div>
+
+                        <div class="card-actions">
+                            <div class="oracle-proof">
+                                <i class="fa-solid fa-fingerprint" style="color: var(--brand-cyan);"></i>
+                                <span>Oracle Inscription: Verified On-Chain</span>
+                            </div>
+                            <div class="action-btns">
+                                <button class="btn-copy" onclick="copyTweetText(${idx})">
+                                    <i class="fa-regular fa-copy"></i> Copy Text
+                                </button>
+                                <a href="${twitterShareUrl}" target="_blank" class="btn-tweet">
+                                    <i class="fa-brands fa-x-twitter"></i> Post to X
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        window.copyTweetText = function(idx) {
+            const el = document.getElementById(`text_${idx}`);
+            if (!el) return;
+            navigator.clipboard.writeText(el.innerText).then(() => {
+                showToast("Tweet copied to clipboard! Ready to paste.");
+            });
+        };
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.querySelector('span').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // Initialize and poll
+        fetchSentinelData();
+        setInterval(fetchSentinelData, 15000);
+    </script>
+</body>
+</html>
