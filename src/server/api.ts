@@ -1496,5 +1496,19 @@ export function createApiServer(
         }
     });
 
+    
+    app.get('/api/sentinel/latest', (req, res) => {
+        try {
+            const sentinelFile = path.join(__dirname, '../../data/sentinel_broadcasts.json');
+            if (fs.existsSync(sentinelFile)) {
+                const data = JSON.parse(fs.readFileSync(sentinelFile, 'utf8'));
+                return res.json(data);
+            }
+            res.json([]);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
     return app;
 }
