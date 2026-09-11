@@ -205,6 +205,33 @@ crew_memory.record_agent_output(
 python3 examples/crewai_cortex_demo.py
 ```
 
+### 4. ⚡ Phidata & Agno Agent Storage (`cortex_protocol.phidata`)
+Decentralized session and memory storage in [`sdk/python/cortex_protocol/phidata.py`](sdk/python/cortex_protocol/phidata.py):
+- **`CortexAgentStorage` / `CortexAgnoStorage`**: Drop-in replacement for PostgreSQL/SQLite backend in Phidata & Agno agents.
+- **On-Chain Session Inscription**: Seals complete chat runs, tool execution trails, and user context directly onto Cortex L1.
+- **Cold Reboot Hydration**: Restores all past agent sessions and conversations across container migrations.
+- **Gas Combustion**: 30% of every state flush burned permanently.
+
+```python
+from cortex_protocol import CortexClient, AgentWallet
+from cortex_protocol.phidata import CortexAgentStorage, CortexAgentSession
+
+# 1. Connect agent wallet to Cortex L1
+client = CortexClient(wallet=AgentWallet.generate())
+
+# 2. Attach Cortex storage backend (replaces PostgreSQL)
+storage = CortexAgentStorage(table_name="financial_agents", client=client)
+
+# 3. Read or upsert sessions with instant blockchain recall
+session = storage.read(session_id="user_session_01")
+```
+
+```bash
+# Run the live interactive Phidata & Agno demo
+python3 examples/phidata_cortex_demo.py
+```
+
+
 
 ## 📜 License
 
