@@ -862,6 +862,10 @@
             <!-- Position Preview Stats -->
             <div class="dex-meta-table mb-3">
                 <div class="dex-meta-row">
+                    <span>Pool Spot Rate</span>
+                    <span class="dex-meta-value mono text-slate-200" id="modal-rate-val">1 CTX ≈ 2.0061 tUSDC</span>
+                </div>
+                <div class="dex-meta-row">
                     <span>Est. LP Share Minted</span>
                     <span class="dex-meta-value mono text-emerald" id="modal-est-shares">0.0000 LP</span>
                 </div>
@@ -972,10 +976,12 @@
             if (pendingEl) pendingEl.textContent = `+$${currentLpData.claimableYieldUsdc.toFixed(4)} tUSDC`;
             
             const claimBtn = document.getElementById('btn-claim-yield');
-            if (claimBtn && currentLpData.claimableYieldUsdc >= 0.005) {
+            if (claimBtn) {
                 claimBtn.disabled = false;
-                claimBtn.style.opacity = '1';
-                claimBtn.style.cursor = 'pointer';
+                if (currentLpData.claimableYieldUsdc >= 0.005) {
+                    claimBtn.style.opacity = '1';
+                    claimBtn.style.cursor = 'pointer';
+                }
             }
         }
 
@@ -1032,6 +1038,15 @@
                     await syncUserBalances();
                 } catch(e) {}
             }
+            if ((!dexState.activeWallet || !dexState.activeWallet.address) && window.cortex && typeof window.cortex.request === 'function') {
+                try {
+                    const accounts = await window.cortex.request({ method: 'ctx_accounts' });
+                    if (accounts && accounts.length > 0) {
+                        dexState.activeWallet = { address: accounts[0] };
+                        await syncUserBalances();
+                    }
+                } catch(e) {}
+            }
         }
 
         async function connectDexWallet() {
@@ -1047,22 +1062,30 @@
                     }
                 } catch(e) {}
             }
-            const key = prompt('Paste your 64-char private key to connect:');
-            if (key) {
+            const input = prompt('Enter your 64-char Private Key or your ctx1... Address:');
+            if (input) {
+                const clean = input.trim();
+                if (clean.startsWith('ctx1') && clean.length >= 38) {
+                    dexState.activeWallet = { address: clean };
+                    localStorage.setItem('cortex_wallet', JSON.stringify(dexState.activeWallet));
+                    await syncUserBalances();
+                    showToast(`🟢 Address Connected: ${clean.substring(0, 10)}...!`);
+                    return;
+                }
                 try {
                     const res = await fetch('/api/wallet/import', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ privateKey: key.trim() })
+                        body: JSON.stringify({ privateKey: clean })
                     });
                     const data = await res.json();
                     if (data.error) return showToast(data.error, true);
                     dexState.activeWallet = data;
                     localStorage.setItem('cortex_wallet', JSON.stringify(data));
                     await syncUserBalances();
-                    showToast('🟢 Wallet Connected!');
+                    showToast('🟢 Wallet Connected with Signing Key!');
                 } catch(e) {
-                    showToast('Error importing key', true);
+                    showToast('Error connecting wallet', true);
                 }
             }
         }
@@ -1094,12 +1117,12 @@
 
                         const claimBtn = document.getElementById('btn-claim-yield');
                         if (claimBtn) {
+                            claimBtn.disabled = false;
+                            claimBtn.style.cursor = 'pointer';
                             if ((lpData.claimableYieldUsdc || 0) >= 0.005) {
-                                claimBtn.disabled = false;
                                 claimBtn.style.opacity = '1';
-                                claimBtn.style.cursor = 'pointer';
                             } else {
-                                claimBtn.style.opacity = '0.65';
+                                claimBtn.style.opacity = '0.9';
                             }
                         }
                     } else {
@@ -1310,40 +1333,55 @@
 
         // --- ADD LIQUIDITY MODAL & LOGIC ---
         function openAddLiquidityModal() {
-            document.getElementById('modal-ctx-bal').textContent = `${dexState.userCtx.toFixed(2)} CTX`;
-            document.getElementById('modal-usdc-bal').textContent = `${dexState.userUsdc.toFixed(2)} tUSDC`;
-            document.getElementById('modal-rate-val').textContent = `1 CTX = ${dexState.spotPrice.toFixed(4)} tUSDC`;
-            document.getElementById('modal-input-ctx').value = '';
-            document.getElementById('modal-input-usdc').value = '';
-            document.getElementById('modal-liq-status').innerHTML = '';
-            document.getElementById('add-liquidity-modal').classList.add('active');
+            const ctxBalEl = document.getElementById('modal-ctx-bal');
+            if (ctxBalEl) ctxBalEl.textContent = `${(dexState.userCtx || 0).toFixed(2)} CTX`;
+            const usdcBalEl = document.getElementById('modal-usdc-bal');
+            if (usdcBalEl) usdcBalEl.textContent = `${(dexState.userUsdc || 1000).toFixed(2)} tUSDC`;
+            const rateEl = document.getElementById('modal-rate-val');
+            if (rateEl) rateEl.textContent = `1 CTX ≈ ${(dexState.spotPrice || 2.0061).toFixed(4)} tUSDC`;
+
+            const inputCtx = document.getElementById('modal-input-ctx');
+            if (inputCtx) inputCtx.value = '';
+            const inputUsdc = document.getElementById('modal-input-usdc');
+            if (inputUsdc) inputUsdc.value = '';
+            const estShares = document.getElementById('modal-est-shares');
+            if (estShares) estShares.textContent = '0.0000 LP';
+            const statusBox = document.getElementById('modal-liq-status');
+            if (statusBox) statusBox.innerHTML = '';
+
+            const modal = document.getElementById('add-liquidity-modal');
+            if (modal) modal.classList.add('active');
         }
 
         function closeAddLiquidityModal() {
-            document.getElementById('add-liquidity-modal').classList.remove('active');
+            const modal = document.getElementById('add-liquidity-modal');
+            if (modal) modal.classList.remove('active');
         }
 
         function calcLiquidityPair() {
             const inCtx = parseFloat(document.getElementById('modal-input-ctx').value || '0');
             const outUsdcEl = document.getElementById('modal-input-usdc');
-            const shareEl = document.getElementById('modal-share-val');
+            const shareEl = document.getElementById('modal-est-shares');
 
-            if (inCtx <= 0) {
-                outUsdcEl.value = '';
-                shareEl.textContent = '< 0.01%';
+            if (isNaN(inCtx) || inCtx <= 0) {
+                if (outUsdcEl) outUsdcEl.value = '';
+                if (shareEl) shareEl.textContent = '0.0000 LP';
                 return;
             }
 
-            const reqUsdc = inCtx * dexState.spotPrice;
-            outUsdcEl.value = reqUsdc.toFixed(4);
+            const spot = dexState.spotPrice || 2.0061;
+            const reqUsdc = +(inCtx * spot).toFixed(4);
+            if (outUsdcEl) outUsdcEl.value = reqUsdc;
 
-            const poolShare = ((inCtx / (dexState.poolCtx + inCtx)) * 100).toFixed(3);
-            shareEl.textContent = `${poolShare}%`;
+            const estShares = Math.sqrt(inCtx * reqUsdc);
+            const currentPool = dexState.poolCtx || 394000;
+            const poolShare = ((inCtx / (currentPool + inCtx)) * 100).toFixed(3);
+            if (shareEl) shareEl.textContent = `${estShares.toFixed(4)} LP (${poolShare}%)`;
         }
 
         async function executeAddLiquidity() {
             const inCtx = parseFloat(document.getElementById('modal-input-ctx').value || '0');
-            if (inCtx <= 0) return showToast('Enter a valid CTX amount to deposit', true);
+            if (isNaN(inCtx) || inCtx <= 0) return showToast('Enter a valid CTX amount to deposit', true);
 
             const btn = document.getElementById('btn-confirm-deposit-lp');
             const statusBox = document.getElementById('modal-liq-status');
@@ -1351,7 +1389,7 @@
             // Find private key from active wallet or prompt
             let pKey = dexState.activeWallet && dexState.activeWallet.privateKey ? dexState.activeWallet.privateKey : null;
             if (!pKey) {
-                pKey = prompt('Enter your private key to sign liquidity deposit:');
+                pKey = prompt('Enter your 64-char Private Key to sign liquidity deposit:');
             }
             if (!pKey) return;
 
@@ -1390,9 +1428,24 @@
         }
 
         async function claimLpYield() {
+            if (!dexState.activeWallet || !dexState.activeWallet.address) {
+                showToast('Please connect your wallet first to claim yield.', true);
+                connectDexWallet();
+                return;
+            }
+
+            if (!currentLpData || currentLpData.userShares <= 0) {
+                return showToast('You do not have an active liquidity position on this wallet.', true);
+            }
+
+            const pending = (currentLpData && currentLpData.claimableYieldUsdc) ? currentLpData.claimableYieldUsdc : 0;
+            if (pending < 0.005) {
+                return showToast(`Pending yield is +$${pending.toFixed(4)} tUSDC. Minimum claim is $0.0050. Yield streams every second!`, true);
+            }
+
             let pKey = dexState.activeWallet && dexState.activeWallet.privateKey ? dexState.activeWallet.privateKey : null;
             if (!pKey) {
-                pKey = prompt('Enter your private key to claim LP fee yield:');
+                pKey = prompt('Enter your 64-char Private Key to authorize yield claim:');
             }
             if (!pKey) return;
 
@@ -1407,7 +1460,6 @@
                 });
                 const data = await res.json();
                 if (data.error) {
-                    if (btn) btn.innerHTML = '<i class="fa-solid fa-gift text-emerald"></i> <span>Claim Yield</span>';
                     return showToast(data.error, true);
                 }
 
@@ -1432,16 +1484,26 @@
         // --- REMOVE LIQUIDITY MODAL & LOGIC ---
         let removeSelectedPercent = 100;
         function openRemoveLiquidityModal() {
+            if (!dexState.activeWallet || !dexState.activeWallet.address) {
+                showToast('Please connect your wallet first to withdraw LP.', true);
+                connectDexWallet();
+                return;
+            }
             if (!currentLpData || currentLpData.userShares <= 0) {
                 return showToast('You do not have any active liquidity deposited.', true);
             }
-            document.getElementById('modal-remove-shares-bal').textContent = `${currentLpData.userShares.toFixed(4)} LP`;
+            const sharesBalEl = document.getElementById('modal-remove-shares-bal');
+            if (sharesBalEl) sharesBalEl.textContent = `${currentLpData.userShares.toFixed(4)} LP`;
             setRemovePercent(100);
-            document.getElementById('remove-liquidity-modal').classList.add('show');
+            const statusBox = document.getElementById('modal-remove-status');
+            if (statusBox) statusBox.innerHTML = '';
+            const modal = document.getElementById('remove-liquidity-modal');
+            if (modal) modal.classList.add('active');
         }
 
         function closeRemoveLiquidityModal() {
-            document.getElementById('remove-liquidity-modal').classList.remove('show');
+            const modal = document.getElementById('remove-liquidity-modal');
+            if (modal) modal.classList.remove('active');
         }
 
         function setRemovePercent(pct) {
@@ -1452,15 +1514,18 @@
             const returnUsdc = +(currentLpData.usdcValue * fraction).toFixed(4);
             const yieldAmt = +(currentLpData.claimableYieldUsdc || 0).toFixed(4);
 
-            document.getElementById('modal-remove-receive-ctx').textContent = `${returnCtx.toFixed(4)} CTX`;
-            document.getElementById('modal-remove-receive-usdc').textContent = `${returnUsdc.toFixed(4)} tUSDC`;
-            document.getElementById('modal-remove-receive-yield').textContent = `+${yieldAmt.toFixed(4)} tUSDC`;
+            const ctxEl = document.getElementById('modal-remove-receive-ctx');
+            if (ctxEl) ctxEl.textContent = `${returnCtx.toFixed(4)} CTX`;
+            const usdcEl = document.getElementById('modal-remove-receive-usdc');
+            if (usdcEl) usdcEl.textContent = `${returnUsdc.toFixed(4)} tUSDC`;
+            const yieldEl = document.getElementById('modal-remove-receive-yield');
+            if (yieldEl) yieldEl.textContent = `+${yieldAmt.toFixed(4)} tUSDC`;
         }
 
         async function executeRemoveLiquidity() {
             let pKey = dexState.activeWallet && dexState.activeWallet.privateKey ? dexState.activeWallet.privateKey : null;
             if (!pKey) {
-                pKey = prompt('Enter your private key to authorize withdrawal:');
+                pKey = prompt('Enter your 64-char Private Key to authorize withdrawal:');
             }
             if (!pKey) return;
 
@@ -1493,6 +1558,18 @@
                 showToast(e.message || 'Withdrawal failed', true);
             }
         }
+
+        // Close modals on overlay click or Escape key
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.classList.contains('dex-modal-overlay')) {
+                e.target.classList.remove('active');
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.dex-modal-overlay.active').forEach(m => m.classList.remove('active'));
+            }
+        });
 
         function drawDexPriceChart() {
             const canvas = document.getElementById('dex-price-canvas');
