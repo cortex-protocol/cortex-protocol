@@ -477,7 +477,7 @@ export function createApiServer(
             const tx = Transaction.createMemoryCommit(keyPair.address, keyPair.publicKey, payload, fee, nonce);
             tx.sign(keyPair.privateKey, keyPair.publicKey);
 
-            const result = blockchain.mempool.addTransaction(tx);
+            const result = blockchain.mempool.addTransaction(tx, (addr) => blockchain.getBalance(addr));
             if (!result.success) {
                 return res.status(400).json({ error: result.error });
             }

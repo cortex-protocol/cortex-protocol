@@ -134,7 +134,7 @@ export class P2PNetwork {
             case MessageType.BROADCAST_TRANSACTION:
                 try {
                     const tx = new Transaction(message.data);
-                    const res = this.blockchain.mempool.addTransaction(tx);
+                    const res = this.blockchain.mempool.addTransaction(tx, (addr) => this.blockchain.getBalance(addr));
                     if (res.success) {
                         // Re-broadcast to other peers
                         this.broadcastExcept(ws, message);

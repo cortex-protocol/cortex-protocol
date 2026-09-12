@@ -422,10 +422,10 @@ export class Blockchain {
 
             if (targetIdx !== -1) {
                 const targetTx = memoryTxs[targetIdx];
-                const leafHash = targetTx.memoryPayload!.vectorHash || CortexCrypto.sha256(JSON.stringify(targetTx.memoryPayload));
+                const leafHash = targetTx.memoryPayload!.vectorHash || CortexCrypto.sha256(Transaction.canonicalJson(targetTx.memoryPayload));
                 
                 // Build authentic Merkle Path
-                let currentLeaves = memoryTxs.map(tx => tx.memoryPayload!.vectorHash || CortexCrypto.sha256(JSON.stringify(tx.memoryPayload)));
+                let currentLeaves = memoryTxs.map(tx => tx.memoryPayload!.vectorHash || CortexCrypto.sha256(Transaction.canonicalJson(tx.memoryPayload)));
                 let idx = targetIdx;
                 const proofPath: Array<{ position: 'left' | 'right'; hash: string }> = [];
 
@@ -471,10 +471,8 @@ export class Blockchain {
                     blockHash: block.hash,
                     memoryRoot: block.memoryRoot,
                     leafHash,
-                    merkleProofPath: proofPath.length > 0 ? proofPath : [
-                        { position: 'left' as const, hash: CortexCrypto.sha256(leafHash) }
-                    ],
-                    verified: true,
+                    merkleProofPath: proofPath,
+                    verified: verified,
                     proofByteSize: proofPath.length * 32 + 32
                 };
             }
