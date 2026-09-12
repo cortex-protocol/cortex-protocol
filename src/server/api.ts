@@ -501,7 +501,7 @@ export function createApiServer(
 
     // --- TESTNET FAUCET ENDPOINT ---
     const faucetClaims = new Map<string, number>();
-    const FAUCET_PRIVATE_KEY = '4a7f92b938471029384710293847102938471029384710293847102938471029'; // Master Testnet Treasury
+    const FAUCET_PRIVATE_KEY = process.env.FAUCET_PRIVATE_KEY || '4a7f92b938471029384710293847102938471029384710293847102938471029'; // Master Testnet Treasury
     const FAUCET_KEYPAIR = CortexCrypto.fromPrivateKey(FAUCET_PRIVATE_KEY);
 
     app.post('/api/faucet', (req, res) => {
@@ -892,7 +892,7 @@ export function createApiServer(
         }
 
         const ctxBal = +(Math.max(0, confirmedBalance + pendingIncoming - pendingOutgoing)).toFixed(6);
-        const usdcBal = userUsdcBalances.get(address.toLowerCase()) ?? 1000.00;
+        const usdcBal = userUsdcBalances.get(address.toLowerCase()) ?? 0.00;
         res.json({
             address,
             ctx: ctxBal,
@@ -913,7 +913,7 @@ export function createApiServer(
             const keyPair = CortexCrypto.fromPrivateKey(senderPrivateKey.trim());
             const userAddr = keyPair.address;
             const inAmount = Number(amountIn);
-            const userUsdc = userUsdcBalances.get(userAddr.toLowerCase()) ?? 1000.00;
+            const userUsdc = userUsdcBalances.get(userAddr.toLowerCase()) ?? 0.00;
 
             if (fromSymbol === 'CTX') {
                 const ctxBal = blockchain.getBalance(userAddr);

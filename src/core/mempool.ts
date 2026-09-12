@@ -1,18 +1,46 @@
 import { Transaction, TransactionType } from './transaction';
 
 export class Mempool {
+    public static readonly MAX_MEMPOOL_SIZE = 5000;
     private transactions: Map<string, Transaction> = new Map();
 
     /**
-     * Add a verified transaction to the mempool
+     * Add a verified transaction to the mempool with DoS protection & fee-priority eviction
      */
-    public addTransaction(tx: Transaction): { success: boolean; error?: string } {
+    public addTransaction(
+        tx: Transaction,
+        balanceProvider?: (address: string) => number
+    ): { success: boolean; error?: string } {
         if (!tx.isValid()) {
             return { success: false, error: 'Cryptographic signature or transaction fields are invalid.' };
         }
 
+        if (balanceProvider && tx.type !== 'COINBASE') {
+            const senderBal = balanceProvider(tx.sender);
+            const totalRequired = tx.amount + tx.fee + (tx.burnAmount || 0);
+            if (senderBal < totalRequired) {
+                return { success: false, error: `Insufficient balance for transaction. Required: ${totalRequired}, Available: ${senderBal}` };
+            }
+        }
+
         if (this.transactions.has(tx.id)) {
             return { success: false, error: 'Transaction already exists in mempool.' };
+        }
+
+        // Mempool capacity check & fee-priority eviction
+        if (this.transactions.size >= Mempool.MAX_MEMPOOL_SIZE) {
+            let lowestFeeTx: Transaction | null = null;
+            for (const existingTx of this.transactions.values()) {
+                if (!lowestFeeTx || existingTx.fee < lowestFeeTx.fee) {
+                    lowestFeeTx = existingTx;
+                }
+            }
+
+            if (lowestFeeTx && tx.fee > lowestFeeTx.fee) {
+                this.transactions.delete(lowestFeeTx.id);
+            } else {
+                return { success: false, error: 'Mempool is full and transaction fee is too low for eviction.' };
+            }
         }
 
         this.transactions.set(tx.id, tx);

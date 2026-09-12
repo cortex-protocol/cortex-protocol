@@ -258,6 +258,26 @@ export class Blockchain {
             return { success: false, error: `Block does not satisfy Proof-of-Work difficulty target.` };
         }
 
+        // Consensus rule: Coinbase validation
+        let totalFees = 0;
+        for (let i = 1; i < block.transactions.length; i++) {
+            totalFees += (block.transactions[i].fee || 0);
+        }
+        totalFees = +totalFees.toFixed(8);
+
+        const expectedCoinbase = +(this.getCurrentBlockReward(block.index) + totalFees).toFixed(8);
+        const coinbaseTx = block.transactions[0];
+        if (!coinbaseTx || coinbaseTx.amount > expectedCoinbase + 0.00000001) {
+            return { 
+                success: false, 
+                error: `Coinbase reward ${coinbaseTx?.amount} exceeds maximum allowed (${expectedCoinbase}).` 
+            };
+        }
+
+        // Consensus rule: In-block state simulation (prevents overspending, negative balances and nonce replay)
+        const simBalances = new Map<string, number>();
+        const simNonces = new Map<string, number>();
+
         for (let i = 0; i < block.transactions.length; i++) {
             const tx = block.transactions[i];
             if (i === 0) {
@@ -270,6 +290,32 @@ export class Blockchain {
                 }
                 if (!tx.isValid()) {
                     return { success: false, error: `Invalid transaction signature in block: ${tx.id}` };
+                }
+
+                const sender = tx.sender;
+                const curBal = simBalances.has(sender) ? simBalances.get(sender)! : this.getBalance(sender);
+                const curNonce = simNonces.has(sender) ? simNonces.get(sender)! : (this.nonceIndex.get(sender) ?? -1);
+
+                const requiredDebit = +(tx.amount + tx.fee + (tx.burnAmount || 0)).toFixed(6);
+                if (curBal < requiredDebit) {
+                    return { 
+                        success: false, 
+                        error: `Sender ${sender} has insufficient balance in block. Required: ${requiredDebit}, Available: ${curBal}` 
+                    };
+                }
+                if (tx.nonce <= curNonce) {
+                    return { 
+                        success: false, 
+                        error: `Transaction ${tx.id} nonce ${tx.nonce} must be strictly greater than previous nonce ${curNonce}` 
+                    };
+                }
+
+                simBalances.set(sender, +(curBal - requiredDebit).toFixed(6));
+                simNonces.set(sender, tx.nonce);
+
+                if (tx.recipient && tx.recipient !== CORTEX_BURN_ADDRESS) {
+                    const recipBal = simBalances.has(tx.recipient) ? simBalances.get(tx.recipient)! : this.getBalance(tx.recipient);
+                    simBalances.set(tx.recipient, +(recipBal + tx.amount).toFixed(6));
                 }
             }
         }
@@ -299,6 +345,7 @@ export class Blockchain {
 
             if (current.index !== previous.index + 1) return false;
             if (current.previousHash !== previous.hash) return false;
+            if (current.timestamp < previous.timestamp) return false;
             if (!current.hasValidProofOfWork()) return false;
             if (current.hash !== current.calculateHash()) return false;
         }
@@ -306,8 +353,28 @@ export class Blockchain {
         return true;
     }
 
+    /**
+     * Compute cumulative chainwork (sum of 16^difficulty as BigInt)
+     * Follows Nakamoto heaviest Proof-of-Work chain consensus rule
+     */
+    public getCumulativeWork(chain: Block[] = this.chain): bigint {
+        return chain.reduce((acc, b) => {
+            const diff = BigInt(Math.max(1, b.difficulty || 1));
+            return acc + (1n << (diff * 4n));
+        }, 0n);
+    }
+
     public replaceChain(newChain: Block[]): boolean {
-        if (newChain.length > this.chain.length && this.isValidChain(newChain)) {
+        if (!this.isValidChain(newChain)) {
+            return false;
+        }
+
+        const currentWork = this.getCumulativeWork(this.chain);
+        const newWork = this.getCumulativeWork(newChain);
+
+        // Nakamoto Consensus: Heaviest Cumulative Work rule
+        if (newWork > currentWork) {
+            console.log(`[Consensus] Reorganizing chain to heavier fork. Current work: ${currentWork}, New work: ${newWork}, Blocks: ${newChain.length}`);
             this.chain = newChain;
             this.rebuildIndexes();
             this.storage.saveChain(this.chain);
