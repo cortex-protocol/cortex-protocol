@@ -1031,7 +1031,7 @@ export function createApiServer(
             const requiredUsdc = +(inCtx * currentSpot).toFixed(4);
 
             const userCtxBal = blockchain.getBalance(userAddr);
-            const userUsdc = userUsdcBalances.get(userAddr.toLowerCase()) ?? 1000.00;
+            const userUsdc = userUsdcBalances.get(userAddr.toLowerCase()) ?? 0.00;
             const fee = 0.01;
 
             if (userCtxBal < inCtx + fee) {
@@ -1144,7 +1144,7 @@ export function createApiServer(
                 return res.status(400).json({ error: 'No pending yield available to claim yet (minimum $0.01 tUSDC). Yield accrues continuously with volume and time.' });
             }
 
-            const currentUsdc = userUsdcBalances.get(userAddr) ?? 1000.00;
+            const currentUsdc = userUsdcBalances.get(userAddr) ?? 0.00;
             userUsdcBalances.set(userAddr, +(currentUsdc + yieldAmount).toFixed(4));
             userClaimedYield.set(userAddr, +((userClaimedYield.get(userAddr) || 0) + yieldAmount).toFixed(4));
             userLastClaimTimestamp.set(userAddr, Date.now());
@@ -1200,7 +1200,7 @@ export function createApiServer(
             poolUsdcReserve = Math.max(1000, +(poolUsdcReserve - usdcToReturn).toFixed(4));
 
             // Credit USDC + pending yield
-            const currentUsdc = userUsdcBalances.get(userAddrLower) ?? 1000.00;
+            const currentUsdc = userUsdcBalances.get(userAddrLower) ?? 0.00;
             userUsdcBalances.set(userAddrLower, +(currentUsdc + usdcToReturn + pendingYield).toFixed(4));
             if (pendingYield > 0) {
                 userClaimedYield.set(userAddrLower, +((userClaimedYield.get(userAddrLower) || 0) + pendingYield).toFixed(4));

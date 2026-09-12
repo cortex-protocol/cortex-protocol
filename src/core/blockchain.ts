@@ -338,6 +338,9 @@ export class Blockchain {
         if (genesis.index !== 0 || genesis.previousHash !== '0000000000000000000000000000000000000000000000000000000000000000') {
             return false;
         }
+        if (this.chain.length > 0 && genesis.hash !== this.chain[0].hash) {
+            return false;
+        }
 
         for (let i = 1; i < chain.length; i++) {
             const current = chain[i];

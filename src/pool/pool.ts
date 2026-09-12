@@ -37,6 +37,7 @@ export class CortexMiningPool {
     private poolBlocksFound: number = 0;
     private currentRoundShares: number = 0;
     private lastDistributedBlock: number = 0;
+    private seenRoundNonces: Set<string> = new Set();
     private onBlockFoundCallback?: (block: Block) => void;
 
     constructor(blockchain: Blockchain, poolPrivateKeyHex?: string) {
@@ -156,6 +157,12 @@ export class CortexMiningPool {
         if (!hash.startsWith(sharePrefix)) {
             return { validShare: false, blockFound: false, error: `Share did not meet pool share difficulty ${this.shareDifficulty}` };
         }
+
+        const shareKey = `${index}:${nonce}:${hash}`;
+        if (this.seenRoundNonces.has(shareKey)) {
+            return { validShare: false, blockFound: false, error: 'Duplicate share: nonce already submitted in this round' };
+        }
+        this.seenRoundNonces.add(shareKey);
 
         // --- VALID SHARE ACCEPTED IN CURRENT ROUND ---
         const miner = this.recordValidShare(minerAddress, workerId, Number(hashrate) || 0);
@@ -324,6 +331,7 @@ export class CortexMiningPool {
         }
 
         this.currentRoundShares = 0;
+        this.seenRoundNonces.clear();
     }
 
     private executeOnChainPayout(recipient: string, amount: number, blockIndex: number, workerId: string) {
@@ -340,7 +348,7 @@ export class CortexMiningPool {
             senderPublicKey: this.poolKeyPair.publicKey,
             recipient: recipient,
             amount: amount,
-            fee: 0,
+            fee: 0.001,
             burnAmount: 0,
             nonce: nonce,
             timestamp: Date.now()
