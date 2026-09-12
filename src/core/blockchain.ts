@@ -342,6 +342,17 @@ export class Blockchain {
             return false;
         }
 
+        // Consensus rule: State simulation & transaction validation across candidate chain
+        const simBalances = new Map<string, number>();
+        const simNonces = new Map<string, number>();
+
+        // Initialize from genesis transactions
+        for (const tx of genesis.transactions) {
+            if (tx.recipient && tx.recipient !== CORTEX_BURN_ADDRESS) {
+                simBalances.set(tx.recipient, (simBalances.get(tx.recipient) || 0) + tx.amount);
+            }
+        }
+
         for (let i = 1; i < chain.length; i++) {
             const current = chain[i];
             const previous = chain[i - 1];
@@ -351,6 +362,54 @@ export class Blockchain {
             if (current.timestamp < previous.timestamp) return false;
             if (!current.hasValidProofOfWork()) return false;
             if (current.hash !== current.calculateHash()) return false;
+
+            // Validate transactions in block
+            if (!current.transactions || current.transactions.length === 0) return false;
+
+            let totalFees = 0;
+            for (let t = 1; t < current.transactions.length; t++) {
+                totalFees += (current.transactions[t].fee || 0);
+            }
+            totalFees = +totalFees.toFixed(8);
+
+            const expectedCoinbase = +(this.getCurrentBlockReward(current.index) + totalFees).toFixed(8);
+            const coinbaseTx = current.transactions[0];
+            if (!coinbaseTx || coinbaseTx.type !== 'COINBASE') return false;
+            if (coinbaseTx.amount > expectedCoinbase + 0.00000001) return false;
+
+            // Credit coinbase recipient in simulation
+            if (coinbaseTx.recipient && coinbaseTx.recipient !== CORTEX_BURN_ADDRESS) {
+                const prevBal = simBalances.get(coinbaseTx.recipient) || 0;
+                simBalances.set(coinbaseTx.recipient, +(prevBal + coinbaseTx.amount).toFixed(6));
+            }
+
+            // Simulate transfers, memories, burns
+            for (let t = 1; t < current.transactions.length; t++) {
+                const tx = current.transactions[t];
+                if (tx.type === 'COINBASE') return false;
+                if (!tx.isValid()) return false;
+
+                const sender = tx.sender;
+                const curBal = simBalances.get(sender) || 0;
+                const curNonce = simNonces.get(sender) ?? -1;
+
+                const requiredDebit = +(tx.amount + tx.fee + (tx.burnAmount || 0)).toFixed(6);
+                // Allow minor floating point rounding tolerance for historical chain compatibility
+                if (curBal + 0.00001 < requiredDebit) {
+                    return false;
+                }
+                if (tx.nonce <= curNonce) {
+                    return false;
+                }
+
+                simBalances.set(sender, Math.max(0, +(curBal - requiredDebit).toFixed(6)));
+                simNonces.set(sender, tx.nonce);
+
+                if (tx.recipient && tx.recipient !== CORTEX_BURN_ADDRESS) {
+                    const recipBal = simBalances.get(tx.recipient) || 0;
+                    simBalances.set(tx.recipient, +(recipBal + tx.amount).toFixed(6));
+                }
+            }
         }
 
         return true;
