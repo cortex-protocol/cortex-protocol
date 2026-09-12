@@ -46,6 +46,7 @@ export class Transaction implements ITransaction {
         timestamp?: number;
         signature?: string;
         memoryPayload?: AIMemoryPayload;
+        id?: string;
     }) {
         this.type = data.type;
         this.sender = data.sender;
@@ -59,7 +60,22 @@ export class Transaction implements ITransaction {
         this.signature = data.signature;
         this.memoryPayload = data.memoryPayload;
 
-        this.id = this.calculateHash();
+        this.id = data.id || this.calculateHash();
+    }
+
+    /**
+     * Deterministic canonical JSON serialization sorting all object keys recursively
+     */
+    public static canonicalJson(obj: any): string {
+        if (obj === null || typeof obj !== 'object') {
+            return JSON.stringify(obj);
+        }
+        if (Array.isArray(obj)) {
+            return `[${obj.map(item => Transaction.canonicalJson(item)).join(',')}]`;
+        }
+        const sortedKeys = Object.keys(obj).sort();
+        const parts = sortedKeys.map(key => `${JSON.stringify(key)}:${Transaction.canonicalJson(obj[key])}`);
+        return `{${parts.join(',')}}`;
     }
 
     /**
@@ -67,7 +83,7 @@ export class Transaction implements ITransaction {
      */
     public calculateHash(): string {
         const memHash = this.memoryPayload
-            ? CortexCrypto.sha256(JSON.stringify(this.memoryPayload))
+            ? CortexCrypto.sha256(Transaction.canonicalJson(this.memoryPayload))
             : '';
             
         const raw = `${this.type}:${this.sender}:${this.recipient}:${this.amount}:${this.fee}:${this.burnAmount}:${this.nonce}:${this.timestamp}:${memHash}`;

@@ -239,6 +239,21 @@ export class Blockchain {
             return { success: false, error: `Invalid previous hash link.` };
         }
 
+        // Consensus rule: verify that block difficulty matches network expected difficulty
+        const expectedDifficulty = this.getDifficulty();
+        if (block.difficulty !== expectedDifficulty) {
+            return { success: false, error: `Invalid block difficulty ${block.difficulty}, expected ${expectedDifficulty}` };
+        }
+
+        // Consensus rule: timestamp bounds to prevent DAA manipulation and clock drift
+        const now = Date.now();
+        if (block.timestamp > now + 30000) {
+            return { success: false, error: 'Block timestamp is too far in the future.' };
+        }
+        if (block.timestamp < latestBlock.timestamp) {
+            return { success: false, error: 'Block timestamp cannot be earlier than previous block.' };
+        }
+
         if (!block.hasValidProofOfWork()) {
             return { success: false, error: `Block does not satisfy Proof-of-Work difficulty target.` };
         }

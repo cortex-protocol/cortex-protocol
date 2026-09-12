@@ -91,7 +91,7 @@ export class Block implements IBlock {
     public calculateMemoryRoot(): string {
         const memoryHashes = this.transactions
             .filter(tx => tx.type === 'MEMORY_COMMIT' && tx.memoryPayload)
-            .map(tx => tx.memoryPayload!.vectorHash || CortexCrypto.sha256(JSON.stringify(tx.memoryPayload)));
+            .map(tx => tx.memoryPayload!.vectorHash || CortexCrypto.sha256(Transaction.canonicalJson(tx.memoryPayload)));
 
         if (memoryHashes.length === 0) {
             return CortexCrypto.sha256('NO_MEMORY_COMMITS');
