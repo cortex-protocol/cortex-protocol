@@ -40,6 +40,8 @@ export class Blockchain {
     constructor(config: Partial<BlockchainConfig> = {}, customDataDir?: string) {
         this.config = { ...DEFAULT_CONFIG, ...config };
         this.mempool = new Mempool();
+        this.mempool.setBalanceProvider((addr) => this.getBalance(addr));
+        this.mempool.setNonceProvider((addr) => this.getConfirmedNonce(addr));
         this.storage = new StorageEngine(customDataDir);
 
         // Try loading from persistent disk storage
@@ -213,6 +215,13 @@ export class Blockchain {
     }
 
     /**
+     * Get the confirmed on-chain nonce for an address (O(1) state lookup)
+     */
+    public getConfirmedNonce(address: string): number {
+        return this.nonceIndex.get(address) ?? -1;
+    }
+
+    /**
      * Get the next expected nonce for an address (O(1) state lookup + mempool check)
      */
     public getNextNonce(address: string): number {
@@ -336,6 +345,7 @@ export class Blockchain {
         this.chain.push(block);
         this.applyBlockToIndexes(block);
         this.mempool.removeTransactions(block.transactions);
+        this.mempool.purgeStaleTransactions((addr) => this.getConfirmedNonce(addr));
 
         // Persist updated ledger to disk
         this.storage.saveChain(this.chain);
