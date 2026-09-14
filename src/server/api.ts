@@ -441,8 +441,11 @@ export function createApiServer(
     app.post(['/api/memory/commit', '/api/memory/inscribe'], (req, res) => {
         try {
             const body = req.body || {};
-            // Default to funded master testnet treasury/agent key if omitted (allowing 1-click web testing)
-            const agentPrivateKey = body.agentPrivateKey || body.privateKey || '4a7f92b938471029384710293847102938471029384710293847102938471029';
+            // Require agentPrivateKey in body or load from environment
+            const agentPrivateKey = body.agentPrivateKey || body.privateKey || process.env.AGENT_PRIVATE_KEY || process.env.FAUCET_PRIVATE_KEY;
+            if (!agentPrivateKey) {
+                return res.status(400).json({ error: 'agentPrivateKey or privateKey is required (or configure AGENT_PRIVATE_KEY in environment).' });
+            }
             const { agentId, topic, content, memoryType = 'KNOWLEDGE_BASE', fee = 0.05 } = body;
 
             if (!agentId || !content || !topic) {
@@ -501,8 +504,13 @@ export function createApiServer(
 
     // --- TESTNET FAUCET ENDPOINT ---
     const faucetClaims = new Map<string, number>();
-    const FAUCET_PRIVATE_KEY = process.env.FAUCET_PRIVATE_KEY || '4a7f92b938471029384710293847102938471029384710293847102938471029'; // Master Testnet Treasury
-    const FAUCET_KEYPAIR = CortexCrypto.fromPrivateKey(FAUCET_PRIVATE_KEY);
+    const FAUCET_PRIVATE_KEY = process.env.FAUCET_PRIVATE_KEY;
+    if (!FAUCET_PRIVATE_KEY) {
+        console.warn('[Faucet] Warning: FAUCET_PRIVATE_KEY not set in environment. Generating ephemeral faucet keypair.');
+    }
+    const FAUCET_KEYPAIR = FAUCET_PRIVATE_KEY 
+        ? CortexCrypto.fromPrivateKey(FAUCET_PRIVATE_KEY) 
+        : CortexCrypto.generateKeyPair();
 
     app.post('/api/faucet', (req, res) => {
         try {
@@ -515,11 +523,13 @@ export function createApiServer(
             }
 
             const now = Date.now();
-            const lastClaimTime = faucetClaims.get(address.toLowerCase()) || 0;
+            const lastAddressClaim = faucetClaims.get(address.toLowerCase()) || 0;
+            const lastIpClaim = faucetClaims.get(clientIp) || 0;
             const COOLDOWN_MS = 10 * 1000; // 10 seconds on Testnet
+            const mostRecentClaim = Math.max(lastAddressClaim, lastIpClaim);
 
-            if (now - lastClaimTime < COOLDOWN_MS) {
-                const remainingSec = Math.ceil((COOLDOWN_MS - (now - lastClaimTime)) / 1000);
+            if (now - mostRecentClaim < COOLDOWN_MS) {
+                const remainingSec = Math.ceil((COOLDOWN_MS - (now - mostRecentClaim)) / 1000);
                 return res.status(429).json({ error: `Faucet rate limited. Please wait ${remainingSec}s before requesting again.` });
             }
 
@@ -541,7 +551,10 @@ export function createApiServer(
 
             tx.sign(FAUCET_KEYPAIR.privateKey, FAUCET_KEYPAIR.publicKey);
 
-            const poolRes = blockchain.mempool.addTransaction(tx);
+            const poolRes = blockchain.mempool.addTransaction(
+                tx,
+                (addr) => blockchain.getBalance(addr)
+            );
             if (!poolRes.success) {
                 return res.status(400).json({ error: poolRes.error });
             }
@@ -715,6 +728,13 @@ export function createApiServer(
 
     // --- REAL AMM DEX ENGINE & LIQUIDITY POOL WITH DISK PERSISTENCE ---
     const dexStateFile = path.join(__dirname, '../../data/dex_state.json');
+    const DEX_AMM_PRIVATE_KEY = process.env.DEX_AMM_PRIVATE_KEY || process.env.FAUCET_PRIVATE_KEY;
+    if (!DEX_AMM_PRIVATE_KEY) {
+        console.warn('[DEX AMM] Warning: Neither DEX_AMM_PRIVATE_KEY nor FAUCET_PRIVATE_KEY set in environment. Generating ephemeral AMM keypair.');
+    }
+    const DEX_AMM_KEYPAIR = DEX_AMM_PRIVATE_KEY 
+        ? CortexCrypto.fromPrivateKey(DEX_AMM_PRIVATE_KEY) 
+        : CortexCrypto.generateKeyPair();
     let poolCtxReserve = 500000;
     let poolUsdcReserve = 622500;
     const userUsdcBalances = new Map<string, number>();
@@ -926,6 +946,30 @@ export function createApiServer(
                 const effectiveIn = inAmount * 0.997;
                 const usdcOut = +( (poolUsdcReserve * effectiveIn) / (poolCtxReserve + effectiveIn) ).toFixed(4);
 
+                // Send on-chain transaction to transfer CTX to AMM pool
+                const nonce = blockchain.getNextNonce(userAddr);
+                const tx = new Transaction({
+                    type: 'TRANSFER',
+                    sender: userAddr,
+                    senderPublicKey: keyPair.publicKey,
+                    recipient: DEX_AMM_KEYPAIR.address,
+                    amount: inAmount,
+                    fee: fee,
+                    burnAmount: 0,
+                    nonce: nonce,
+                    timestamp: Date.now()
+                });
+                tx.sign(keyPair.privateKey, keyPair.publicKey);
+
+                const poolRes = blockchain.mempool.addTransaction(
+                    tx,
+                    (addr) => blockchain.getBalance(addr)
+                );
+                if (!poolRes.success) {
+                    return res.status(400).json({ error: `Swap transaction failed: ${poolRes.error}` });
+                }
+                p2p.broadcastTransaction(tx);
+
                 poolCtxReserve += inAmount;
                 poolUsdcReserve -= usdcOut;
                 userUsdcBalances.set(userAddr.toLowerCase(), +(userUsdc + usdcOut).toFixed(4));
@@ -934,23 +978,6 @@ export function createApiServer(
                 priceHistory.push({ timestamp: Date.now(), price: +(poolUsdcReserve / poolCtxReserve).toFixed(4) });
                 if (priceHistory.length > 50) priceHistory = priceHistory.slice(-50);
                 saveDexState();
-
-                // Send on-chain transaction to burn/transfer CTX to AMM pool
-                const nonce = blockchain.getNextNonce(userAddr);
-                const tx = new Transaction({
-                    type: 'TRANSFER',
-                    sender: userAddr,
-                    senderPublicKey: keyPair.publicKey,
-                    recipient: 'ctx1dexamm000000000000000000000000000000000000000000',
-                    amount: inAmount,
-                    fee: fee,
-                    burnAmount: 0,
-                    nonce: nonce,
-                    timestamp: Date.now()
-                });
-                tx.sign(keyPair.privateKey, keyPair.publicKey);
-                blockchain.mempool.addTransaction(tx);
-                p2p.broadcastTransaction(tx);
 
                 return res.json({
                     success: true,
@@ -969,6 +996,38 @@ export function createApiServer(
 
                 const effectiveIn = inAmount * 0.997;
                 const ctxOut = +( (poolCtxReserve * effectiveIn) / (poolUsdcReserve + effectiveIn) ).toFixed(4);
+                const fee = 0.01;
+
+                const ammBal = blockchain.getBalance(DEX_AMM_KEYPAIR.address);
+                if (ammBal < ctxOut + fee) {
+                    return res.status(400).json({ 
+                        error: `Insufficient AMM reserve balance. Required: ${(ctxOut + fee).toFixed(4)} CTX, Available: ${ammBal.toFixed(4)} CTX` 
+                    });
+                }
+
+                // Send CTX from AMM reserve to user on-chain
+                const nonce = blockchain.getNextNonce(DEX_AMM_KEYPAIR.address);
+                const tx = new Transaction({
+                    type: 'TRANSFER',
+                    sender: DEX_AMM_KEYPAIR.address,
+                    senderPublicKey: DEX_AMM_KEYPAIR.publicKey,
+                    recipient: userAddr,
+                    amount: ctxOut,
+                    fee: fee,
+                    burnAmount: 0,
+                    nonce: nonce,
+                    timestamp: Date.now()
+                });
+                tx.sign(DEX_AMM_KEYPAIR.privateKey, DEX_AMM_KEYPAIR.publicKey);
+
+                const poolRes = blockchain.mempool.addTransaction(
+                    tx,
+                    (addr) => blockchain.getBalance(addr)
+                );
+                if (!poolRes.success) {
+                    return res.status(400).json({ error: `Swap transaction failed: ${poolRes.error}` });
+                }
+                p2p.broadcastTransaction(tx);
 
                 poolUsdcReserve += inAmount;
                 poolCtxReserve -= ctxOut;
@@ -979,24 +1038,6 @@ export function createApiServer(
                 priceHistory.push({ timestamp: Date.now(), price: +(poolUsdcReserve / poolCtxReserve).toFixed(4) });
                 if (priceHistory.length > 50) priceHistory = priceHistory.slice(-50);
                 saveDexState();
-
-                // Send CTX from Faucet/Treasury to user on-chain
-                const fee = 0.01;
-                const nonce = blockchain.getNextNonce(FAUCET_KEYPAIR.address);
-                const tx = new Transaction({
-                    type: 'TRANSFER',
-                    sender: FAUCET_KEYPAIR.address,
-                    senderPublicKey: FAUCET_KEYPAIR.publicKey,
-                    recipient: userAddr,
-                    amount: ctxOut,
-                    fee: fee,
-                    burnAmount: 0,
-                    nonce: nonce,
-                    timestamp: Date.now()
-                });
-                tx.sign(FAUCET_KEYPAIR.privateKey, FAUCET_KEYPAIR.publicKey);
-                blockchain.mempool.addTransaction(tx);
-                p2p.broadcastTransaction(tx);
 
                 return res.json({
                     success: true,
@@ -1047,7 +1088,7 @@ export function createApiServer(
                 type: 'TRANSFER',
                 sender: userAddr,
                 senderPublicKey: keyPair.publicKey,
-                recipient: 'ctx1dexamm000000000000000000000000000000000000000000',
+                recipient: DEX_AMM_KEYPAIR.address,
                 amount: inCtx,
                 fee: fee,
                 burnAmount: 0,
@@ -1055,7 +1096,14 @@ export function createApiServer(
                 timestamp: Date.now()
             });
             tx.sign(keyPair.privateKey, keyPair.publicKey);
-            blockchain.mempool.addTransaction(tx);
+
+            const poolRes = blockchain.mempool.addTransaction(
+                tx,
+                (addr) => blockchain.getBalance(addr)
+            );
+            if (!poolRes.success) {
+                return res.status(400).json({ error: `Failed to deposit CTX to AMM pool: ${poolRes.error}` });
+            }
             p2p.broadcastTransaction(tx);
 
             // Deduct USDC
@@ -1182,11 +1230,44 @@ export function createApiServer(
 
             const ctxToReturn = +(poolCtxReserve * poolShare).toFixed(4);
             const usdcToReturn = +(poolUsdcReserve * poolShare).toFixed(4);
+            const fee = 0.01;
+
+            // Verify AMM reserve balance before deducting user shares
+            const ammBal = blockchain.getBalance(DEX_AMM_KEYPAIR.address);
+            if (ammBal < ctxToReturn + fee) {
+                return res.status(400).json({ 
+                    error: `Insufficient AMM reserve balance to process withdrawal. Required: ${(ctxToReturn + fee).toFixed(4)} CTX, Available: ${ammBal.toFixed(4)} CTX` 
+                });
+            }
+
+            // Send CTX on-chain back to user from dedicated AMM address
+            const nonce = blockchain.getNextNonce(DEX_AMM_KEYPAIR.address);
+            const tx = new Transaction({
+                type: 'TRANSFER',
+                sender: DEX_AMM_KEYPAIR.address,
+                senderPublicKey: DEX_AMM_KEYPAIR.publicKey,
+                recipient: userAddr,
+                amount: ctxToReturn,
+                fee: fee,
+                burnAmount: 0,
+                nonce: nonce,
+                timestamp: Date.now()
+            });
+            tx.sign(DEX_AMM_KEYPAIR.privateKey, DEX_AMM_KEYPAIR.publicKey);
+
+            const poolRes = blockchain.mempool.addTransaction(
+                tx,
+                (addr) => blockchain.getBalance(addr)
+            );
+            if (!poolRes.success) {
+                return res.status(400).json({ error: `Withdrawal transaction failed: ${poolRes.error}` });
+            }
+            p2p.broadcastTransaction(tx);
 
             // Auto-claim any pending yield before removal
             const pendingYield = calculateUserPendingYield(userAddrLower);
 
-            // Deduct shares
+            // Deduct shares only after on-chain transaction is accepted
             const remainingShares = +(userShares - sharesToRemove).toFixed(4);
             if (remainingShares <= 0.0001) {
                 userLpShares.delete(userAddrLower);
@@ -1208,23 +1289,6 @@ export function createApiServer(
             userLastClaimTimestamp.set(userAddrLower, Date.now());
             userLastClaimVolume.set(userAddrLower, totalTradingVolumeUsd);
             saveDexState();
-
-            // Send CTX on-chain back to user from AMM address
-            const nonce = blockchain.getNextNonce(FAUCET_KEYPAIR.address);
-            const tx = new Transaction({
-                type: 'TRANSFER',
-                sender: FAUCET_KEYPAIR.address,
-                senderPublicKey: FAUCET_KEYPAIR.publicKey,
-                recipient: userAddr,
-                amount: ctxToReturn,
-                fee: 0.01,
-                burnAmount: 0,
-                nonce: nonce,
-                timestamp: Date.now()
-            });
-            tx.sign(FAUCET_KEYPAIR.privateKey, FAUCET_KEYPAIR.publicKey);
-            blockchain.mempool.addTransaction(tx);
-            p2p.broadcastTransaction(tx);
 
             res.json({
                 success: true,
