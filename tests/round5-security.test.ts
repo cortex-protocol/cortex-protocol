@@ -201,6 +201,63 @@ async function runTests() {
     }
     console.log('  ✓ User LP shares remained intact (shares = ' + savedShares + ')');
 
+    // -------------------------------------------------------------
+    // TEST 5: Recipient Address Format & Checksum Validation
+    // -------------------------------------------------------------
+    console.log('\nTest 5: Recipient address validation rejects malformed / non-ctx1 strings...');
+    
+    // 1. Raw CLI flags / random strings must be rejected
+    if (CortexCrypto.isValidAddress('--worker')) {
+        throw new Error('FAIL: CortexCrypto.isValidAddress accepted "--worker"');
+    }
+    console.log('  ✓ Correctly rejected "--worker"');
+
+    if (CortexCrypto.isValidAddress('attacker_wallet')) {
+        throw new Error('FAIL: CortexCrypto.isValidAddress accepted "attacker_wallet"');
+    }
+    console.log('  ✓ Correctly rejected non-ctx1 address');
+
+    // 2. Legitimate keypair address must be accepted
+    const legitimate = CortexCrypto.generateKeyPair();
+    if (!CortexCrypto.isValidAddress(legitimate.address)) {
+        throw new Error('FAIL: CortexCrypto.isValidAddress rejected valid address ' + legitimate.address);
+    }
+    console.log('  ✓ Correctly accepted valid derived address: ' + legitimate.address);
+
+    // 3. Transaction with malformed recipient must fail isValid()
+    const malformedTx = new Transaction({
+        type: 'TRANSFER',
+        sender: keyPair.address,
+        senderPublicKey: keyPair.publicKey,
+        recipient: '--worker',
+        amount: 10,
+        fee: 0.01,
+        burnAmount: 0,
+        nonce: 1
+    });
+    malformedTx.sign(keyPair.privateKey, keyPair.publicKey);
+    if (malformedTx.isValid()) {
+        throw new Error('FAIL: Transaction with recipient "--worker" passed isValid()');
+    }
+    console.log('  ✓ Transaction.isValid() correctly rejected recipient "--worker"');
+
+    // 4. Transaction with valid recipient must pass isValid()
+    const validTx = new Transaction({
+        type: 'TRANSFER',
+        sender: keyPair.address,
+        senderPublicKey: keyPair.publicKey,
+        recipient: legitimate.address,
+        amount: 10,
+        fee: 0.01,
+        burnAmount: 0,
+        nonce: 1
+    });
+    validTx.sign(keyPair.privateKey, keyPair.publicKey);
+    if (!validTx.isValid()) {
+        throw new Error('FAIL: Valid transaction rejected by isValid()');
+    }
+    console.log('  ✓ Transaction.isValid() correctly accepted valid recipient');
+
     console.log('\n=== ALL ROUND 5 SECURITY TESTS PASSED SUCCESSFULLY! ===\n');
 }
 

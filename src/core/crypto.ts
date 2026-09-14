@@ -40,6 +40,32 @@ export class CortexCrypto {
     }
 
     /**
+     * Validate whether an address matches the canonical Cortex address format
+     */
+    static isValidAddress(address: string): boolean {
+        if (!address || typeof address !== 'string') return false;
+        const trimmed = address.trim();
+        if (!trimmed.startsWith('ctx1') || trimmed.length < 25 || trimmed.length > 64) return false;
+        if (/\s/.test(trimmed)) return false;
+
+        // If it is a canonical 52-char derived address, verify ripemd160 checksum
+        if (trimmed.length === 52) {
+            const payload = trimmed.slice(4);
+            if (/^[0-9a-fA-F]{48}$/.test(payload)) {
+                const ripemd = payload.slice(0, 40);
+                const checksum = payload.slice(40);
+                const expectedChecksum = crypto.createHash('sha256')
+                    .update(crypto.createHash('sha256').update(ripemd).digest())
+                    .digest('hex')
+                    .substring(0, 8);
+                return checksum.toLowerCase() === expectedChecksum.toLowerCase();
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Generate a brand new cryptographically secure KeyPair
      */
     static generateKeyPair(): KeyPair {

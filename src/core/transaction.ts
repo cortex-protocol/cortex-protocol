@@ -141,6 +141,11 @@ export class Transaction implements ITransaction {
             return false;
         }
 
+        // Validate recipient address format (prevent arbitrary strings like '--worker' or black-hole burns)
+        if (typeof this.recipient !== 'string' || !CortexCrypto.isValidAddress(this.recipient)) {
+            return false;
+        }
+
         // Verify ECDSA signature
         const hash = this.calculateHash();
         return CortexCrypto.verifySignature(hash, this.signature, this.senderPublicKey);

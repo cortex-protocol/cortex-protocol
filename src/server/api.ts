@@ -518,7 +518,7 @@ export function createApiServer(
             const { address } = body;
             const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
 
-            if (!address || !address.startsWith('ctx1') || address.length < 20) {
+            if (!address || !CortexCrypto.isValidAddress(address.trim())) {
                 return res.status(400).json({ error: 'Please provide a valid Cortex address starting with ctx1...' });
             }
 
@@ -1349,6 +1349,12 @@ export function createApiServer(
 
             if (!privateKey || !recipient || !amount || Number(amount) <= 0) {
                 return res.status(400).json({ error: 'privateKey, recipient and positive amount are required.' });
+            }
+
+            if (!CortexCrypto.isValidAddress(recipient.trim())) {
+                return res.status(400).json({
+                    error: 'Invalid recipient address. Must be a valid Cortex Bech32 address starting with ctx1...'
+                });
             }
 
             const keyPair = CortexCrypto.fromPrivateKey(privateKey);
