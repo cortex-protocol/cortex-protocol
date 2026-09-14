@@ -213,6 +213,13 @@ export class Blockchain {
     }
 
     /**
+     * Get confirmed on-chain nonce for an address (O(1) state lookup)
+     */
+    public getConfirmedNonce(address: string): number {
+        return this.nonceIndex.get(address) ?? -1;
+    }
+
+    /**
      * Get the next expected nonce for an address (O(1) state lookup + mempool check)
      */
     public getNextNonce(address: string): number {
