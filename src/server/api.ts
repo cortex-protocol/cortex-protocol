@@ -477,7 +477,11 @@ export function createApiServer(
             const tx = Transaction.createMemoryCommit(keyPair.address, keyPair.publicKey, payload, fee, nonce);
             tx.sign(keyPair.privateKey, keyPair.publicKey);
 
-            const result = blockchain.mempool.addTransaction(tx, (addr) => blockchain.getBalance(addr));
+            const result = blockchain.mempool.addTransaction(
+                tx,
+                (addr) => blockchain.getBalance(addr),
+                (addr) => blockchain.getConfirmedNonce(addr)
+            );
             if (!result.success) {
                 return res.status(400).json({ error: result.error });
             }
@@ -541,7 +545,11 @@ export function createApiServer(
 
             tx.sign(FAUCET_KEYPAIR.privateKey, FAUCET_KEYPAIR.publicKey);
 
-            const poolRes = blockchain.mempool.addTransaction(tx);
+            const poolRes = blockchain.mempool.addTransaction(
+                tx,
+                (addr) => blockchain.getBalance(addr),
+                (addr) => blockchain.getConfirmedNonce(addr)
+            );
             if (!poolRes.success) {
                 return res.status(400).json({ error: poolRes.error });
             }
@@ -1312,7 +1320,11 @@ export function createApiServer(
 
             tx.sign(keyPair.privateKey, keyPair.publicKey);
 
-            const poolRes = blockchain.mempool.addTransaction(tx);
+            const poolRes = blockchain.mempool.addTransaction(
+                tx,
+                (addr) => blockchain.getBalance(addr),
+                (addr) => blockchain.getConfirmedNonce(addr)
+            );
             if (!poolRes.success) {
                 return res.status(400).json({ error: poolRes.error });
             }
@@ -1368,7 +1380,10 @@ export function createApiServer(
             const nextIndex = latestBlock.index + 1;
             const difficulty = blockchain.getDifficulty();
             const reward = blockchain.getCurrentBlockReward(nextIndex);
-            const candidateTxs = blockchain.mempool.getCandidateTransactions();
+            const candidateTxs = blockchain.mempool.getCandidateTransactions(
+                500,
+                (addr) => blockchain.getConfirmedNonce(addr)
+            );
             const totalFees = candidateTxs.reduce((sum, tx) => sum + tx.fee, 0);
 
             const coinbaseTx = Transaction.createCoinbase(address, reward, totalFees);

@@ -25,17 +25,30 @@ export class Mempool {
      */
     public addTransaction(
         tx: Transaction,
-        balanceProvider?: (address: string) => number
+        balanceProvider?: (address: string) => number,
+        nonceProvider?: (address: string) => number
     ): { success: boolean; error?: string } {
         if (!tx.isValid()) {
             return { success: false, error: 'Cryptographic signature or transaction fields are invalid.' };
         }
 
-        if (balanceProvider && tx.type !== 'COINBASE') {
-            const senderBal = balanceProvider(tx.sender);
-            const totalRequired = tx.amount + tx.fee + (tx.burnAmount || 0);
-            if (senderBal < totalRequired) {
-                return { success: false, error: `Insufficient balance for transaction. Required: ${totalRequired}, Available: ${senderBal}` };
+        if (tx.type !== 'COINBASE') {
+            if (nonceProvider) {
+                const confirmedNonce = nonceProvider(tx.sender);
+                if (tx.nonce <= confirmedNonce) {
+                    return { 
+                        success: false, 
+                        error: `Invalid nonce: ${tx.nonce}. Must be strictly greater than confirmed nonce ${confirmedNonce}.` 
+                    };
+                }
+            }
+
+            if (balanceProvider) {
+                const senderBal = balanceProvider(tx.sender);
+                const totalRequired = tx.amount + tx.fee + (tx.burnAmount || 0);
+                if (senderBal < totalRequired) {
+                    return { success: false, error: `Insufficient balance for transaction. Required: ${totalRequired}, Available: ${senderBal}` };
+                }
             }
         }
 
@@ -81,10 +94,64 @@ export class Mempool {
     }
 
     /**
-     * Get candidate transactions to include in the next block (up to maxTxLimit)
+     * Get candidate transactions to include in the next block (up to maxTxLimit).
+     * Filters out stale nonces and guarantees strictly ascending nonce order per sender.
      */
-    public getCandidateTransactions(maxLimit = 500): Transaction[] {
-        return this.getAll().slice(0, maxLimit);
+    public getCandidateTransactions(
+        maxLimit = 500,
+        nonceProvider?: (address: string) => number
+    ): Transaction[] {
+        let txs = this.getAll();
+
+        // 1. Filter out stale nonces if nonceProvider is provided
+        if (nonceProvider) {
+            txs = txs.filter(tx => {
+                if (tx.type === 'COINBASE' || !tx.sender) return true;
+                return tx.nonce > nonceProvider(tx.sender);
+            });
+        }
+
+        // 2. Group transactions by sender to preserve sequential nonce order
+        const bySender = new Map<string, Transaction[]>();
+        for (const tx of txs) {
+            if (!bySender.has(tx.sender)) {
+                bySender.set(tx.sender, []);
+            }
+            bySender.get(tx.sender)!.push(tx);
+        }
+
+        // 3. For each sender, sort by nonce ascending (strict sequential order)
+        for (const senderTxs of bySender.values()) {
+            senderTxs.sort((a, b) => a.nonce - b.nonce);
+        }
+
+        // 4. Greedily pick candidate transactions respecting fee priority while strictly maintaining nonce order
+        const candidates: Transaction[] = [];
+        const senderOffsets = new Map<string, number>();
+
+        while (candidates.length < maxLimit) {
+            let bestSender: string | null = null;
+            let bestFee = -1;
+
+            for (const [sender, list] of bySender.entries()) {
+                const offset = senderOffsets.get(sender) || 0;
+                if (offset < list.length) {
+                    const nextTx = list[offset];
+                    if (nextTx.fee > bestFee) {
+                        bestFee = nextTx.fee;
+                        bestSender = sender;
+                    }
+                }
+            }
+
+            if (!bestSender) break;
+
+            const offset = senderOffsets.get(bestSender) || 0;
+            candidates.push(bySender.get(bestSender)![offset]);
+            senderOffsets.set(bestSender, offset + 1);
+        }
+
+        return candidates;
     }
 
     /**
