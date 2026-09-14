@@ -297,6 +297,12 @@ export class Blockchain {
                 const curNonce = simNonces.has(sender) ? simNonces.get(sender)! : (this.nonceIndex.get(sender) ?? -1);
 
                 const requiredDebit = +(tx.amount + tx.fee + (tx.burnAmount || 0)).toFixed(6);
+                if (!Number.isFinite(requiredDebit) || requiredDebit < 0) {
+                    return { 
+                        success: false, 
+                        error: `Invalid debit amount calculated for transaction ${tx.id}: ${requiredDebit}` 
+                    };
+                }
                 if (curBal < requiredDebit) {
                     return { 
                         success: false, 
@@ -314,6 +320,12 @@ export class Blockchain {
                 simNonces.set(sender, tx.nonce);
 
                 if (tx.recipient && tx.recipient !== CORTEX_BURN_ADDRESS) {
+                    if (!Number.isFinite(tx.amount) || tx.amount < 0) {
+                        return {
+                            success: false,
+                            error: `Invalid credit amount for recipient in transaction ${tx.id}: ${tx.amount}`
+                        };
+                    }
                     const recipBal = simBalances.has(tx.recipient) ? simBalances.get(tx.recipient)! : this.getBalance(tx.recipient);
                     simBalances.set(tx.recipient, +(recipBal + tx.amount).toFixed(6));
                 }

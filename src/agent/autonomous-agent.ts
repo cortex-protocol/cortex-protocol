@@ -86,8 +86,13 @@ class AutonomousAIAgent {
 
     constructor(nodeUrl = 'http://localhost:3000') {
         this.nodeUrl = nodeUrl;
-        // Deterministic Agent keypair
-        this.keyPair = CortexCrypto.fromPrivateKey('4a7f92b938471029384710293847102938471029384710293847102938471029');
+        const agentKey = process.env.AGENT_PRIVATE_KEY || process.env.FAUCET_PRIVATE_KEY;
+        if (agentKey) {
+            this.keyPair = CortexCrypto.fromPrivateKey(agentKey);
+        } else {
+            this.keyPair = CortexCrypto.generateKeyPair();
+            console.warn(`[AutonomousAI] Warning: No AGENT_PRIVATE_KEY configured in environment. Generated ephemeral key: ${this.keyPair.address}`);
+        }
         console.log(`[AutonomousAI] Agent initialized with address: ${this.keyPair.address}`);
     }
 
